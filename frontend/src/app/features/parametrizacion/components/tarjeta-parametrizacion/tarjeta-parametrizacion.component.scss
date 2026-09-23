@@ -1,0 +1,170 @@
+.tarjeta-catalogo-card {
+  height: 100%;
+  background: #ffffff;
+  border: 1px solid var(--border-subtle, #d9e2ec);
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.08);
+    border-color: var(--primary-container, #005b96);
+  }
+}
+
+.tarjeta-catalogo-cabecera {
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--border-subtle, #d9e2ec);
+}
+
+.tarjeta-icono-contenedor {
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  background: rgba(0, 67, 112, 0.08);
+  color: var(--primary-color, #004370);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  .material-symbols-outlined {
+    font-size: 20px;
+  }
+}
+
+.tarjeta-titulo-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  h3 {
+    margin: 0;
+    color: var(--text-main, #1f2933);
+    font-size: 15px;
+    font-weight: 750;
+  }
+}
+
+.badge-activos {
+  background: #dcfce7;
+  color: #15803d;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 6px;
+  border-radius: 4px;
+  width: fit-content;
+  text-transform: uppercase;
+}
+
+.tarjeta-catalogo-contenido {
+  padding: 16px 20px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.descripcion-catalogo {
+  margin: 0;
+  color: var(--text-secondary, #5c6b73);
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
+.vista-previa-seccion {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.titulo-vista-previa {
+  margin: 0;
+  color: var(--text-secondary, #5c6b73);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.lista-previa {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+
+    .bullet-icono {
+      font-size: 16px;
+      color: var(--primary-color, #004370);
+    }
+
+    .texto-item {
+      color: var(--text-main, #1f2933);
+      font-size: 13px;
+      font-weight: 550;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    &.sin-registros {
+      color: var(--text-secondary, #5c6b73);
+      font-style: italic;
+      font-size: 12px;
+    }
+  }
+}
+
+.texto-mas {
+  font-size: 11px;
+  color: var(--primary-color, #004370);
+  font-weight: 700;
+  margin-top: 2px;
+  padding-left: 20px;
+}
+
+.tarjeta-catalogo-pie {
+  padding: 12px 20px 16px;
+  background: var(--bg-neutral-low, #f8fafc);
+  border-top: 1px solid var(--border-subtle, #d9e2ec);
+}
+
+.boton-administrar-tarjeta {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 34px;
+  border: 1px solid var(--border-subtle, #d9e2ec);
+  border-radius: 6px;
+  background: #ffffff;
+  color: var(--text-main, #1f2933);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+
+  &:hover {
+    background: var(--primary-color, #004370);
+    color: #ffffff !important;
+    border-color: var(--primary-color, #004370);
+  }
+
+  .material-symbols-outlined {
+    font-size: 16px;
+  }
+}

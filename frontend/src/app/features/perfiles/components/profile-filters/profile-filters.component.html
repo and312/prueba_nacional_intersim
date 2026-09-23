@@ -1,0 +1,60 @@
+<div class="perfiles-filters-card" [formGroup]="filterForm">
+  <div class="perfiles-filters-grid">
+    <!-- Buscador -->
+    <div class="perfiles-filter-field perfiles-search-filter">
+      <label for="searchFilter">Buscar</label>
+      <div class="perfiles-filter-search">
+        <span class="material-symbols-outlined">search</span>
+        <input
+          id="searchFilter"
+          formControlName="search"
+          type="text"
+          placeholder="Buscar por código, cargo, área..."
+        />
+        @if (filterForm.get('search')?.value) {
+          <button class="clear-search-btn" type="button" (click)="filterForm.get('search')?.setValue('')">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Estado -->
+    <div class="perfiles-filter-field">
+      <label for="estadoFilter">Estado del perfil</label>
+      <select id="estadoFilter" formControlName="estado">
+        <option value="">Todos los estados</option>
+        @for (opt of statusOptions; track opt.value) {
+          <option [value]="opt.value">{{ opt.label }}</option>
+        }
+      </select>
+    </div>
+
+    <!-- Área Solicitante (Siempre visible) -->
+    <div class="perfiles-filter-field">
+      <label for="areaFilter">Área del solicitante</label>
+      <select id="areaFilter" formControlName="areaId">
+        <option value="">Todas las áreas</option>
+        @for (area of areas; track area.id) {
+          <option [value]="area.id">{{ area.nombre }}</option>
+        }
+      </select>
+    </div>
+
+    <!-- Rango de Fechas -->
+    <div class="perfiles-filter-field">
+      <label for="fechaDesdeFilter">Desde</label>
+      <input id="fechaDesdeFilter" formControlName="fechaDesde" type="date" />
+    </div>
+
+    <div class="perfiles-filter-field">
+      <label for="fechaHastaFilter">Hasta</label>
+      <input id="fechaHastaFilter" formControlName="fechaHasta" type="date" />
+    </div>
+  </div>
+
+  <button class="perfiles-clear-filters" type="button" (click)="clearFilters()">
+    <span class="material-symbols-outlined">filter_list_off</span>
+    Limpiar filtros
+  </button>
+</div>

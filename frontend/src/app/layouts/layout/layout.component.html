@@ -1,0 +1,220 @@
+@if (isMobileOpen()) {
+  <div (click)="closeMobileSidebar()" class="sidebar-backdrop fixed inset-0 top-[64px] bg-slate-900/50 backdrop-blur-sm z-30 lg:hidden transition-opacity duration-300"></div>
+}
+
+<aside [class.sidebar-collapsed]="isCollapsed()" [class.mobile-open]="isMobileOpen()" class="w-[260px] h-screen lg:h-screen fixed left-0 top-[64px] lg:top-0 bg-sidebar-bg flex flex-col py-4 z-40 lg:z-50 border-r border-border-subtle transition-all duration-300">
+  <!-- Desktop Sidebar Logo Container (>= 1024px) -->
+  <div class="hidden lg:flex flex-col items-center justify-center text-center logo-container w-full px-5 mb-6 relative">
+    <img src="/nacional-seguros.png" alt="Nacional Seguros Logo" class="logo-img object-contain mb-2">
+    <p class="text-surface-variant/60 font-label-md text-[11px] uppercase tracking-widest mt-1 logo-text">Nacional seguros</p>
+  </div>
+
+  <nav class="flex-1 space-y-1 px-3">
+    <a routerLink="/dashboard" (click)="closeMobileSidebar()" routerLinkActive="active-link" [routerLinkActiveOptions]="{exact: true}" class="flex items-center gap-3 px-3 py-2 text-surface-variant/80 hover:text-surface-white hover:bg-primary-container/50 transition-colors duration-200 cursor-pointer rounded-lg group">
+      <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">dashboard</span>
+      <span class="font-body-md text-body-md nav-label">Inicio</span>
+    </a>
+
+    <a routerLink="/solicitudes" (click)="closeMobileSidebar()" routerLinkActive="active-link" class="flex items-center gap-3 px-3 py-2 text-surface-variant/80 hover:text-surface-white hover:bg-primary-container/50 transition-colors duration-200 cursor-pointer rounded-lg group">
+      <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">description</span>
+      <span class="font-body-md text-body-md nav-label">Solicitudes</span>
+    </a>
+
+    <a routerLink="/perfiles" (click)="closeMobileSidebar()" routerLinkActive="active-link" class="flex items-center gap-3 px-3 py-2 text-surface-variant/80 hover:text-surface-white hover:bg-primary-container/50 transition-colors duration-200 cursor-pointer rounded-lg group">
+      <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">person_search</span>
+      <span class="font-body-md text-body-md nav-label">Perfiles</span>
+    </a>
+
+    @if (authService.getUserRole() === 'RRHH' || authService.getUserRole() === 'Administrador') {
+      <a routerLink="/estrategias" (click)="closeMobileSidebar()" routerLinkActive="active-link" class="flex items-center gap-3 px-3 py-2 text-surface-variant/80 hover:text-surface-white hover:bg-primary-container/50 transition-colors duration-200 cursor-pointer rounded-lg group">
+        <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">ads_click</span>
+        <span class="font-body-md text-body-md nav-label">Estrategias</span>
+      </a>
+    }
+
+    <a routerLink="/vacantes" (click)="closeMobileSidebar()" routerLinkActive="active-link" class="flex items-center gap-3 px-3 py-2 text-surface-variant/80 hover:text-surface-white hover:bg-primary-container/50 transition-colors duration-200 cursor-pointer rounded-lg group">
+      <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">work</span>
+      <span class="font-body-md text-body-md nav-label">Vacantes</span>
+    </a>
+
+    <a routerLink="/postulantes" (click)="closeMobileSidebar()" routerLinkActive="active-link" class="flex items-center gap-3 px-3 py-2 text-surface-variant/80 hover:text-surface-white hover:bg-primary-container/50 transition-colors duration-200 cursor-pointer rounded-lg group">
+      <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">groups</span>
+      <span class="font-body-md text-body-md nav-label">Postulantes</span>
+    </a>
+
+    @if (authService.getUserRole() === 'Administrador') {
+      <div class="sidebar-section-label pt-4 pb-1 px-3 nav-label">
+        <p class="text-[10px] uppercase tracking-wider text-surface-variant/40">ADMIN</p>
+      </div>
+
+      <a routerLink="/usuarios" (click)="closeMobileSidebar()" routerLinkActive="active-link" [routerLinkActiveOptions]="{exact: true}" class="flex items-center gap-3 px-3 py-2 text-surface-variant/80 hover:text-surface-white hover:bg-primary-container/50 transition-colors duration-200 cursor-pointer rounded-lg group">
+        <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">manage_accounts</span>
+        <span class="font-body-md text-body-md nav-label">Usuarios</span>
+      </a>
+
+      <a routerLink="/usuarios/roles" (click)="closeMobileSidebar()" routerLinkActive="active-link" class="flex items-center gap-3 px-3 py-2 text-surface-variant/80 hover:text-surface-white hover:bg-primary-container/50 transition-colors duration-200 cursor-pointer rounded-lg group">
+        <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">security</span>
+        <span class="font-body-md text-body-md nav-label">Roles y Permisos</span>
+      </a>
+
+      <a routerLink="/usuarios/areas" (click)="closeMobileSidebar()" routerLinkActive="active-link" class="flex items-center gap-3 px-3 py-2 text-surface-variant/80 hover:text-surface-white hover:bg-primary-container/50 transition-colors duration-200 cursor-pointer rounded-lg group">
+        <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">corporate_fare</span>
+        <span class="font-body-md text-body-md nav-label">Áreas</span>
+      </a>
+
+      <a routerLink="/integraciones" (click)="closeMobileSidebar()" routerLinkActive="active-link" class="flex items-center gap-3 px-3 py-2 text-surface-variant/80 hover:text-surface-white hover:bg-primary-container/50 transition-colors duration-200 cursor-pointer rounded-lg group">
+        <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">api</span>
+        <span class="font-body-md text-body-md nav-label">Integraciones API</span>
+      </a>
+
+      <a routerLink="/configuracion/parametrizacion" (click)="closeMobileSidebar()" routerLinkActive="active-link" class="flex items-center gap-3 px-3 py-2 text-surface-variant/80 hover:text-surface-white hover:bg-primary-container/50 transition-colors duration-200 cursor-pointer rounded-lg group">
+        <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">settings_suggest</span>
+        <span class="font-body-md text-body-md nav-label">Parametrización</span>
+      </a>
+    }
+  </nav>
+
+  <div class="sidebar-logout-container px-4 pt-4 mt-auto">
+    <div (click)="logout()" class="sidebar-logout-action flex items-center gap-3 cursor-pointer transition-colors">
+      <div class="w-8 h-8 rounded-full bg-secondary-container flex items-center justify-center text-primary font-bold text-xs">
+        NS
+      </div>
+      <div class="overflow-hidden user-info-text">
+        <p class="text-surface-white font-label-md truncate">Cerrar Sesión</p>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<main [class.main-expanded]="isCollapsed()" class="ml-[260px] min-h-screen flex flex-col transition-all duration-300">
+  <header [class.header-expanded]="isCollapsed()" class="h-[64px] fixed top-0 right-0 left-[260px] bg-surface-white border-b border-border-subtle flex justify-between items-center z-60 transition-all duration-300">
+    <!-- Left: Hamburger Button -->
+    <div class="flex items-center gap-4">
+      <button (click)="toggleSidebar()" id="sidebar-toggle" class="header-action-icon-btn" aria-label="Alternar menú lateral" title="Alternar menú lateral">
+        <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">{{ isMobileOpen() ? 'close' : 'menu' }}</span>
+      </button>
+    </div>
+
+    <!-- Mobile & Tablet Center Brand (< 1024px) -->
+    <div class="mobile-tablet-only flex-1 justify-center items-center cursor-pointer select-none px-2 overflow-hidden" routerLink="/dashboard">
+      <img src="/nacional-seguro-logo-positivo.png" alt="Nacional Seguros Logo" class="mobile-navbar-logo">
+    </div>
+    
+    <!-- Right Actions Container -->
+    <div class="flex items-center gap-3">
+      <!-- Desktop Actions (>= 1024px ONLY) -->
+      <div class="desktop-only-action gap-4">
+        <div class="flex gap-4 items-center">
+          <button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors relative">
+            <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">notifications</span>
+            <span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full border-2 border-surface-white"></span>
+          </button>
+          <button class="w-10 h-10 flex items-center justify-center text-on-surface-variant hover:bg-surface-container-low rounded-full transition-colors">
+            <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">settings</span>
+          </button>
+        </div>
+        
+        <div class="h-8 w-[1px] bg-border-subtle"></div>
+        
+        <div #desktopTrigger="matMenuTrigger" [matMenuTriggerFor]="desktopUserMenu" class="header-user-trigger flex items-center gap-2 cursor-pointer py-1.5 px-2 rounded-lg hover:bg-surface-container-low transition-colors duration-200 select-none" title="Menú de usuario">
+          <div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden flex-shrink-0 cursor-pointer">
+            <img class="w-full h-full object-cover cursor-pointer" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmKr22OAisKCJAu1yvSysCgwSHOMoy073lowBZgwB1VrQJgmFtlFOin6Olw00vyAyqjpBhEWS6EnbwD_OUUEaQJJHxpyx43ZfoUFCgG3SiUuCGsJ0I1DFtM6CVpHPM2YPQsi7h0mdZ6x6cRZTKxoSR4M13j6eqYmZvHPBm24DmrjHemBBoohSJBsLDvwbd0on5KmOsHoM-faweGjT2EVxO22vd8SdrGuesULCyNC20TwaKJluF9OR6cRIggyOop9kWnQ0KNhSv9Q" alt="User Avatar">
+          </div>
+          <span class="font-medium text-[#475569] text-sm tracking-tight leading-none cursor-pointer">{{ getUserShortName() }}</span>
+          <span class="material-symbols-outlined notranslate user-menu-arrow text-[#475569] text-[20px] cursor-pointer" [class.is-open]="desktopTrigger.menuOpen" translate="no" aria-hidden="true">
+            expand_more
+          </span>
+        </div>
+
+        <mat-menu #desktopUserMenu="matMenu" xPosition="before" yPosition="below" panelClass="user-menu-panel">
+          <ng-template matMenuContent>
+            <div class="user-menu-container">
+              <div class="user-menu-header">
+                <span class="user-role-badge">{{ getUserDisplayRole() }}</span>
+                <p class="user-full-name">{{ getUserFullName() }}</p>
+                <span class="user-email-text">{{ getUserEmail() }}</span>
+              </div>
+
+              <div class="user-menu-divider"></div>
+
+              <div class="user-menu-body">
+                <button type="button" (click)="logout()" class="user-menu-logout-btn">
+                  <svg class="logout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                    <polyline points="10 17 5 12 10 7"></polyline>
+                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                  </svg>
+                  <span>Cerrar sesión</span>
+                </button>
+              </div>
+            </div>
+          </ng-template>
+        </mat-menu>
+      </div>
+
+      <!-- Mobile & Tablet Three-Dots Button (< 1024px ONLY) -->
+      <button (click)="toggleHeaderMenu()" type="button" class="mobile-tablet-only header-action-icon-btn flex-shrink-0" aria-label="Más opciones" title="Más opciones">
+        <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">more_horiz</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Mobile & Tablet Responsive Floating Sub-Bar (< 1024px ONLY) when clicking (...) -->
+  @if (isHeaderMenuOpen()) {
+    <div (click)="closeHeaderMenu()" class="mobile-tablet-only-block fixed inset-0 top-[64px] bg-slate-900/30 backdrop-blur-xs z-30 cursor-pointer"></div>
+
+    <div class="header-responsive-subbar">
+      <!-- Left side: Notifications & Settings -->
+      <div class="flex items-center gap-3">
+        <button type="button" class="subbar-icon-btn relative" title="Notificaciones">
+          <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">notifications</span>
+          <span class="absolute top-2 right-2 w-2 h-2 bg-error rounded-full border border-surface-white"></span>
+        </button>
+
+        <button type="button" class="subbar-icon-btn" title="Configuración">
+          <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">settings</span>
+        </button>
+      </div>
+
+      <!-- Right side: User Profile Badge -->
+      <div #mobileTrigger="matMenuTrigger" [matMenuTriggerFor]="mobileUserMenu" class="header-user-trigger flex items-center gap-2 cursor-pointer py-1 px-2 rounded-lg hover:bg-surface-container-low transition-colors duration-200 select-none" title="Menú de usuario">
+        <div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden flex-shrink-0 cursor-pointer">
+          <img class="w-full h-full object-cover cursor-pointer" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAmKr22OAisKCJAu1yvSysCgwSHOMoy073lowBZgwB1VrQJgmFtlFOin6Olw00vyAyqjpBhEWS6EnbwD_OUUEaQJJHxpyx43ZfoUFCgG3SiUuCGsJ0I1DFtM6CVpHPM2YPQsi7h0mdZ6x6cRZTKxoSR4M13j6eqYmZvHPBm24DmrjHemBBoohSJBsLDvwbd0on5KmOsHoM-faweGjT2EVxO22vd8SdrGuesULCyNC20TwaKJluF9OR6cRIggyOop9kWnQ0KNhSv9Q" alt="User Avatar">
+        </div>
+        <span class="font-medium text-[#475569] text-xs sm:text-sm tracking-tight leading-none cursor-pointer">{{ getUserShortName() }}</span>
+        <span class="material-symbols-outlined notranslate user-menu-arrow text-[#475569] text-[18px] cursor-pointer" [class.is-open]="mobileTrigger.menuOpen" translate="no" aria-hidden="true">
+          expand_more
+        </span>
+      </div>
+
+      <mat-menu #mobileUserMenu="matMenu" xPosition="before" yPosition="below" panelClass="user-menu-panel">
+        <ng-template matMenuContent>
+          <div class="user-menu-container">
+            <div class="user-menu-header">
+              <span class="user-role-badge">{{ getUserDisplayRole() }}</span>
+              <p class="user-full-name">{{ getUserFullName() }}</p>
+              <span class="user-email-text">{{ getUserEmail() }}</span>
+            </div>
+
+            <div class="user-menu-divider"></div>
+
+            <div class="user-menu-body">
+              <button type="button" (click)="logout(); closeHeaderMenu()" class="user-menu-logout-btn">
+                <svg class="logout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
+                  <polyline points="10 17 5 12 10 7"></polyline>
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                </svg>
+                <span>Cerrar sesión</span>
+              </button>
+            </div>
+          </div>
+        </ng-template>
+      </mat-menu>
+    </div>
+  }
+
+  <div class="content-wrapper flex-1 flex flex-col">
+    <router-outlet></router-outlet>
+  </div>
+</main>

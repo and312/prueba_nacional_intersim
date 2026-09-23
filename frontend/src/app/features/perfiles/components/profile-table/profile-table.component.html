@@ -1,0 +1,79 @@
+<div class="perfiles-table-wrap">
+  <table class="perfiles-table">
+    <thead>
+      <tr>
+        <th>Código</th>
+        <th>Solicitud</th>
+        @if (showAreaColumn) {
+          <th>Área</th>
+        }
+        <th>Solicitante</th>
+        <th>Cargo</th>
+        <th>Origen</th>
+        <th>Prioridad</th>
+        <th>Estado</th>
+        <th>Fecha Recepción</th>
+        <th>Última Actualización</th>
+        <th class="table-actions-header">Acción</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (item of items; track item.id) {
+        <tr>
+          <td>
+            <span class="perfil-code">{{ item.codigo }}</span>
+          </td>
+          <td>
+            <span class="perfil-solicitud-code">{{ item.solicitudCodigo }}</span>
+          </td>
+          @if (showAreaColumn) {
+            <td class="area-cell" [title]="item.areaNombre">
+              <span class="muted-text area-title">{{ item.areaNombre }}</span>
+            </td>
+          }
+          <td class="solicitante-cell" [title]="item.solicitante || 'Sin Asignar'">
+            <span class="muted-text strong-muted">{{ item.solicitante || 'Sin Asignar' }}</span>
+          </td>
+          <td class="cargo-cell" [title]="item.cargo">
+            <span class="perfil-cargo-title">{{ item.cargo }}</span>
+          </td>
+          <td>
+            <span [class]="obtenerOrigenBadge(item.origen).cssClass">
+              <span class="material-symbols-outlined origin-icon notranslate" translate="no" aria-hidden="true">{{ obtenerOrigenBadge(item.origen).icon }}</span>
+              <span>{{ obtenerOrigenBadge(item.origen).label }}</span>
+            </span>
+          </td>
+          <td>
+            <span [class]="obtenerPrioridadInfo(item.prioridad).cssClass">{{ obtenerPrioridadInfo(item.prioridad).label }}</span>
+          </td>
+          <td>
+            <app-profile-status-badge [estado]="item.estado" [estadoCodigo]="item.estadoCodigo" [rol]="userRole"></app-profile-status-badge>
+          </td>
+          <td>
+            <span class="muted-text">{{ item.fechaSolicitud | date:'dd/MM/yyyy HH:mm' }}</span>
+          </td>
+          <td>
+            <span class="muted-text">{{ item.ultimaActualizacion | date:'dd/MM/yyyy HH:mm' }}</span>
+          </td>
+          <td class="table-actions-cell">
+            <button
+              (click)="onActionClick(getRowAction(item).action, item, $event)"
+              [class]="'perfil-action-btn ' + getRowAction(item).cssClass"
+              type="button"
+            >
+              <span class="material-symbols-outlined">{{ getRowAction(item).icon }}</span>
+              <span>{{ getRowAction(item).label }}</span>
+            </button>
+          </td>
+        </tr>
+      } @empty {
+        <tr>
+          <td [attr.colspan]="showAreaColumn ? 11 : 10" class="empty-table-message">
+            <span class="material-symbols-outlined">folder_open</span>
+            <p>No se encontraron perfiles con los filtros seleccionados.</p>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

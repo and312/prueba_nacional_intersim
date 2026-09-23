@@ -1,0 +1,47 @@
+.splash-screen-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #ffffff;
+  z-index: 99999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 300ms ease-in-out;
+
+  &.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .splash-screen-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    text-align: center;
+  }
+
+  .splash-logo {
+    max-width: 240px;
+    height: auto;
+    margin-bottom: 10px;
+  }
+
+  .splash-spinner {
+    margin: 10px 0;
+  }
+
+  .splash-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    color: #004370; // Azul institucional
+    margin: 0;
+    letter-spacing: 0.5px;
+  }
+}

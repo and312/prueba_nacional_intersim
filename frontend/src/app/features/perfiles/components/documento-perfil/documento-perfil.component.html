@@ -1,0 +1,46 @@
+<div class="documento-tarjeta-contenedor">
+  <div class="documento-cabecera">
+    <span class="material-symbols-outlined icono-documento">picture_as_pdf</span>
+    <div class="documento-titulos">
+      <h4>{{ titulo }}</h4>
+      <p>{{ descripcion }}</p>
+    </div>
+  </div>
+
+  <div class="documento-cuerpo">
+    <div class="info-documento-item">
+      <span class="info-label">Archivo:</span>
+      <span class="info-valor" [title]="fileName">{{ fileName }}</span>
+    </div>
+    <div class="info-documento-item">
+      <span class="info-label">Estado:</span>
+      <span class="info-valor" [style.color]="colorEstado" style="font-weight: 700;">
+        {{ estadoGeneracion }}
+      </span>
+    </div>
+    <div class="info-documento-item">
+      <span class="info-label">Fecha de generación:</span>
+      <span class="info-valor">
+        @if (fechaGeneracion) {
+          {{ fechaGeneracion | date:'dd/MM/yyyy HH:mm' }}
+        } @else {
+          {{ fechaGeneracionTexto }}
+        }
+      </span>
+    </div>
+  </div>
+
+  <div class="documento-acciones">
+    <button
+      class="boton-abrir-pdf"
+      [class.deshabilitado]="!tieneDocumento"
+      [disabled]="!tieneDocumento"
+      (click)="onAbrirClick($event)"
+      type="button"
+      [title]="tooltipTexto"
+    >
+      <span class="material-symbols-outlined">open_in_new</span>
+      <span>{{ tieneDocumento ? 'Abrir documento' : 'Documento no disponible' }}</span>
+    </button>
+  </div>
+</div>

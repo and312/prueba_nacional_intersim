@@ -1,0 +1,57 @@
+<div class="observaciones-recibidas-contenedor">
+  <div class="panel-cabecera">
+    <span class="material-symbols-outlined icono-panel">rate_review</span>
+    <h4>Observaciones del Área Solicitante</h4>
+  </div>
+  <p class="panel-descripcion">
+    El Área Solicitante ha registrado las siguientes observaciones generales sobre el profesiograma. Revíselas y márquelas como resueltas conforme aplique las correcciones necesarias:
+  </p>
+
+  <div class="lista-obs-recibidas">
+    @for (obs of observaciones; track obs.idObservacionPerfil) {
+      <div 
+        class="obs-recibida-tarjeta" 
+        [class.estado-resuelta]="obs.estado === 'RESUELTA'"
+        [class.estado-pendiente]="obs.estado === 'PENDIENTE'"
+      >
+        <div class="control-resolucion">
+          <input 
+            type="checkbox" 
+            [id]="'check-' + obs.idObservacionPerfil"
+            [checked]="obs.estado === 'RESUELTA'" 
+            [disabled]="!puedeResolver(obs)"
+            (change)="marcarComoResuelta(obs, $event)"
+            class="checkbox-resolucion"
+          />
+          <label [for]="'check-' + obs.idObservacionPerfil" class="screen-reader-only">Resolver observación</label>
+        </div>
+
+        <div class="obs-recibida-detalle">
+          <div class="obs-item-cabecera">
+            <span class="tipo-obs-badge">[{{ obs.tipoObservacion?.nombre || 'Observación' }}]</span>
+            <span class="badge-estado" [class]="obs.estado.toLowerCase()">
+              {{ obs.estado }}
+            </span>
+          </div>
+
+          <p class="comentario-obs">"{{ obs.comentario }}"</p>
+
+          <div class="meta-autor">
+            <span>Registrado por: <strong>{{ obs.nombreUsuarioSolicitante || 'Solicitante' }}</strong> el {{ obs.fechaRegistro | date:'dd/MM/yyyy HH:mm' }}</span>
+            @if (obs.estado === 'RESUELTA') {
+              <span class="meta-resolucion">
+                <span class="material-symbols-outlined icono-check">check_circle</span>
+                Resuelto por: <strong>{{ obs.nombreUsuarioRRHH || 'RRHH' }}</strong> el {{ obs.fechaResolucion | date:'dd/MM/yyyy HH:mm' }}
+              </span>
+            }
+          </div>
+        </div>
+      </div>
+    } @empty {
+      <div class="estado-vacio-obs">
+        <span class="material-symbols-outlined icono-vacio">forum</span>
+        <p>No se encontraron observaciones recibidas.</p>
+      </div>
+    }
+  </div>
+</div>

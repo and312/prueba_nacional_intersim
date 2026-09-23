@@ -1,0 +1,184 @@
+<div class="modal-catalogo-overlay" (click)="onCerrar()">
+  <div class="modal-catalogo-contenedor" (click)="$event.stopPropagation()">
+    <!-- Cabecera -->
+    <div class="modal-catalogo-cabecera">
+      <div class="modal-titulo-bloque">
+        <span class="material-symbols-outlined icono-cabecera notranslate" translate="no" aria-hidden="true">{{ config.icono }}</span>
+        <div class="modal-titulo-meta">
+          <h2>Mantenimiento de {{ config.titulo }}</h2>
+          <p>{{ config.descripcion }}</p>
+        </div>
+      </div>
+      <button class="boton-cerrar-modal" (click)="onCerrar()" aria-label="Cerrar modal">
+        <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">close</span>
+      </button>
+    </div>
+
+    <!-- Contenido -->
+    <div class="modal-catalogo-cuerpo">
+      
+      <!-- Zona del Formulario (Creación o Edición) -->
+      @if (mostrarFormularioCreacion()) {
+        <div class="zona-formulario-formulario">
+          <h3 class="formulario-titulo">Nuevo elemento</h3>
+          <app-formulario-catalogo
+            [nombresExistentes]="obtenerNombresExistentes()"
+            [esEdicion]="false"
+            [esCargo]="config.clave === 'CARGOS'"
+            [listadoAreasCargo]="listadoAreasCargo"
+            (guardar)="onGuardarCreacion($event)"
+            (cancelar)="onCancelarCreacion()"
+          ></app-formulario-catalogo>
+        </div>
+      }
+
+      <!-- Grilla de registros del catálogo -->
+      <div class="tabla-mantenimiento-contenedor">
+        <div class="tabla-cabecera-acciones">
+          <span class="registros-contador">
+            Registros: <strong>{{ registros.length }}</strong>
+            @if (terminoBusqueda()) {
+              <span class="filtro-activo">&nbsp;(mostrando {{ totalFiltrados }})</span>
+            }
+          </span>
+          @if (!mostrarFormularioCreacion() && modoEdicionId() === null) {
+            <button class="boton-agregar-registro" (click)="onIniciarCreacion()">
+              <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">add</span>
+              <span>Agregar elemento</span>
+            </button>
+          }
+        </div>
+
+        <!-- Buscador -->
+        <div class="buscador-catalogo">
+          <span class="material-symbols-outlined icono-busqueda notranslate" translate="no" aria-hidden="true">search</span>
+          <input
+            type="text"
+            class="input-busqueda"
+            [placeholder]="config.clave === 'CARGOS' ? 'Buscar por nombre o área...' : 'Buscar por nombre...'"
+            [ngModel]="terminoBusqueda()"
+            (ngModelChange)="terminoBusqueda.set($event)"
+            autocomplete="off"
+            id="buscador-catalogo-input"
+          />
+          @if (terminoBusqueda()) {
+            <button class="btn-limpiar-busqueda" (click)="limpiarBusqueda()" title="Limpiar búsqueda" type="button">
+              <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">close</span>
+            </button>
+          }
+        </div>
+
+        <div class="tabla-mantenimiento-wrapper">
+          <table class="tabla-mantenimiento">
+            <thead>
+              <tr>
+                <th class="col-id">ID</th>
+                <th class="col-nombre">Nombre</th>
+                @if (config.clave === 'CARGOS') {
+                  <th class="col-area">Área de Cargo</th>
+                }
+                <th class="col-estado">Estado</th>
+                <th class="col-acciones">Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of registrosFiltrados; track obtenerId(item)) {
+                @if (modoEdicionId() === obtenerId(item)) {
+                  <!-- Fila en modo edición -->
+                  <tr class="fila-edicion-activa">
+                    <td [attr.colspan]="config.clave === 'CARGOS' ? 5 : 4">
+                      <div class="edicion-formulario-fila">
+                        <h4 class="edicion-subtitulo">Editar elemento (ID: {{ obtenerId(item) }})</h4>
+                        <app-formulario-catalogo
+                          [nombreInicial]="item.nombre"
+                          [nombresExistentes]="obtenerNombresExistentes()"
+                          [esEdicion]="true"
+                          [esCargo]="config.clave === 'CARGOS'"
+                          [areaCargoIdInicial]="item.areaCargoId"
+                          [listadoAreasCargo]="listadoAreasCargo"
+                          (guardar)="onGuardarEdicion(obtenerId(item), $event)"
+                          (cancelar)="onCancelarEdicion()"
+                        ></app-formulario-catalogo>
+                      </div>
+                    </td>
+                  </tr>
+                } @else {
+                  <!-- Fila en modo lectura -->
+                  <tr>
+                    <td class="col-id font-mono">{{ obtenerId(item) }}</td>
+                    <td class="col-nombre font-semibold text-text-main">{{ item.nombre }}</td>
+                    @if (config.clave === 'CARGOS') {
+                      <td class="col-area">
+                        <span class="badge-area font-medium text-text-muted">
+                          {{ item.areaCargoNombre || obtenerNombreArea(item.areaCargoId) }}
+                        </span>
+                      </td>
+                    }
+                    <td class="col-estado">
+                      <div class="estado-toggle-grupo">
+                        <span class="badge-estado" [class.activo]="item.activo" [class.inactivo]="!item.activo">
+                          {{ item.activo ? 'Activo' : 'Inactivo' }}
+                        </span>
+                        
+                        <!-- Switch HTML -->
+                        <label class="switch-control-label">
+                          <input 
+                            type="checkbox" 
+                            [checked]="item.activo" 
+                            (change)="onToggleEstado(item, $event)"
+                            class="switch-checkbox-input"
+                          />
+                          <span class="switch-slider"></span>
+                        </label>
+                      </div>
+                    </td>
+                    <td class="col-acciones" style="display: flex; align-items: center; gap: 8px; justify-content: center;">
+                      <button 
+                        class="btn-tabla-editar" 
+                        (click)="onIniciarEdicion(item)"
+                        [disabled]="mostrarFormularioCreacion() || modoEdicionId() !== null"
+                        title="Editar nombre"
+                      >
+                        <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">edit</span>
+                      </button>
+                      <button 
+                        class="btn-tabla-eliminar"
+                        [class.en-uso]="!puedeEliminarRegistro(item)"
+                        (click)="onEliminar(item)"
+                        [disabled]="mostrarFormularioCreacion() || modoEdicionId() !== null"
+                        title="Eliminar"
+                      >
+                        <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">delete_outline</span>
+                      </button>
+                    </td>
+                  </tr>
+                }
+              } @empty {
+                <tr>
+                  <td [attr.colspan]="config.clave === 'CARGOS' ? 5 : 4" class="tabla-vacia">
+                    @if (terminoBusqueda()) {
+                      <span class="material-symbols-outlined icono-vacio notranslate" translate="no" aria-hidden="true">search_off</span>
+                      <p>No se encontraron resultados para "<strong>{{ terminoBusqueda() }}</strong>".</p>
+                      <button class="btn-limpiar-busqueda-vacia" (click)="limpiarBusqueda()" type="button">Limpiar búsqueda</button>
+                    } @else {
+                      <span class="material-symbols-outlined icono-vacio notranslate" translate="no" aria-hidden="true">inventory_2</span>
+                      <p>No existen registros configurados para este catálogo.</p>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Pie de acciones -->
+    <div class="modal-catalogo-pie">
+      <button class="boton-cerrar-final" (click)="onCerrar()">
+        Cerrar mantenimiento
+      </button>
+    </div>
+  </div>
+</div>

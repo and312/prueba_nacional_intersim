@@ -1,0 +1,54 @@
+@if (valoracion) {
+  <div class="valoracion-tarjeta">
+    <div class="valoracion-cabecera">
+      <span class="material-symbols-outlined icono-valoracion">analytics</span>
+      <h4>Valoración de ajuste y viabilidad del perfil</h4>
+    </div>
+
+    <!-- Contenedor flexible de métricas si existen -->
+    @if (valoracion.nivelCriticidad || valoracion.nivelCoherencia || valoracion.riesgoCobertura) {
+      <div class="valoracion-metricas-grid">
+        <!-- Nivel Criticidad -->
+        @if (valoracion.nivelCriticidad) {
+          <div class="metrica-item">
+            <span class="metrica-label">Nivel de criticidad</span>
+            <span class="metrica-valor badge-nivel" [ngClass]="obtenerClaseCriticidad(valoracion.nivelCriticidad)">
+              {{ valoracion.nivelCriticidad }}
+            </span>
+          </div>
+        }
+
+        <!-- Coherencia (Si no existe, no se muestra) -->
+        @if (valoracion.nivelCoherencia !== null && valoracion.nivelCoherencia !== undefined) {
+          <div class="metrica-item">
+            <span class="metrica-label">Nivel de coherencia</span>
+            <div class="coherencia-indicador">
+              <span class="coherencia-porcentaje">{{ valoracion.nivelCoherencia }}%</span>
+              <div class="coherencia-barra-bg">
+                <div class="coherencia-barra-fill" [style.width.%]="valoracion.nivelCoherencia"></div>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Riesgo Cobertura -->
+        @if (valoracion.riesgoCobertura) {
+          <div class="metrica-item">
+            <span class="metrica-label">Riesgo de cobertura</span>
+            <span class="metrica-valor badge-nivel" [ngClass]="obtenerClaseRiesgo(valoracion.riesgoCobertura)">
+              {{ valoracion.riesgoCobertura }}
+            </span>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Comentario del Agente IA -->
+    @if (valoracion.comentarioAgente) {
+      <div class="valoracion-comentario-seccion">
+        <span class="comentario-label">Sugerencia y análisis del Agente IA</span>
+        <p class="comentario-texto">"{{ valoracion.comentarioAgente }}"</p>
+      </div>
+    }
+  </div>
+}

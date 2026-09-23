@@ -1,0 +1,501 @@
+<div class="postulantes-container">
+  <!-- Cabecera de Página -->
+  <header class="page-header">
+    <div class="header-content">
+      <div>
+        <h1>Gestión de Postulantes</h1>
+        <p>Pool unificado de candidatos internos y externos para análisis de idoneidad y generación de estrategias</p>
+      </div>
+      <button mat-stroked-button color="primary" (click)="cargarDatos()" class="btn-refrescar" matTooltip="Refrescar candidatos y perfiles">
+        <mat-icon>refresh</mat-icon> Actualizar Pool
+      </button>
+    </div>
+  </header>
+
+  <!-- Barra Superior de Control: Selección de Estrategia Habilitada y Evaluación de Postulantes -->
+  <mat-card class="strategy-control-card mat-elevation-z1">
+    <div class="strategy-grid">
+      <!-- Selector de Perfil Aprobado por RRHH / Estrategia Habilitada -->
+      <div class="profile-selector-box">
+        <label class="control-label">
+          <mat-icon class="label-icon">verified</mat-icon>
+          Estrategia Habilitada (Perfil Aprobado RRHH):
+        </label>
+        <mat-form-field appearance="outline" class="full-width custom-select-field">
+          <mat-label>Seleccionar estrategia / perfil</mat-label>
+          <mat-select [(ngModel)]="perfilSeleccionadoId" panelClass="custom-select-panel" (openedChange)="onDropdownOpenedChange($event)">
+            <mat-select-trigger>
+              @if (perfilSeleccionado()) {
+                <div class="selected-trigger-box">
+                  <span class="trigger-code">[{{ perfilSeleccionado()?.codigoPerfil || perfilSeleccionado()?.codigo || ('PRF-' + (perfilSeleccionado()?.perfilId || perfilSeleccionado()?.id)) }}]</span>
+                  <span class="trigger-cargo">{{ perfilSeleccionado()?.cargo }}</span>
+                </div>
+              }
+            </mat-select-trigger>
+
+            <!-- Buscador Integrado en la cabecera del Combobox -->
+            <div class="dropdown-search-header" (keydown)="$event.stopPropagation()">
+              <mat-icon class="search-icon">search</mat-icon>
+              <input
+                type="text"
+                class="dropdown-search-input"
+                placeholder="Buscar por código, cargo o área..."
+                [ngModel]="busquedaPerfilText()"
+                (ngModelChange)="busquedaPerfilText.set($event)"
+              />
+              @if (busquedaPerfilText()) {
+                <button type="button" class="btn-clear-search-dropdown" (click)="busquedaPerfilText.set(''); $event.stopPropagation()" matTooltip="Limpiar filtro">
+                  <mat-icon>close</mat-icon>
+                </button>
+              }
+            </div>
+
+            <mat-option [value]="null">
+              <div class="profile-option-card option-empty">
+                <span>-- Ninguno seleccionado --</span>
+              </div>
+            </mat-option>
+
+            @for (perfil of perfilesAprobadosFiltrados(); track (perfil.perfilId || perfil.id)) {
+              <mat-option [value]="(perfil.perfilId || perfil.id)">
+                <div class="profile-option-card">
+                  <div class="option-header-row">
+                    <span class="option-code">[{{ perfil.codigoPerfil || perfil.codigo || ('PRF-' + (perfil.perfilId || perfil.id)) }}]</span>
+                    <span class="option-area">{{ perfil.areaSolicitante || perfil.areaNombre || 'Área Solicitante' }}</span>
+                  </div>
+                  <div class="option-cargo-title">{{ perfil.cargo }}</div>
+                </div>
+              </mat-option>
+            }
+
+            @if (perfilesAprobadosFiltrados().length === 0 && busquedaPerfilText()) {
+              <div class="dropdown-empty-search">
+                <mat-icon>search_off</mat-icon>
+                <span>No se encontraron estrategias / perfiles coincidentes</span>
+              </div>
+            }
+          </mat-select>
+          @if (perfilSeleccionadoId()) {
+            <mat-hint class="hint-ok">
+              <mat-icon class="hint-icon">check_circle</mat-icon> Estrategia habilitada vinculada correctamente
+            </mat-hint>
+          } @else {
+            <mat-hint>Selecciona una estrategia / perfil aprobado por RRHH para iniciar la evaluación</mat-hint>
+          }
+        </mat-form-field>
+      </div>
+
+      <!-- Resumen Dinámico de Selección -->
+      <div class="selection-summary-box">
+        <div class="summary-header">
+          <span class="summary-title">Resumen de Selección</span>
+          @if (totalSeleccionados() > 0) {
+            <button type="button" class="btn-limpiar" (click)="limpiarSeleccion()" matTooltip="Limpiar todos los postulantes seleccionados">
+              <mat-icon>restart_alt</mat-icon>
+              <span>Limpiar selección</span>
+            </button>
+          }
+        </div>
+        <div class="summary-body">
+          <div class="summary-metric">
+            <span class="metric-label">Perfil / Estrategia:</span>
+            <span
+              class="metric-value profile-name"
+              [class.empty]="!perfilSeleccionado()"
+              [matTooltip]="perfilSeleccionado()?.cargo || 'Pendiente de selección'"
+            >
+              {{ perfilSeleccionado()?.cargo || 'Pendiente de selección' }}
+            </span>
+          </div>
+          <div class="summary-badges-row">
+            <div class="badge-item total" [class.active]="totalSeleccionados() > 0">
+              <span class="badge-num">{{ totalSeleccionados() }}</span>
+              <span class="badge-lbl">Total Selección</span>
+            </div>
+            <div class="badge-item internos">
+              <span class="badge-num">{{ conteoInternosSeleccionados() }}</span>
+              <span class="badge-lbl">Internos</span>
+            </div>
+            <div class="badge-item externos">
+              <span class="badge-num">{{ conteoExternosSeleccionados() }}</span>
+              <span class="badge-lbl">Externos</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Botón Principal: Evaluar Postulantes -->
+      <div class="strategy-action-box">
+        <button
+          mat-raised-button
+          color="primary"
+          class="btn-generar-estrategia"
+          [disabled]="!puedeGenerarEstrategia()"
+          (click)="onGenerarEstrategia()"
+        >
+          <mat-icon>assignment_turned_in</mat-icon>
+          <span>Evaluar postulantes</span>
+        </button>
+        @if (!perfilSeleccionadoId()) {
+          <span class="validation-note">* Requiere seleccionar una estrategia</span>
+        } @else if (totalSeleccionados() === 0) {
+          <span class="validation-note">* Marca al menos 1 postulante</span>
+        } @else {
+          <span class="validation-note ready">
+            <mat-icon>check</mat-icon> Listo para evaluar candidatos
+          </span>
+        }
+      </div>
+    </div>
+  </mat-card>
+
+  <!-- Notificación si se inició la evaluación -->
+  @if (estrategiaGeneradaPayload()) {
+    <div class="alert-success-box mat-elevation-z1">
+      <div class="alert-icon-col">
+        <mat-icon>task_alt</mat-icon>
+      </div>
+      <div class="alert-content-col">
+        <strong>¡Evaluación de postulantes iniciada!</strong>
+        <p>
+          Se han enviado <strong>{{ estrategiaGeneradaPayload().totalPostulantes }} candidatos</strong>
+          ({{ estrategiaGeneradaPayload().conteoInternos }} internos y {{ estrategiaGeneradaPayload().conteoExternos }} externos)
+          para el proceso de evaluación de idoneidad con la estrategia <strong>"{{ estrategiaGeneradaPayload().cargo }}"</strong>.
+        </p>
+      </div>
+      <button mat-icon-button (click)="estrategiaGeneradaPayload.set(null)" matTooltip="Cerrar aviso">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  }
+
+  <!-- Modal Popup: Credencial / Ficha Detallada del Postulante -->
+  @if (selectedPostulante()) {
+    <div class="candidate-modal-backdrop" (click)="cerrarExpediente()">
+      <div class="candidate-credential-card mat-elevation-z8" (click)="$event.stopPropagation()">
+        <!-- Header de la Credencial -->
+        <div class="credential-header">
+          <div class="company-badge">
+            <mat-icon class="company-icon">person_search</mat-icon>
+            <span>Ficha del Postulante</span>
+          </div>
+          <button type="button" class="btn-close-modal" (click)="cerrarExpediente()" matTooltip="Cerrar ficha">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <!-- Hero Avatar & Nombre -->
+        <div class="credential-hero">
+          <div class="hero-avatar">
+            {{ selectedPostulante()!.nombresApellidos.substring(0, 2).toUpperCase() }}
+          </div>
+          <div class="hero-info">
+            <h2 class="hero-name">{{ selectedPostulante()!.nombresApellidos }}</h2>
+            <div class="hero-tags">
+              <span
+                class="origin-badge"
+                [class.badge-interno]="selectedPostulante()!.origen === 'INTERNO'"
+                [class.badge-externo]="selectedPostulante()!.origen === 'EXTERNO'"
+              >
+                <span class="origin-dot"></span>
+                {{ selectedPostulante()!.origen === 'INTERNO' ? 'Postulante Interno' : 'Postulante Externo' }}
+              </span>
+              @if (selectedPostulante()!.seniority && selectedPostulante()!.seniority !== 'N/A') {
+                <span class="seniority-tag">{{ selectedPostulante()!.seniority }}</span>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Cuerpo de Información Detallada -->
+        <div class="credential-body">
+          <div class="details-grid">
+            <div class="detail-item">
+              <div class="detail-icon-box">
+                <mat-icon>business_center</mat-icon>
+              </div>
+              <div class="detail-content">
+                <span class="detail-label">Cargo / Posición</span>
+                <span class="detail-value">{{ selectedPostulante()!.cargo || 'No especificado' }}</span>
+              </div>
+            </div>
+
+            <div class="detail-item">
+              <div class="detail-icon-box">
+                <mat-icon>location_on</mat-icon>
+              </div>
+              <div class="detail-content">
+                <span class="detail-label">Ciudad / Regional</span>
+                <span class="detail-value">{{ selectedPostulante()!.ciudadResidencia || 'No especificada' }}</span>
+              </div>
+            </div>
+
+            <div class="detail-item">
+              <div class="detail-icon-box">
+                <mat-icon>alternate_email</mat-icon>
+              </div>
+              <div class="detail-content">
+                <span class="detail-label">Correo Electrónico</span>
+                <span class="detail-value">{{ selectedPostulante()!.correoElectronico || 'No registrado' }}</span>
+              </div>
+            </div>
+
+            <div class="detail-item">
+              <div class="detail-icon-box">
+                <mat-icon>smartphone</mat-icon>
+              </div>
+              <div class="detail-content">
+                <span class="detail-label">Teléfono / Celular</span>
+                <span class="detail-value">{{ selectedPostulante()!.numeroCelular || 'No registrado' }}</span>
+              </div>
+            </div>
+
+            @if (selectedPostulante()!.pretensionSalarialBs) {
+              <div class="detail-item full-width-item">
+                <div class="detail-icon-box salary">
+                  <mat-icon>paid</mat-icon>
+                </div>
+                <div class="detail-content">
+                  <span class="detail-label">Pretensión Salarial</span>
+                  <span class="detail-value salary-val">Bs. {{ selectedPostulante()!.pretensionSalarialBs | number }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Footer / Acciones -->
+        <div class="credential-footer">
+          <button mat-raised-button color="primary" class="btn-cerrar-modal" (click)="cerrarExpediente()">
+            <mat-icon>check</mat-icon> Entendido / Cerrar
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Tarjeta Principal del Pool de Postulantes -->
+  <mat-card class="list-card mat-elevation-z1">
+    <app-loader [isLoading]="componentLoading.isLoading('postulantes')()" message="Cargando pool de postulantes..."></app-loader>
+
+    <mat-card-content>
+      <!-- Barra de Filtros y Buscador -->
+      <div class="table-toolbar">
+        <!-- Pestañas de Origen -->
+        <div class="filter-segments">
+          <button
+            type="button"
+            class="segment-btn"
+            [class.active]="filtroOrigen() === 'TODOS'"
+            (click)="setFiltroOrigen('TODOS')"
+          >
+            Todos <span class="count-pill">{{ totalPostulantes() }}</span>
+          </button>
+          <button
+            type="button"
+            class="segment-btn"
+            [class.active]="filtroOrigen() === 'INTERNO'"
+            (click)="setFiltroOrigen('INTERNO')"
+          >
+            <span class="dot-indicator dot-interno"></span> Internos <span class="count-pill">{{ totalInternos() }}</span>
+          </button>
+          <button
+            type="button"
+            class="segment-btn"
+            [class.active]="filtroOrigen() === 'EXTERNO'"
+            (click)="setFiltroOrigen('EXTERNO')"
+          >
+            <span class="dot-indicator dot-externo"></span> Externos <span class="count-pill">{{ totalExternos() }}</span>
+          </button>
+        </div>
+
+        <!-- Buscador en tiempo real -->
+        <div class="search-box">
+          <mat-icon class="search-icon">search</mat-icon>
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Buscar por nombre, cargo o ciudad..."
+            [ngModel]="terminoBusqueda()"
+            (ngModelChange)="terminoBusqueda.set($event); pageIndex.set(0)"
+          />
+          @if (terminoBusqueda()) {
+            <button mat-icon-button class="btn-clear-search" (click)="limpiarBusqueda()" matTooltip="Limpiar búsqueda">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+        </div>
+      </div>
+
+      <!-- Contador de resultados y estado de selección -->
+      <div class="selection-status-bar">
+        <span class="results-count">
+          Mostrando <strong>{{ postulantesFiltrados().length }}</strong> candidatos
+          @if (terminoBusqueda() || filtroOrigen() !== 'TODOS') {
+            (filtrados de {{ totalPostulantes() }})
+          }
+        </span>
+
+        @if (totalSeleccionados() > 0) {
+          <div class="selected-indicator">
+            <mat-icon class="check-badge-icon">check_circle</mat-icon>
+            <span><strong>{{ totalSeleccionados() }}</strong> seleccionados</span>
+            <span class="sep">•</span>
+            <span>{{ conteoInternosSeleccionados() }} int.</span>
+            <span class="sep">/</span>
+            <span>{{ conteoExternosSeleccionados() }} ext.</span>
+          </div>
+        }
+      </div>
+
+      <!-- Tabla de Postulantes con Scrollbar Horizontal y Contenedor Responsive -->
+      <div class="table-responsive">
+        <table mat-table [dataSource]="postulantesPaginados()" class="full-width-table">
+          <!-- Columna Checkbox Selección -->
+          <ng-container matColumnDef="select">
+            <th mat-header-cell *matHeaderCellDef class="th-checkbox">
+              <mat-checkbox
+                [checked]="isAllSelected()"
+                [indeterminate]="isSomeSelected()"
+                (change)="masterToggle()"
+                color="primary"
+                matTooltip="Seleccionar / Deseleccionar de la página actual"
+              >
+              </mat-checkbox>
+            </th>
+            <td mat-cell *matCellDef="let element" class="td-checkbox">
+              <mat-checkbox
+                [checked]="isSelected(element)"
+                (change)="toggleSelection(element)"
+                color="primary"
+              >
+              </mat-checkbox>
+            </td>
+          </ng-container>
+
+          <!-- Columna Nombre -->
+          <ng-container matColumnDef="nombres">
+            <th mat-header-cell *matHeaderCellDef> Nombre del Postulante </th>
+            <td mat-cell *matCellDef="let element">
+              <div class="candidate-name-cell">
+                <span class="name-text">{{ element.nombresApellidos }}</span>
+                @if (element.correoElectronico) {
+                  <span class="email-subtext">{{ element.correoElectronico }}</span>
+                }
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Columna Cargo -->
+          <ng-container matColumnDef="cargo">
+            <th mat-header-cell *matHeaderCellDef> Cargo / Posición </th>
+            <td mat-cell *matCellDef="let element">
+              <span class="cargo-text">{{ element.cargo }}</span>
+            </td>
+          </ng-container>
+
+          <!-- Columna Origen (Badge Interno / Externo) -->
+          <ng-container matColumnDef="origen">
+            <th mat-header-cell *matHeaderCellDef> Origen </th>
+            <td mat-cell *matCellDef="let element">
+              <span
+                class="origin-badge"
+                [class.badge-interno]="element.origen === 'INTERNO'"
+                [class.badge-externo]="element.origen === 'EXTERNO'"
+              >
+                <span class="origin-dot"></span>
+                {{ element.origen === 'INTERNO' ? 'Interno' : 'Externo' }}
+              </span>
+            </td>
+          </ng-container>
+
+          <!-- Columna Regional -->
+          <ng-container matColumnDef="ciudad">
+            <th mat-header-cell *matHeaderCellDef> Regional / Ciudad </th>
+            <td mat-cell *matCellDef="let element">
+              <div class="city-cell">
+                <mat-icon class="city-icon">location_on</mat-icon>
+                <span>{{ element.ciudadResidencia }}</span>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Columna Pretensión Salarial -->
+          <ng-container matColumnDef="salario">
+            <th mat-header-cell *matHeaderCellDef> Pretensión Salarial </th>
+            <td mat-cell *matCellDef="let element">
+              @if (element.pretensionSalarialBs) {
+                <span class="salary-badge">Bs. {{ element.pretensionSalarialBs | number }}</span>
+              } @else {
+                <span class="salary-empty">Por convenir</span>
+              }
+            </td>
+          </ng-container>
+
+          <!-- Columna Fecha de Registro (Nuevos Primero) -->
+          <ng-container matColumnDef="fechaRegistro">
+            <th mat-header-cell *matHeaderCellDef> Fecha Registro </th>
+            <td mat-cell *matCellDef="let element">
+              <div class="date-cell">
+                <mat-icon class="date-icon">schedule</mat-icon>
+                <div class="date-text-group">
+                  <span class="date-main">{{ element.fechaRegistro | date:'dd/MM/yyyy' }}</span>
+                  <span class="time-sub">{{ element.fechaRegistro | date:'HH:mm' }} hrs</span>
+                </div>
+              </div>
+            </td>
+          </ng-container>
+
+          <!-- Columna Acciones -->
+          <ng-container matColumnDef="acciones">
+            <th mat-header-cell *matHeaderCellDef class="th-acciones"> Acciones </th>
+            <td mat-cell *matCellDef="let element" class="td-acciones">
+              <button
+                mat-icon-button
+                color="primary"
+                (click)="viewExpediente(element)"
+                matTooltip="Ver Expediente / Detalle del Candidato"
+              >
+                <mat-icon>visibility</mat-icon>
+              </button>
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr
+            mat-row
+            *matRowDef="let row; columns: displayedColumns;"
+            [class.row-selected]="isSelected(row)"
+          ></tr>
+        </table>
+      </div>
+
+      <!-- Paginación con Paginador Oficial de Material -->
+      <mat-paginator
+        [length]="postulantesFiltrados().length"
+        [pageSize]="pageSize()"
+        [pageSizeOptions]="[10, 25, 50, 100]"
+        [pageIndex]="pageIndex()"
+        (page)="onPageChange($event)"
+        showFirstLastButtons
+        aria-label="Seleccionar página de postulantes"
+        class="custom-paginator"
+      >
+      </mat-paginator>
+
+      <!-- Estado Vacío -->
+      @if (postulantesFiltrados().length === 0 && !isLoadingPool()) {
+        <div class="empty-state-box">
+          <mat-icon class="empty-icon">person_search</mat-icon>
+          <h3>No se encontraron postulantes</h3>
+          <p>Intenta ajustar el término de búsqueda o cambia la pestaña de origen.</p>
+          @if (terminoBusqueda() || filtroOrigen() !== 'TODOS') {
+            <button mat-stroked-button color="primary" (click)="limpiarBusqueda(); setFiltroOrigen('TODOS')">
+              Restablecer Filtros
+            </button>
+          }
+        </div>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

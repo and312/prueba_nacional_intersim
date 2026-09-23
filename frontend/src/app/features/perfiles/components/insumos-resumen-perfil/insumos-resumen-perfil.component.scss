@@ -1,0 +1,119 @@
+.insumos-lateral-card {
+  background: #ffffff;
+  border: 1px solid var(--border-subtle, #d9e2ec);
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.titulo-insumos {
+  margin: 0 0 16px;
+  color: var(--primary-color, #004370);
+  font-size: 15px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.lista-insumos {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.insumo-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border-subtle, #e2e8f0);
+
+  &:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+}
+
+.insumo-icono-contenedor {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: rgba(0, 67, 112, 0.06);
+  color: var(--primary-color, #004370);
+  flex-shrink: 0;
+
+  .material-symbols-outlined {
+    font-size: 16px;
+  }
+}
+
+.insumo-detalles {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.insumo-nombre {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main, #1f2933);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.insumo-metadatos {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-secondary, #5c6b73);
+  margin-top: 2px;
+  flex-wrap: wrap;
+}
+
+.insumo-tipo {
+  font-weight: 600;
+}
+
+.separador-meta {
+  color: var(--border-subtle, #cbd5e1);
+}
+
+.insumo-version {
+  font-weight: 700;
+  background: #f1f5f9;
+  padding: 0 4px;
+  border-radius: 3px;
+  color: #475569;
+}
+
+.insumo-fecha {
+  font-style: italic;
+}
+
+.insumos-vacios {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 10px;
+  text-align: center;
+  color: var(--text-secondary, #5c6b73);
+
+  .icono-vacio {
+    font-size: 28px;
+    color: var(--border-subtle, #cbd5e1);
+    margin-bottom: 8px;
+  }
+
+  p {
+    margin: 0;
+    font-size: 12.5px;
+    font-weight: 500;
+  }
+}

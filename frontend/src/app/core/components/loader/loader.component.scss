@@ -1,0 +1,52 @@
+.local-loader-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(255, 255, 255, 0.88);
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(2px);
+  animation: fadeIn 200ms ease-out;
+
+  .local-loader-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-align: center;
+    padding: 24px;
+  }
+
+  .local-loader-logo {
+    max-width: 120px;
+    height: auto;
+    margin-bottom: 4px;
+    opacity: 0.85;
+  }
+
+  .local-loader-spinner-wrapper {
+    margin: 4px 0;
+  }
+
+  .local-loader-text {
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 550;
+    color: #004370; // Azul institucional
+    margin: 0;
+    letter-spacing: 0.3px;
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}

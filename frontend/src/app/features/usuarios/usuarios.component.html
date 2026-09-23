@@ -1,0 +1,315 @@
+<!-- ======================================================== -->
+<!-- VISTA: LISTADO DE USUARIOS                               -->
+<!-- ======================================================== -->
+<div *ngIf="viewMode() === 'list'" class="admin-page">
+
+  <!-- Header -->
+  <div class="admin-header">
+    <div>
+      <h1 class="admin-title">Gestión de Usuarios</h1>
+      <p class="admin-subtitle">Administración de colaboradores, roles, áreas y accesos del sistema.</p>
+    </div>
+    <button class="btn-primary" (click)="iniciarCrear()">
+      <span class="material-symbols-outlined">person_add</span>
+      Registrar Usuario
+    </button>
+  </div>
+
+  <!-- Filtros -->
+  <div class="form-card" style="padding: 16px 20px;">
+    <div style="display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:12px;">
+      <div style="position:relative; flex:1; min-width:180px; max-width:300px;">
+        <span class="material-symbols-outlined"
+          style="position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:18px;color:var(--text-secondary);pointer-events:none;">search</span>
+        <input type="text"
+          style="padding:8px 12px 8px 34px;border:1px solid var(--border-subtle);border-radius:8px;font-size:13px;background:#f7f9fc;outline:none;width:100%;box-sizing:border-box;"
+          placeholder="Buscar por nombre o correo..."
+          [value]="searchQuery()"
+          (input)="onSearch($event)" />
+      </div>
+      <button class="btn-secondary" style="font-size:12px;padding:7px 14px;" (click)="limpiarFiltros()">
+        Limpiar filtros
+      </button>
+    </div>
+    <div class="form-grid">
+      <div class="form-group">
+        <label>Área</label>
+        <select [(ngModel)]="filterArea" (change)="aplicarFiltros()">
+          <option [ngValue]="null">Todas las áreas</option>
+          <option *ngFor="let area of areas()" [ngValue]="area.areaId">{{ area.nombre }}</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Rol</label>
+        <select [(ngModel)]="filterRol" (change)="aplicarFiltros()">
+          <option [ngValue]="null">Todos los roles</option>
+          <option *ngFor="let rol of rolesList()" [ngValue]="rol.rolId">{{ rol.nombre }}</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Estado</label>
+        <select [(ngModel)]="filterEstado" (change)="aplicarFiltros()">
+          <option value="">Todos</option>
+          <option value="Activo">Activo</option>
+          <option value="Inactivo">Inactivo</option>
+          <option value="Bloqueado">Bloqueado</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Cargo</label>
+        <input type="text" placeholder="Ej: Jefe de Finanzas" [(ngModel)]="filterCargo" (change)="aplicarFiltros()" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Error de permisos -->
+  <div *ngIf="errorMessage()" class="error-banner">
+    <span class="material-symbols-outlined error-icon">lock</span>
+    <div class="error-content">
+      <p class="error-title">Acceso restringido</p>
+      <p class="error-msg">{{ errorMessage() }}</p>
+      <button class="btn-login" (click)="irAlLogin()">
+        <span class="material-symbols-outlined">login</span>
+        Cambiar cuenta / Iniciar sesión
+      </button>
+    </div>
+  </div>
+
+  <!-- Tabla -->
+  <div *ngIf="!errorMessage()" class="table-card">
+    <app-loader [isLoading]="componentLoading.isLoading('usuarios')()" message="Cargando usuarios..."></app-loader>
+    <div class="table-wrap">
+      <table class="w-full border-collapse">
+        <thead>
+          <tr>
+            <th class="mat-header-cell">Foto</th>
+            <th class="mat-header-cell">Nombre Completo</th>
+            <th class="mat-header-cell">Correo</th>
+            <th class="mat-header-cell">Área</th>
+            <th class="mat-header-cell">Cargo</th>
+            <th class="mat-header-cell">Rol</th>
+            <th class="mat-header-cell">Estado</th>
+            <th class="mat-header-cell">Registro</th>
+            <th class="mat-header-cell" style="text-align: center;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="mat-row" *ngFor="let u of usuarios()">
+            <td class="mat-cell avatar-cell">
+              <img class="avatar"
+                [src]="u.fotografiaUrl || ''"
+                (error)="onImgError($event)"
+                [alt]="u.nombres" />
+            </td>
+            <td class="mat-cell">
+              <span class="user-name">{{ u.nombres }} {{ u.apellidos }}</span>
+            </td>
+            <td class="mat-cell user-email">{{ u.correo }}</td>
+            <td class="mat-cell cell-secondary">{{ u.areaNombre || '—' }}</td>
+            <td class="mat-cell cell-secondary">{{ u.cargo || '—' }}</td>
+            <td class="mat-cell">
+              <span class="chip chip-rol">{{ u.roles?.[0] || '—' }}</span>
+            </td>
+            <td class="mat-cell">
+              <span class="chip"
+                [class.chip-activo]="u.estado === 'Activo'"
+                [class.chip-inactivo]="u.estado === 'Inactivo'"
+                [class.chip-bloqueado]="u.estado === 'Bloqueado'">
+                {{ u.estado }}
+              </span>
+            </td>
+            <td class="mat-cell cell-secondary">{{ u.fechaCreacion | date:'dd/MM/yyyy' }}</td>
+            <td class="mat-cell">
+              <div class="actions-cell">
+                <button class="action-btn" title="Ver detalle" (click)="verDetalle(u)">
+                  <span class="material-symbols-outlined">visibility</span>
+                </button>
+                <button class="action-btn" title="Editar" (click)="iniciarEditar(u)">
+                  <span class="material-symbols-outlined">edit</span>
+                </button>
+                <button class="action-btn" title="Restablecer contraseña" (click)="resetPassword(u)">
+                  <span class="material-symbols-outlined">key</span>
+                </button>
+                <button *ngIf="u.estado !== 'Bloqueado'" class="action-btn danger" title="Bloquear"
+                  (click)="cambiarEstado(u, 'Bloqueado')">
+                  <span class="material-symbols-outlined">lock</span>
+                </button>
+                <button *ngIf="u.estado === 'Bloqueado'" class="action-btn" title="Desbloquear"
+                  (click)="cambiarEstado(u, 'Activo')">
+                  <span class="material-symbols-outlined">lock_open</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Empty State -->
+          <tr class="mat-row" *ngIf="usuarios().length === 0">
+            <td class="mat-cell" colspan="9">
+              <div class="empty-state">
+                <span class="material-symbols-outlined">manage_accounts</span>
+                <p>No se encontraron usuarios con los filtros aplicados.</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <mat-paginator
+      [length]="totalCount()"
+      [pageSize]="pageSize()"
+      [pageIndex]="pageIndex()"
+      [pageSizeOptions]="[5, 10, 20, 50]"
+      (page)="onPageChange($event)">
+    </mat-paginator>
+  </div>
+
+</div><!-- /list -->
+
+
+<!-- ======================================================== -->
+<!-- VISTA: FORMULARIO (Crear / Editar)                        -->
+<!-- ======================================================== -->
+<div *ngIf="viewMode() === 'form'" class="admin-page">
+  <div class="form-card">
+    <h2 class="form-card-title">
+      {{ isEditMode() ? 'Editar Colaborador' : 'Registrar Nuevo Colaborador' }}
+    </h2>
+
+    <form [formGroup]="usuarioForm" (ngSubmit)="guardar()">
+
+      <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-secondary);margin:0 0 14px;">Datos Personales</p>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Nombres <span class="required">*</span></label>
+          <input formControlName="nombres" type="text" placeholder="Ej: Juan Carlos" />
+          <span class="field-error" *ngIf="usuarioForm.get('nombres')?.invalid && usuarioForm.get('nombres')?.touched">Campo requerido.</span>
+        </div>
+        <div class="form-group">
+          <label>Apellidos <span class="required">*</span></label>
+          <input formControlName="apellidos" type="text" placeholder="Ej: Pérez López" />
+          <span class="field-error" *ngIf="usuarioForm.get('apellidos')?.invalid && usuarioForm.get('apellidos')?.touched">Campo requerido.</span>
+        </div>
+        <div class="form-group">
+          <label>Correo electrónico <span class="required">*</span></label>
+          <input formControlName="correo" type="email" placeholder="usuario@empresa.com" />
+          <span class="field-error" *ngIf="usuarioForm.get('correo')?.invalid && usuarioForm.get('correo')?.touched">Correo inválido.</span>
+        </div>
+        <div class="form-group">
+          <label>Tipo de Autenticación <span class="required">*</span></label>
+          <select formControlName="tipoAutenticacion">
+            <option value="Local">Local (contraseña)</option>
+            <option value="ActiveDirectory">Active Directory</option>
+          </select>
+        </div>
+        <div class="form-group" *ngIf="!isEditMode()">
+          <label>Contraseña <span class="required">*</span></label>
+          <input formControlName="clave" type="password" placeholder="Mínimo 4 caracteres" />
+          <span class="field-error" *ngIf="usuarioForm.get('clave')?.invalid && usuarioForm.get('clave')?.touched">Contraseña requerida.</span>
+        </div>
+        <div class="form-group">
+          <label>Estado <span class="required">*</span></label>
+          <select formControlName="estado">
+            <option value="Activo">Activo</option>
+            <option value="Inactivo">Inactivo</option>
+            <option value="Bloqueado">Bloqueado</option>
+          </select>
+        </div>
+      </div>
+
+      <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-secondary);margin:18px 0 14px;padding-top:14px;border-top:1px solid var(--border-subtle);">Información Laboral</p>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Área <span class="required">*</span></label>
+          <select formControlName="areaId">
+            <option [ngValue]="null">-- Seleccione un área --</option>
+            <option *ngFor="let area of areas()" [ngValue]="area.areaId">{{ area.nombre }}</option>
+          </select>
+          <span class="field-error" *ngIf="usuarioForm.get('areaId')?.invalid && usuarioForm.get('areaId')?.touched">Seleccione un área.</span>
+        </div>
+        <div class="form-group">
+          <label>Cargo <span class="required">*</span></label>
+          <input formControlName="cargo" type="text" placeholder="Ej: Analista de Reclutamiento" />
+          <span class="field-error" *ngIf="usuarioForm.get('cargo')?.invalid && usuarioForm.get('cargo')?.touched">El cargo es requerido.</span>
+        </div>
+        <div class="form-group">
+          <label>Gerencia</label>
+          <input formControlName="gerencia" type="text" placeholder="Ej: Gerencia de Operaciones" />
+        </div>
+        <div class="form-group">
+          <label>Teléfono</label>
+          <input formControlName="telefono" type="text" placeholder="Ej: 75123456" />
+        </div>
+      </div>
+
+      <p style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-secondary);margin:18px 0 14px;padding-top:14px;border-top:1px solid var(--border-subtle);">Roles del Sistema <span class="required">*</span></p>
+      <div class="roles-grid">
+        <label *ngFor="let rol of rolesList()"
+          class="rol-chip"
+          [class.selected]="isRolSelected(rol.rolId)"
+          (click)="toggleRol(rol.rolId)">
+          <span class="material-symbols-outlined">{{ isRolSelected(rol.rolId) ? 'check_circle' : 'radio_button_unchecked' }}</span>
+          {{ rol.nombre }}
+        </label>
+      </div>
+      <span class="field-error" *ngIf="usuarioForm.get('rolIds')?.invalid && usuarioForm.get('rolIds')?.touched">Seleccione al menos un rol.</span>
+
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="cancelar()">Cancelar</button>
+        <button type="submit" class="btn-primary" [disabled]="usuarioForm.invalid || isLoading()">
+          {{ isEditMode() ? 'Guardar Cambios' : 'Registrar Usuario' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div><!-- /form -->
+
+
+<!-- ======================================================== -->
+<!-- VISTA: DETALLE                                            -->
+<!-- ======================================================== -->
+<div *ngIf="viewMode() === 'detail'" class="admin-page">
+  <div *ngIf="isLoading()" class="loading-box">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <div *ngIf="!isLoading() && selectedUsuario()" class="detail-card">
+    <div class="detail-header">
+      <img class="detail-avatar"
+        [src]="selectedUsuario()?.fotografiaUrl || ''"
+        (error)="onImgError($event)"
+        alt="Avatar" />
+      <div class="detail-info">
+        <h2>{{ selectedUsuario()?.nombres }} {{ selectedUsuario()?.apellidos }}</h2>
+        <p>{{ selectedUsuario()?.correo }} · {{ selectedUsuario()?.roles?.join(', ') }}</p>
+      </div>
+    </div>
+
+    <div class="detail-body">
+      <div class="detail-field"><label>Área</label><p>{{ selectedUsuario()?.areaNombre || '—' }}</p></div>
+      <div class="detail-field"><label>Cargo</label><p>{{ selectedUsuario()?.cargo || '—' }}</p></div>
+      <div class="detail-field"><label>Gerencia</label><p>{{ selectedUsuario()?.gerencia || '—' }}</p></div>
+      <div class="detail-field"><label>Teléfono</label><p>{{ selectedUsuario()?.telefono || '—' }}</p></div>
+      <div class="detail-field"><label>Tipo Auth</label><p>{{ selectedUsuario()?.tipoAutenticacion }}</p></div>
+      <div class="detail-field">
+        <label>Estado</label>
+        <p>
+          <span class="chip"
+            [class.chip-activo]="selectedUsuario()?.estado === 'Activo'"
+            [class.chip-inactivo]="selectedUsuario()?.estado === 'Inactivo'"
+            [class.chip-bloqueado]="selectedUsuario()?.estado === 'Bloqueado'">
+            {{ selectedUsuario()?.estado }}
+          </span>
+        </p>
+      </div>
+      <div class="detail-field"><label>Registro</label><p>{{ selectedUsuario()?.fechaCreacion | date:'dd/MM/yyyy HH:mm' }}</p></div>
+      <div class="detail-field"><label>Observaciones</label><p>{{ selectedUsuario()?.observaciones || '—' }}</p></div>
+    </div>
+
+    <div class="detail-footer">
+      <button class="btn-secondary" (click)="cancelar()">← Volver</button>
+      <button class="btn-primary" (click)="iniciarEditar(selectedUsuario())">Editar</button>
+    </div>
+  </div>
+</div><!-- /detail -->
+

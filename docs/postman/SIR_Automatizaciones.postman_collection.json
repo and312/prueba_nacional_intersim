@@ -1,0 +1,811 @@
+{
+    "info": {
+        "_postman_id": "84323145-c49b-426c-829d-47817b189283",
+        "name": "SIR - Automatizaciones (n8n & WhatsApp)",
+        "description": "Colección de endpoints para integraciones internas de IA, n8n y WhatsApp correspondientes al Sistema Inteligente de Reclutamiento (SIR) de Nacional Seguros. Incluye la estructura de perfiles y solicitudes actualizadas.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "1. Catálogos y Campos Dinámicos",
+            "item": [
+                {
+                    "name": "Obtener Campos y Catálogos Requeridos",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{X_API_KEY}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/internal/vacancy-requests/fields",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "internal",
+                                "vacancy-requests",
+                                "fields"
+                            ]
+                        },
+                        "description": "Retorna los campos obligatorios, recomendados e internos de las solicitudes de vacante, junto con las opciones activas cargadas desde base de datos (Regionales, Tipos de Solicitud, Modalidades, etc.)."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "2. Gestión de Perfiles (Área / WhatsApp / n8n)",
+            "item": [
+                {
+                    "name": "Consultar Perfiles del Solicitante",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{X_API_KEY}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/internal/vacancy-requests/perfiles?telefono=+59175107615",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "internal",
+                                "vacancy-requests",
+                                "perfiles"
+                            ],
+                            "query": [
+                                {
+                                    "key": "solicitanteId",
+                                    "value": "3",
+                                    "disabled": true
+                                },
+                                {
+                                    "key": "telefono",
+                                    "value": "+59175107615"
+                                }
+                            ]
+                        },
+                        "description": "Obtiene la lista de perfiles de cargo activos pertenecientes al usuario solicitante, resolviéndolo mediante su ID o número de teléfono registrado en WhatsApp."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Obtener Detalle Completo de Perfil",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{X_API_KEY}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/internal/perfiles/1/detalle-completo?telefono=+59175107615",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "internal",
+                                "perfiles",
+                                "1",
+                                "detalle-completo"
+                            ],
+                            "query": [
+                                {
+                                    "key": "telefono",
+                                    "value": "+59175107615"
+                                }
+                            ]
+                        },
+                        "description": "Retorna el detalle estructurado de la solicitud asociada al perfil y el objeto `resumenEjecutivoRol` (si existe)."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Registrar o Actualizar Resumen Ejecutivo (IA / n8n)",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{X_API_KEY}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"solicitudId\": 1,\n  \"resumenEjecutivoRol\": {\n    \"resumen\": \"El Gerente de TI liderará la transformación tecnológica de la compañía, coordinando las áreas de desarrollo, infraestructura y seguridad informática.\",\n    \"objetivoCargo\": \"Garantizar la disponibilidad de los sistemas e impulsar iniciativas ágiles de digitalización.\",\n    \"funcionesPrincipales\": [\n      \"Diseñar y ejecutar el plan estratégico de tecnología.\",\n      \"Liderar y capacitar al equipo de ingenieros de software.\",\n      \"Negociar contratos con proveedores tecnológicos.\"\n    ],\n    \"requisitosMinimos\": [\n      \"Título profesional en Ingeniería de Sistemas, Telecomunicaciones o ramas afines.\",\n      \"Mínimo 5 años de experiencia liderando áreas de TI.\"\n    ],\n    \"formacionExperiencia\": \"Licenciatura culminada y deseable maestría en Administración de TI o Dirección de Proyectos.\",\n    \"hardSkills\": [\n      \"Arquitectura en la nube (AWS/Azure)\",\n      \"Metodologías Ágiles (Scrum, Kanban)\",\n      \"Gobernanza de Datos e ITIL\"\n    ],\n    \"softSkills\": [\n      \"Liderazgo estratégico\",\n      \"Negociación asertiva\",\n      \"Resolución de problemas complejos\"\n    ],\n    \"modalidad\": \"Híbrido\",\n    \"ubicacion\": \"Santa Cruz de la Sierra - Oficina Central\",\n    \"bandaSalarial\": \"Bs. 15,000 - 20,000\",\n    \"criteriosEvaluacion\": \"Evaluación técnica de arquitectura de nube, caso práctico de gestión ágil y entrevista por competencias.\",\n    \"caracteristicasClave\": \"Buscamos un perfil dinámico, orientado a resultados y facilitador del cambio cultural.\",\n    \"valoracionPerfil\": \"Crítico e indispensable para el plan estratégico anual de transformación.\"\n  }\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/internal/perfiles/1/resumen",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "internal",
+                                "perfiles",
+                                "1",
+                                "resumen"
+                            ]
+                        },
+                        "description": "Permite a la IA de n8n registrar los resultados estructurados del resumen del cargo generados por LLMs directamente en el perfil del SIR."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Registrar Observación de Perfil (WhatsApp / Solicitante)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{X_API_KEY}}",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"tipoObservacionId\": 1,\n  \"comentario\": \"Por favor ajusten la banda salarial máxima, el presupuesto asignado para esta posición solo permite hasta Bs. 18,000.\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/internal/perfiles/1/observaciones?telefono=+59175107615",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "internal",
+                                "perfiles",
+                                "1",
+                                "observaciones"
+                            ],
+                            "query": [
+                                {
+                                    "key": "telefono",
+                                    "value": "+59175107615"
+                                }
+                            ]
+                        },
+                        "description": "Registra una observación o corrección al perfil directamente desde la interacción por WhatsApp con el solicitante (el número de teléfono sirve para identificar al autor de la observación)."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Aprobar Perfil (WhatsApp / Solicitante)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{X_API_KEY}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/internal/perfiles/1/aprobar-solicitante?telefono=+59175107615",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "internal",
+                                "perfiles",
+                                "1",
+                                "aprobar-solicitante"
+                            ],
+                            "query": [
+                                {
+                                    "key": "telefono",
+                                    "value": "+59175107615"
+                                }
+                            ]
+                        },
+                        "description": "Confirma la aprobación del perfil de cargo por parte del área solicitante vía WhatsApp, iniciando los flujos internos de selección y reclutamiento."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Registrar Decisión del Área (n8n / WhatsApp)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "X-Internal-Api-Key",
+                                "value": "workflow_ia_secret_key_2026",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"decision\": \"OBSERVAR\",\n  \"observaciones\": [\n    {\n      \"tipoObservacionId\": 1,\n      \"comentario\": \"Por favor ajustar la banda salarial máxima, el presupuesto asignado para esta posición solo permite hasta Bs. 18,000.\"\n    }\n  ]\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/internal/perfiles/1/decision-area",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "internal",
+                                "perfiles",
+                                "1",
+                                "decision-area"
+                            ]
+                        },
+                        "description": "Permite registrar la decisión final del Área Solicitante (APROBAR u OBSERVAR) enviando las observaciones correspondientes en una sola llamada."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Obtener Resumen y PDF de Perfil por PerfilCargoId (n8n)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Internal-Api-Key",
+                                "value": "workflow_ia_secret_key_2026",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/internal/perfiles/PRF-SOL-2026-0001/resumen-y-pdf",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "internal",
+                                "perfiles",
+                                "PRF-SOL-2026-0001",
+                                "resumen-y-pdf"
+                            ]
+                        },
+                        "description": "Obtiene el cargo, el resumen ejecutivo y la URL del PDF del perfil estructurado a partir del PerfilCargoId."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Obtener Perfiles Pendientes de Usuario Solicitante (n8n)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Internal-Api-Key",
+                                "value": "workflow_ia_secret_key_2026",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/internal/users/3/perfiles-pendientes",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "internal",
+                                "users",
+                                "3",
+                                "perfiles-pendientes"
+                            ]
+                        },
+                        "description": "Retorna la lista de perfiles pendientes de revisión del área (PERF-REV-AREA o PERF-REV-RRHH) correspondientes al solicitante dado su UserId."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Obtener Perfil Estructurado por Solicitud (n8n)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Internal-Api-Key",
+                                "value": "workflow_ia_secret_key_2026",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/internal/perfiles-estructurados/10",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "internal",
+                                "perfiles-estructurados",
+                                "10"
+                            ]
+                        },
+                        "description": "Obtiene el perfil estructurado completo para una solicitud por su SolicitudId."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Guardar o Actualizar Perfil Estructurado (n8n Upsert)",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "X-Internal-Api-Key",
+                                "value": "workflow_ia_secret_key_2026",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"solicitudId\": 10,\n  \"perfilEstructurado\": {\n    \"datosGeneralesCargo\": {\n      \"area\": \"Tecnología\",\n      \"cargo\": \"Desarrollador Senior .NET\"\n    },\n    \"objetivoPrincipalCargo\": \"Diseñar y construir microservicios escalables.\",\n    \"perfilRequerido\": {\n      \"anosExperiencia\": 5,\n      \"educacion\": \"Licenciatura en Sistemas\"\n    },\n    \"conocimientosTecnicosRequeridos\": [\"C#\", \".NET Core\", \"SQL Server\"],\n    \"herramientasSistemas\": {\n      \"ide\": \"VS Code / Visual Studio\",\n      \"controlVersiones\": \"Git\"\n    },\n    \"funcionesPrincipalesCargo\": [\n      \"Diseñar arquitectura de base de datos\",\n      \"Implementar APIs RESTful\"\n    ],\n    \"competenciasClave\": [\"Liderazgo técnico\", \"Resolución de problemas\"],\n    \"indicadoresExitoCargo\": [\"Cumplimiento de sprints\"],\n    \"perfilIdealCandidato\": \"Profesional enfocado a resultados con experiencia en nube.\",\n    \"filtrosClaveSeleccion\": {\n      \"ingles\": \"Intermedio\"\n    },\n    \"matrizPonderacion\": [\n      { \"criterio\": \"Experiencia Técnica\", \"peso\": 50 }\n    ],\n    \"perfilTipoAltoAjuste\": \"Ingeniero Backend Senior\"\n  },\n  \"fuentesUtilizadas\": [\"Manual Organizativo\"],\n  \"alertas\": [],\n  \"estadoGeneracion\": \"GENERADO_CON_FUENTES\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/internal/perfiles-estructurados/10",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "internal",
+                                "perfiles-estructurados",
+                                "10"
+                            ]
+                        },
+                        "description": "Crea o actualiza el perfil estructurado completo para una solicitud por su SolicitudId."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Obtener Resumen Ejecutivo por Solicitud (n8n)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Internal-Api-Key",
+                                "value": "workflow_ia_secret_key_2026",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/internal/perfiles/solicitud/10/resumen",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "internal",
+                                "perfiles",
+                                "solicitud",
+                                "10",
+                                "resumen"
+                            ]
+                        },
+                        "description": "Obtiene el resumen ejecutivo para una solicitud por su SolicitudId."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Guardar o Actualizar Resumen Ejecutivo por Solicitud (n8n Upsert)",
+                    "request": {
+                        "method": "PUT",
+                        "header": [
+                            {
+                                "key": "X-Internal-Api-Key",
+                                "value": "workflow_ia_secret_key_2026",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"resumen\": \"Profesional con 5 años de experiencia liderando equipos ágiles.\",\n  \"objetivoCargo\": \"Dirigir el área de ingeniería de software.\",\n  \"funcionesPrincipales\": [\n    \"Planificación de sprint\",\n    \"Diseño de arquitectura de software\"\n  ],\n  \"requisitosMinimos\": [\n    \"Título universitario en Sistemas\",\n    \"Experiencia previa como líder técnico\"\n  ],\n  \"formacionExperiencia\": \"Licenciatura en Sistemas con postgrado en metodologías ágiles.\",\n  \"hardSkills\": [\n    \".NET Core\",\n    \"SQL Server\",\n    \"Docker\"\n  ],\n  \"softSkills\": [\n    \"Liderazgo\",\n    \"Trabajo en equipo\"\n  ],\n  \"modalidad\": \"Híbrido\",\n  \"ubicacion\": \"Santa Cruz de la Sierra\",\n  \"bandaSalarial\": \"Rango B\",\n  \"criteriosEvaluacion\": \"Evaluación técnica y psicométrica\",\n  \"caracteristicasClave\": \"Autónomo y enfocado en calidad de entregables.\",\n  \"valoracionPerfil\": \"Perfil altamente calificado para el área de TI.\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/internal/perfiles/solicitud/10/resumen",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "internal",
+                                "perfiles",
+                                "solicitud",
+                                "10",
+                                "resumen"
+                            ]
+                        },
+                        "description": "Crea o actualiza el resumen ejecutivo para una solicitud por su SolicitudId."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Listar Tipos de Observación Activos (n8n)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Internal-Api-Key",
+                                "value": "workflow_ia_secret_key_2026",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/internal/tipos-observacion",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "internal",
+                                "tipos-observacion"
+                            ]
+                        },
+                        "description": "Obtiene la lista simplificada de tipos de observación en estado Activo en la base de datos."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Subir o Actualizar PDF de Perfil Estructurado (n8n)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "X-Internal-Api-Key",
+                                "value": "workflow_ia_secret_key_2026",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "file",
+                                    "type": "file",
+                                    "src": []
+                                },
+                                {
+                                    "key": "publicUrl",
+                                    "value": "",
+                                    "type": "text",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/internal/perfiles/14/documentos/perfil-estructurado",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "internal",
+                                "perfiles",
+                                "14",
+                                "documentos",
+                                "perfil-estructurado"
+                            ]
+                        },
+                        "description": "Registra o reemplaza físicamente el PDF del perfil estructurado enlazado por el PerfilCargoId (perfilId)."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Subir o Actualizar PDF de Resumen Ejecutivo (n8n)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "X-Internal-Api-Key",
+                                "value": "workflow_ia_secret_key_2026",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "file",
+                                    "type": "file",
+                                    "src": []
+                                },
+                                {
+                                    "key": "publicUrl",
+                                    "value": "",
+                                    "type": "text",
+                                    "disabled": true
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/internal/perfiles/14/documentos/resumen-ejecutivo",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "internal",
+                                "perfiles",
+                                "14",
+                                "documentos",
+                                "resumen-ejecutivo"
+                            ]
+                        },
+                        "description": "Registra o reemplaza físicamente el PDF del resumen ejecutivo enlazado por el PerfilCargoId (perfilId)."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Descargar PDF de Perfil Estructurado (n8n)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Internal-Api-Key",
+                                "value": "workflow_ia_secret_key_2026",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/internal/perfiles/14/documentos/perfil-estructurado/descarga",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "internal",
+                                "perfiles",
+                                "14",
+                                "documentos",
+                                "perfil-estructurado",
+                                "descarga"
+                            ]
+                        },
+                        "description": "Descarga el archivo binario del PDF estructurado enlazado al perfilId."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Descargar PDF de Resumen Ejecutivo (n8n)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Internal-Api-Key",
+                                "value": "workflow_ia_secret_key_2026",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/internal/perfiles/14/documentos/resumen-ejecutivo/descarga",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "internal",
+                                "perfiles",
+                                "14",
+                                "documentos",
+                                "resumen-ejecutivo",
+                                "descarga"
+                            ]
+                        },
+                        "description": "Descarga el archivo binario del PDF del resumen ejecutivo enlazado al perfilId."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Crear Observación de Perfil (n8n)",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "X-Internal-Api-Key",
+                                "value": "workflow_ia_secret_key_2026",
+                                "type": "text"
+                            },
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n    \"perfilCargoId\": 14,\n    \"tipoObservacionId\": 1,\n    \"comentario\": \"Observaci\\u00f3n de prueba sobre competencias requeridas\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/internal/perfiles/observaciones",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "internal",
+                                "perfiles",
+                                "observaciones"
+                            ]
+                        },
+                        "description": "Crea una nueva observación para un perfil de cargo con estado inicial 'no atendido'."
+                    },
+                    "response": []
+                }
+            ]
+        },
+        {
+            "name": "3. Documentos y PDFs",
+            "item": [
+                {
+                    "name": "Subir o Actualizar PDF de la Solicitud",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Authorization",
+                                "value": "Bearer {{TOKEN}}",
+                                "type": "text"
+                            }
+                        ],
+                        "body": {
+                            "mode": "formdata",
+                            "formdata": [
+                                {
+                                    "key": "file",
+                                    "type": "file",
+                                    "src": []
+                                },
+                                {
+                                    "key": "tipoDocumento",
+                                    "value": "Profesiograma",
+                                    "type": "text"
+                                }
+                            ]
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/api/v1/solicitudes/1/documentos",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "v1",
+                                "solicitudes",
+                                "1",
+                                "documentos"
+                            ]
+                        },
+                        "description": "Sube o actualiza el archivo físico (por ejemplo, el PDF autogenerado del Profesiograma o Resumen Ejecutivo) y lo asocia a la solicitud de vacante."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Descargar Documento PDF Vigente",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-API-Key",
+                                "value": "{{X_API_KEY}}",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/internal/solicitudes/1/documentos/Profesiograma/descarga",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "internal",
+                                "solicitudes",
+                                "1",
+                                "documentos",
+                                "Profesiograma",
+                                "descarga"
+                            ]
+                        },
+                        "description": "Retorna una redirección al PDF en almacenamiento en la nube, o transmite directamente el archivo binario del documento solicitado (tipos válidos: `Profesiograma`, `ResumenEjecutivo`)."
+                    },
+                    "response": []
+                },
+                {
+                    "name": "Obtener Completitud de Solicitud (n8n)",
+                    "request": {
+                        "method": "GET",
+                        "header": [
+                            {
+                                "key": "X-Internal-Api-Key",
+                                "value": "workflow_rrhh_secret_key_2026",
+                                "type": "text"
+                            }
+                        ],
+                        "url": {
+                            "raw": "{{baseUrl}}/api/internal/solicitudes/1/completitud",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "api",
+                                "internal",
+                                "solicitudes",
+                                "1",
+                                "completitud"
+                            ]
+                        },
+                        "description": "Retorna la información de la solicitud y el estado detallado de completitud de todos los campos obligatorios y opcionales, indicando el porcentaje y si cada campo está cumplido o no."
+                    },
+                    "response": []
+                }
+            ]
+        }
+    ],
+    "event": [
+        {
+            "listen": "prerequest",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    ""
+                ]
+            }
+        },
+        {
+            "listen": "test",
+            "script": {
+                "type": "text/javascript",
+                "exec": [
+                    ""
+                ]
+            }
+        }
+    ],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://2.25.133.206",
+            "type": "string"
+        },
+        {
+            "key": "X_API_KEY",
+            "value": "n8n_secret_key_123",
+            "type": "string"
+        },
+        {
+            "key": "TOKEN",
+            "value": "jwt_token_here",
+            "type": "string"
+        }
+    ]
+}

@@ -1,0 +1,63 @@
+<div class="admin-page">
+  <!-- Toast Notificaciones de Éxito -->
+  @if (successMessage()) {
+    <div class="alerta-exito-toast">
+      <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">check_circle</span>
+      <span>{{ successMessage() }}</span>
+    </div>
+  }
+
+  <!-- Cabecera de Página -->
+  <div class="admin-header">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true" style="font-size: 28px; color: var(--primary-color);">settings_suggest</span>
+      <div>
+        <h1 class="admin-title" style="margin: 0;">Parametrización</h1>
+        <p class="admin-subtitle">Administra los catálogos utilizados en solicitudes, perfiles y procesos de reclutamiento.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loader institucional -->
+  <app-loader [isLoading]="isLoading() || componentLoading.isLoading('inicio-parametrizacion')()" message="Cargando catálogos..."></app-loader>
+
+  <!-- Zona de Error -->
+  @if (isError()) {
+    <div class="estado-error-vista">
+      <span class="material-symbols-outlined icono-error notranslate" translate="no" aria-hidden="true">error</span>
+      <h3>Ocurrió un error</h3>
+      <p>{{ errorMessage() }}</p>
+      <button class="btn-reintentar" (click)="retry()">
+        <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">sync</span>
+        <span>Reintentar</span>
+      </button>
+    </div>
+  } @else if (!isLoading()) {
+    <!-- Grid de Tarjetas de Catálogo -->
+    <div class="catalogos-grid">
+      @for (cat of catalogosConfig; track cat.clave) {
+        <app-tarjeta-parametrizacion
+          [config]="cat"
+          [total]="obtenerMetricas(cat.clave).total"
+          [activos]="obtenerMetricas(cat.clave).activos"
+          [vistaPrevia]="obtenerMetricas(cat.clave).vistaPrevia"
+          (administrar)="onAdministrar($event)"
+        ></app-tarjeta-parametrizacion>
+      }
+    </div>
+  }
+
+  <!-- Modal de Mantenimiento de Catálogo -->
+  @if (selectedCatalogo() && configuracionSeleccionada()) {
+    <app-modal-mantenimiento-catalogo
+      [config]="configuracionSeleccionada()!"
+      [registros]="registrosSeleccionados()"
+      [listadoAreasCargo]="areasCargo()"
+      (cerrar)="onCerrarModal()"
+      (crear)="onCrearRegistro($event)"
+      (actualizar)="onActualizarRegistro($event)"
+      (cambiarEstado)="onCambiarEstadoRegistro($event)"
+      (eliminar)="onEliminarRegistro($event)"
+    ></app-modal-mantenimiento-catalogo>
+  }
+</div>

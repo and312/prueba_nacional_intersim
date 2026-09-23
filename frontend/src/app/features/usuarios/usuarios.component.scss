@@ -1,0 +1,137 @@
+// ─── Overrides específicos de Usuarios ───────────────────────
+
+// Avatar en la tabla
+.avatar-cell {
+  .avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--border-subtle);
+    background: #e6e8eb;
+  }
+}
+
+.user-name    { font-weight: 600; color: var(--text-main); }
+.user-email   { font-size: 12px; color: var(--text-secondary); }
+
+// Error banner de permisos
+.error-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 20px 24px;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: 12px;
+  color: #dc2626;
+
+  .error-icon { font-size: 24px; margin-top: 2px; flex-shrink: 0; }
+
+  .error-content {
+    flex: 1;
+
+    .error-title { font-size: 15px; font-weight: 700; margin: 0 0 4px; }
+    .error-msg   { font-size: 13px; margin: 0 0 12px; color: #b91c1c; line-height: 1.5; }
+
+    .btn-login {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      background: #dc2626;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      &:hover { background: #b91c1c; }
+      .material-symbols-outlined { font-size: 16px; }
+    }
+  }
+}
+
+// Roles-chip dentro del formulario
+.roles-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 6px;
+
+  .rol-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border: 2px solid var(--border-subtle);
+    border-radius: 999px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    background: #fff;
+    color: var(--text-main);
+    user-select: none;
+
+    &.selected {
+      border-color: var(--primary-color);
+      background: rgba(0,67,112,.08);
+      color: var(--primary-color);
+      font-weight: 600;
+    }
+
+    .material-symbols-outlined { font-size: 16px; }
+  }
+}
+
+// Detail view
+.detail-card {
+  background: #fff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+
+  .detail-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 24px 28px;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-container) 100%);
+    color: #fff;
+
+    .detail-avatar {
+      width: 68px;
+      height: 68px;
+      border-radius: 50%;
+      border: 3px solid rgba(255,255,255,.35);
+      object-fit: cover;
+    }
+
+    .detail-info {
+      h2 { margin: 0 0 4px; font-size: 20px; font-weight: 700; }
+      p  { margin: 0; font-size: 13px; opacity: 0.85; }
+    }
+  }
+
+  .detail-body {
+    padding: 24px 28px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 18px;
+
+    .detail-field {
+      label { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; color: var(--text-secondary); margin-bottom: 3px; }
+      p     { margin: 0; font-size: 13px; color: var(--text-main); font-weight: 500; }
+    }
+  }
+
+  .detail-footer {
+    padding: 16px 28px;
+    border-top: 1px solid var(--border-subtle);
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+}

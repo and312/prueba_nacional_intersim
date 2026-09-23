@@ -1,0 +1,45 @@
+<div class="catalogos-container">
+  <header class="page-header">
+    <h1>Catálogos Maestros</h1>
+    <p>Administración y consulta de los catálogos del sistema (Cero Hardcoding)</p>
+  </header>
+
+  <mat-card class="catalogos-card">
+    <app-loader [isLoading]="componentLoading.isLoading('catalogos')()" message="Cargando catálogos..."></app-loader>
+    <mat-card-content>
+      <div class="filter-container">
+        <mat-form-field appearance="outline">
+          <mat-label>Seleccionar Catálogo</mat-label>
+          <mat-select [value]="selectedCatalogo()" (selectionChange)="onCatalogChange($event.value)">
+            @for (cat of catalogos; track cat) {
+              <mat-option [value]="cat">{{ cat }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      <table mat-table [dataSource]="dataSource()" class="mat-elevation-z1 full-width-table">
+        <ng-container matColumnDef="id">
+          <th mat-header-cell *matHeaderCellDef> ID </th>
+          <td mat-cell *matCellDef="let element"> {{element.id}} </td>
+        </ng-container>
+
+        <ng-container matColumnDef="codigo">
+          <th mat-header-cell *matHeaderCellDef> Código </th>
+          <td mat-cell *matCellDef="let element"> 
+            <span class="code-badge">{{element.codigo}}</span>
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="nombre">
+          <th mat-header-cell *matHeaderCellDef> Nombre </th>
+          <td mat-cell *matCellDef="let element"> {{element.nombre}} </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      </table>
+    </mat-card-content>
+  </mat-card>
+</div>
+

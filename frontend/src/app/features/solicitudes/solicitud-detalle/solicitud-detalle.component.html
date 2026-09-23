@@ -1,0 +1,1404 @@
+@if (solicitud()) {
+  <div class="solicitudes-container-canvas">
+    @if (showTrazabilidad()) {
+      <div class="trace-page">
+        <div class="trace-shell max-w-[1160px] mx-auto space-y-4 px-4 md:px-6">
+        <!-- BREADCRUMBS -->
+        <nav class="trace-breadcrumb flex flex-wrap items-center gap-2 text-label-md font-label-md text-text-secondary">
+          <span>Solicitudes</span>
+          <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+          <span>SOL-00{{ solicitud().solicitudId || solicitud().id }}</span>
+          <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+          <span class="text-primary font-semibold">Trazabilidad</span>
+        </nav>
+
+        <!-- TITLE SECTION -->
+        <section class="trace-header flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+          <div class="trace-header-main min-w-0 flex-1">
+            <h2 class="font-headline-lg text-headline-lg text-primary m-0">Trazabilidad completa de solicitud</h2>
+            <p class="font-body-lg text-body-lg text-text-secondary mt-1">Historial de eventos de la solicitud SOL-00{{ solicitud().solicitudId || solicitud().id }} · {{ solicitud().cargo || solicitud().nombreCargo }}</p>
+          </div>
+          <div class="trace-badges flex flex-wrap gap-2 justify-start md:justify-end md:max-w-[520px]">
+            <span
+              class="trace-badge inline-flex items-center justify-center border"
+              style="border-radius: 12px; padding: 7px 14px; font-size: 13px; font-weight: 700; line-height: 1.2;"
+              [style.background-color]="(solicitud().estadoNombre === 'Aprobada' || solicitud().estadoNombre === 'Aprobada para perfil') ? '#dcfce7' : ((solicitud().estadoNombre === 'Observada' || solicitud().estadoNombre === 'Con observaciones') ? '#fff3e8' : (solicitud().estadoNombre === 'Rechazada' ? '#fee2e2' : ((solicitud().estadoNombre === 'En revisión' || solicitud().estadoNombre === 'En Validación' || solicitud().estadoNombre === 'En validación') ? '#e7f3ff' : '#eaf4ff')))"
+              [style.color]="(solicitud().estadoNombre === 'Aprobada' || solicitud().estadoNombre === 'Aprobada para perfil') ? '#15803d' : ((solicitud().estadoNombre === 'Observada' || solicitud().estadoNombre === 'Con observaciones') ? '#e65300' : (solicitud().estadoNombre === 'Rechazada' ? '#b91c1c' : ((solicitud().estadoNombre === 'En revisión' || solicitud().estadoNombre === 'En Validación' || solicitud().estadoNombre === 'En validación') ? '#005b96' : '#004370')))"
+              [style.border-color]="(solicitud().estadoNombre === 'Aprobada' || solicitud().estadoNombre === 'Aprobada para perfil') ? '#86efac' : ((solicitud().estadoNombre === 'Observada' || solicitud().estadoNombre === 'Con observaciones') ? '#ffc48a' : (solicitud().estadoNombre === 'Rechazada' ? '#fca5a5' : ((solicitud().estadoNombre === 'En revisión' || solicitud().estadoNombre === 'En Validación' || solicitud().estadoNombre === 'En validación') ? '#9fd0ff' : '#b8d9f5')))"
+              [class.bg-slate-100]="solicitud().estadoNombre === 'Borrador'"
+              [class.text-primary]="solicitud().estadoNombre === 'Borrador'"
+              [class.border-slate-200]="solicitud().estadoNombre === 'Borrador'"
+              [class.bg-blue-100]="solicitud().estadoNombre === 'En revisión' || solicitud().estadoNombre === 'En Validación'"
+              [class.text-blue-800]="solicitud().estadoNombre === 'En revisión' || solicitud().estadoNombre === 'En Validación'"
+              [class.border-blue-200]="solicitud().estadoNombre === 'En revisión' || solicitud().estadoNombre === 'En Validación'"
+              [class.bg-orange-100]="solicitud().estadoNombre === 'Observada' || solicitud().estadoNombre === 'Con observaciones'"
+              [class.text-orange-800]="solicitud().estadoNombre === 'Observada' || solicitud().estadoNombre === 'Con observaciones'"
+              [class.border-orange-200]="solicitud().estadoNombre === 'Observada' || solicitud().estadoNombre === 'Con observaciones'"
+              [class.bg-red-100]="solicitud().estadoNombre === 'Rechazada'"
+              [class.text-red-800]="solicitud().estadoNombre === 'Rechazada'"
+              [class.border-red-200]="solicitud().estadoNombre === 'Rechazada'"
+              [class.bg-green-100]="solicitud().estadoNombre === 'Aprobada' || solicitud().estadoNombre === 'Aprobada para perfil'"
+              [class.text-green-800]="solicitud().estadoNombre === 'Aprobada' || solicitud().estadoNombre === 'Aprobada para perfil'"
+              [class.border-green-200]="solicitud().estadoNombre === 'Aprobada' || solicitud().estadoNombre === 'Aprobada para perfil'"
+            >{{ solicitud().estadoNombre }}</span>
+            <span class="trace-badge trace-badge-area inline-flex items-center justify-center border" style="border-radius: 12px; padding: 7px 14px; font-size: 13px; font-weight: 700; line-height: 1.2; background: #eef3f7; color: #004370; border-color: #d7e2ea;">{{ solicitud().area || solicitud().areaSolicitante }}</span>
+            <span class="trace-badge trace-badge-channel inline-flex items-center justify-center border" style="border-radius: 12px; padding: 7px 14px; font-size: 13px; font-weight: 700; line-height: 1.2; background: #eef3f7; color: #004370; border-color: #d7e2ea;">Backoffice</span>
+            <span
+              class="trace-badge trace-badge-priority inline-flex items-center justify-center border"
+              style="border-radius: 12px; padding: 7px 14px; font-size: 13px; font-weight: 700; line-height: 1.2;"
+              [style.background-color]="solicitud().prioridad === 'Alta' ? '#fff1e6' : (solicitud().prioridad === 'Media' ? '#fff7d6' : '#eef3f7')"
+              [style.color]="solicitud().prioridad === 'Alta' ? '#c2410c' : (solicitud().prioridad === 'Media' ? '#92400e' : '#475569')"
+              [style.border-color]="solicitud().prioridad === 'Alta' ? '#fdba74' : (solicitud().prioridad === 'Media' ? '#facc15' : '#cbd5e1')"
+              [class.bg-red-100]="solicitud().prioridad === 'Alta'"
+              [class.text-red-800]="solicitud().prioridad === 'Alta'"
+              [class.border-red-200]="solicitud().prioridad === 'Alta'"
+              [class.bg-amber-100]="solicitud().prioridad === 'Media'"
+              [class.text-amber-800]="solicitud().prioridad === 'Media'"
+              [class.border-amber-200]="solicitud().prioridad === 'Media'"
+              [class.bg-slate-100]="!solicitud().prioridad || solicitud().prioridad === 'Baja'"
+              [class.text-primary]="!solicitud().prioridad || solicitud().prioridad === 'Baja'"
+              [class.border-slate-200]="!solicitud().prioridad || solicitud().prioridad === 'Baja'"
+            >Prioridad: {{ solicitud().prioridad || 'Baja' }}</span>
+          </div>
+        </section>
+
+        <!-- SUMMARY CARD (BENTO STYLE) -->
+        <section class="trace-summary-grid mt-4" style="display: flex; flex-wrap: wrap; gap: 16px; align-items: stretch;">
+          <div class="trace-request-card bg-surface-white border border-border-subtle p-4 rounded-lg shadow-sm min-w-0" style="flex: 3 1 560px;">
+            <h3 class="font-headline-sm text-headline-sm text-primary mb-3">Datos de la solicitud</h3>
+            <div class="trace-request-fields grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3" style="gap: 18px 24px;">
+              <div class="trace-field">
+                <p class="font-label-md text-label-md text-text-secondary mb-0.5 leading-tight">Código de Solicitud</p>
+                <p class="font-headline-sm text-headline-sm text-text-main">SOL-00{{ solicitud().solicitudId || solicitud().id }}</p>
+              </div>
+              <div class="trace-field">
+                <p class="font-label-md text-label-md text-text-secondary mb-0.5 leading-tight">Cargo solicitado</p>
+                <p class="font-headline-sm text-headline-sm text-text-main">{{ solicitud().cargo || solicitud().nombreCargo }}</p>
+              </div>
+              <div class="trace-field min-w-0">
+                <p class="font-label-md text-label-md text-text-secondary mb-0.5 leading-tight">Solicitante</p>
+                <p class="trace-field-value trace-field-email font-headline-sm text-headline-sm text-text-main" style="overflow-wrap: anywhere; word-break: break-word;">{{ solicitud().solicitanteNombre || solicitud().solicitante || solicitud().solicitanteEmail || solicitud().createdBy || 'Sin asignación' }}</p>
+              </div>
+              <div class="trace-field">
+                <p class="font-label-md text-label-md text-text-secondary mb-0.5 leading-tight">Creada el</p>
+                <p class="font-body-md text-body-md text-text-main">{{ (solicitud().createdDate || solicitud().fecha) | date:'dd/MM/yyyy' }}</p>
+              </div>
+              <div class="trace-field">
+                <p class="font-label-md text-label-md text-text-secondary mb-0.5 leading-tight">Última actualización</p>
+                <p class="font-body-md text-body-md text-text-main">{{ (solicitud().lastModifiedDate || solicitud().createdDate || solicitud().fecha) | date:'dd/MM/yyyy' }}</p>
+              </div>
+              <div class="trace-field">
+                <p class="font-label-md text-label-md text-text-secondary mb-0.5 leading-tight">Estado Global</p>
+                <p class="font-body-md text-body-md font-semibold" [style.color]="getEstadoColor(solicitud().estadoNombre)">{{ solicitud().estadoNombre }}</p>
+              </div>
+            </div>
+          </div>
+          <div class="trace-progress-card text-surface-white p-4 rounded-lg flex flex-col justify-center relative overflow-hidden" style="background-color: #005b96; flex: 2 1 320px; min-height: 190px; max-height: 240px;">
+            <div class="relative z-10">
+              <p class="font-label-md text-label-md opacity-80 mb-2">Completitud del Proceso</p>
+              <p class="font-data-numeral text-data-numeral" style="font-size: 28px; font-weight: 700;">
+                {{ getCompletitudPorcentaje(solicitud()) }}%
+              </p>
+              <div class="w-full mt-3 overflow-hidden" style="background-color: rgba(255,255,255,0.22); height: 8px; border-radius: 9999px;">
+                <div class="h-full rounded-full transition-all duration-700 ease-out" [style.width]="getCompletitudPorcentaje(solicitud()) + '%'" style="background-color: #ffffff; height: 100%; border-radius: 9999px; display: block;"></div>
+              </div>
+              <p class="mt-3 font-body-md text-body-md opacity-90 leading-snug">
+                Etapa actual: {{ solicitud().estadoNombre }}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- FILTERS -->
+        <!-- <section class="trace-filter-bar flex flex-col md:flex-row md:items-center justify-between gap-3">
+          <div class="trace-filter-tabs flex flex-wrap gap-2">
+            <button class="trace-filter-button px-3 py-1.5 bg-primary text-surface-white rounded font-label-md text-label-md border-none cursor-pointer">Todos</button>
+            <button class="trace-filter-button px-3 py-1.5 bg-surface-white border border-border-subtle text-text-secondary hover:bg-surface-container-low transition-colors rounded font-label-md text-label-md cursor-pointer">Área solicitante</button>
+            <button class="trace-filter-button px-3 py-1.5 bg-surface-white border border-border-subtle text-text-secondary hover:bg-surface-container-low transition-colors rounded font-label-md text-label-md cursor-pointer">RRHH</button>
+            <button class="trace-filter-button px-3 py-1.5 bg-surface-white border border-border-subtle text-text-secondary hover:bg-surface-container-low transition-colors rounded font-label-md text-label-md cursor-pointer">Agente IA</button>
+            <button class="trace-filter-button px-3 py-1.5 bg-surface-white border border-border-subtle text-text-secondary hover:bg-surface-container-low transition-colors rounded font-label-md text-label-md cursor-pointer">Sistema</button>
+          </div>
+          <div class="flex items-center gap-2 text-text-secondary">
+            <span class="material-symbols-outlined text-[20px]">sort</span>
+            <span class="font-label-md text-label-md">Más recientes primero</span>
+          </div>
+        </section> -->
+
+        <div class="trace-timeline-shell max-w-[980px] mx-auto mt-5">
+        <!-- TIMELINE -->
+        <section class="trace-timeline-card bg-surface-white border border-border-subtle rounded-lg p-6 mt-6  relative overflow-hidden shadow-sm">
+          <div class="trace-timeline relative space-y-6">
+            <!-- Timeline Line -->
+            <div class="trace-timeline-line absolute left-[15px] top-4 bottom-4 w-[2px] bg-border-subtle z-0"></div>
+
+            @for (item of historial(); track item.historyId; let first = $first; let last = $last) {
+              <div class="timeline-item flex gap-3 md:gap-4 relative z-10">
+                <div class="trace-timeline-marker w-8 h-8 rounded-full flex items-center justify-center shrink-0 shadow-sm"
+                     [style.background-color]="getTimelineItemColor(item, first)"
+                     style="border: none !important; outline: none !important;">
+                  @if (first && isWhatsAppOrigin(item)) {
+                    <svg class="w-3.5 h-3.5 fill-current text-white shrink-0" viewBox="0 0 24 24" style="width: 15px; height: 15px; fill: #ffffff; display: block;">
+                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414-.074-.124-.272-.198-.57-.347zM12 2a10 10 0 0 0-8.47 15.319L2 22l4.821-1.464A10 10 0 1 0 12 2zm0 18a8 8 0 0 1-4.275-1.229l-.307-.184-2.854.867.88-2.784-.202-.321A8 8 0 1 1 12 20z"/>
+                    </svg>
+                  } @else {
+                    <span class="material-symbols-outlined text-surface-white text-[15px]" style="font-size: 15px; color: #fff; line-height: 1; display: flex; align-items: center; justify-content: center;">
+                      {{ getTimelineItemIcon(item, first) }}
+                    </span>
+                  }
+                </div>
+                <div class="trace-timeline-content flex-1 pb-4 border-border-subtle min-w-0" [class.border-b]="!last">
+                  <div class="flex flex-col md:flex-row md:justify-between md:items-start gap-2">
+                    <div class="min-w-0">
+                      <div class="flex flex-wrap items-center gap-x-2 gap-y-1 mb-1">
+                        <h4 class="font-headline-sm text-headline-sm text-text-main m-0 leading-tight inline-block">
+                          @if (item.estadoAnterior) {
+                            {{ item.estadoAnterior }} &rarr; {{ item.estadoNuevo }}
+                          } @else {
+                            {{ item.estadoNuevo }}
+                          }
+                        </h4>
+                        @if (first && getTimelineItemCanalBadge(item, first); as badge) {
+                          <span style="display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; padding: 3px 10px; margin-left: 12px; border-radius: 9999px; vertical-align: middle; line-height: 1.1; white-space: nowrap; letter-spacing: 0.2px; box-shadow: 0 1px 2px rgba(0,0,0,0.04);"
+                                [style.color]="badge.color"
+                                [style.background-color]="badge.bg"
+                                [style.border]="'1px solid ' + badge.border">
+                            {{ badge.texto }}
+                          </span>
+                        }
+                      </div>
+                      <p class="font-body-md text-body-md text-text-secondary mt-1">
+                        Registrado por <span class="font-semibold text-primary" style="color: #004370;">{{ getActorNombre(item, first) }}</span> 
+                        <span class="text-xs text-text-secondary">({{ getActorRol(item, first) }})</span>
+                      </p>
+                      <p class="text-xs text-text-secondary mt-0.5" style="font-size: 11px; margin-top: 4px;">
+                        Iteración: <span class="font-semibold">{{ item.iteracion || 1 }}</span>
+                      </p>
+                      @if (item.justificacion || getJustificacion(item, first)) {
+                        <div class="mt-2 p-3 bg-surface-container-low rounded border-l-4" [style.border-left-color]="getEstadoColor(item.estadoNuevo)" style="border-left: 4px solid; background-color: #f8fafc;">
+                          <p class="font-body-md text-body-md text-text-main italic m-0">"{{ getJustificacion(item, first) }}"</p>
+                        </div>
+                      }
+                    </div>
+                    <span class="trace-timeline-date inline-flex items-center self-start shrink-0 bg-slate-100 text-slate-600 px-2 py-1 rounded text-[12px] leading-none whitespace-nowrap">
+                      {{ item.fechaCambio | date:'dd/MM/yyyy HH:mm' }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            } @empty {
+              <div class="text-center py-8 text-text-secondary">
+                No hay transiciones de estado registradas para esta solicitud.
+              </div>
+            }
+          </div>
+        </section>
+
+        <!-- FOOTER ACTIONS -->
+         <div class="trace-footer-actions flex flex-row items-center justify-start gap-4 mt-6">
+ <button
+  (click)="showTrazabilidad.set(false)"
+  class="inline-flex w-auto flex-none items-center justify-center bg-surface-white border border-primary text-primary font-headline-sm text-headline-sm leading-none transition-all shadow-sm cursor-pointer"
+  style="border: 1px solid #004370; color: #004370; background-color: #fff; border-radius: 6px; padding: 12px 30px; min-height: 44px; gap: 12px;"
+  onmouseenter="this.style.backgroundColor='#eaf4ff'; this.style.transform='translateY(-1px)'; this.style.boxShadow='0 6px 14px rgba(0, 67, 112, 0.14)'"
+  onmouseleave="this.style.backgroundColor='#fff'; this.style.transform='translateY(0)'; this.style.boxShadow='0 1px 3px rgba(0, 0, 0, 0.12)'"
+>
+  <span class="material-symbols-outlined shrink-0 leading-none" style="font-size: 20px;  line-height: 1;">arrow_back</span>
+  <span class="leading-none">Volver al detalle</span>
+</button>
+</div>
+        </div>
+        </div>
+      </div>
+    } @else if (isSubsanando()) {
+      <!-- BREADCRUMBS -->
+      <nav class="flex gap-2 text-label-md font-label-md text-text-secondary mb-4">
+        <span>Solicitudes</span>
+        <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+        <span>SOL-00{{ solicitud().solicitudId || solicitud().id }}</span>
+        <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+        <span class="text-primary font-semibold">Observaciones</span>
+      </nav>
+
+      <!-- TITLE SECTION -->
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8">
+        <div>
+          <h2 class="font-headline-lg text-headline-lg text-primary mb-1">SOL-00{{ solicitud().solicitudId || solicitud().id }} · {{ solicitud().cargo || solicitud().nombreCargo }}</h2>
+          <p class="text-text-secondary font-body-md text-body-md">
+            Solicitud con observaciones de RRHH · Área {{ solicitud().area || solicitud().areaSolicitante }}
+          </p>
+        </div>
+        <div class="flex flex-wrap gap-2 items-center">
+          <span class="px-3 py-1 bg-orange-100 text-orange-700 rounded-full text-xs font-semibold flex items-center gap-1 border border-orange-200" style="background-color: #fff7ed; color: #ea580c; border: 1px solid #ffedd5;">
+            <span class="w-2 h-2 rounded-full bg-orange-500 mr-1" style="background-color: #ea580c;"></span>
+            Con observaciones
+          </span>
+          <span class="px-3 py-1 bg-surface-container-high text-on-surface-variant border border-border-subtle rounded-full text-xs font-semibold">Prioridad: {{ solicitud().prioridad || 'Media' }}</span>
+          <span class="px-3 py-1 bg-surface-container-high text-on-surface-variant border border-border-subtle rounded-full text-xs font-semibold">Canal: {{ solicitud().canalOrigen || 'BackOffice' }}</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-12 gap-container-gap pb-24">
+        <!-- Left Column: Corrections Form -->
+        <div class="col-span-12 lg:col-span-9 space-y-container-gap">
+
+          <!-- Observaciones de RRHH Card -->
+          <div class="bg-surface-white border border-border-subtle rounded-xl p-6 relative overflow-hidden shadow-sm" style="background-color: #ffffff; border: 1px solid #D9E2EC;">
+            <div class="absolute top-0 left-0 w-1.5 h-full bg-orange-500" style="background-color: #f97316; width: 6px; position: absolute; top: 0; bottom: 0; left: 0;"></div>
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-surface-container-high flex items-center justify-center text-primary" style="background-color: #f2f4f7;">
+                  <span class="material-symbols-outlined" style="color: #004370;">rate_review</span>
+                </div>
+                <div>
+                  <h3 class="font-headline-sm text-headline-sm text-primary" style="font-weight: 600; font-size: 16px; margin: 0; color: #004370;">Observaciones de RRHH</h3>
+                  <p class="text-text-secondary text-label-md" style="font-size: 12px; margin: 4px 0 0 0; color: #5C6B73;">Emitido por {{ solicitud().modifiedBy || 'RRHH' }} · {{ (solicitud().lastModifiedDate || solicitud().createdDate) | date:'dd/MM/yyyy' }}</p>
+                </div>
+              </div>
+            </div>
+            @if (solicitud().observacionesRrhh && solicitud().observacionesRrhh.length > 0) {
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                @for (obs of solicitud().observacionesRrhh; track obs.observacionId; let i = $index) {
+                  <div class="flex items-center p-3 bg-surface-container-low rounded border border-border-subtle" style="background-color: #f8fafc; border: 1px solid #D9E2EC;">
+                    <span class="material-symbols-outlined text-orange-500 mr-3" style="color: #f97316;">pending_actions</span>
+                    <span class="text-label-md font-medium text-text-main" style="font-size: 12px; color: #1F2933;">{{ i + 1 }}. {{ obs.observacion }}</span>
+                    <span class="ml-auto text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded uppercase" style="color: #ea580c; background-color: #fff7ed; font-size: 10px; font-weight: 700;">{{ obs.estadoAsociado || 'Pendiente' }}</span>
+                  </div>
+                }
+              </div>
+            } @else {
+              <p class="text-body-md text-on-surface-variant mb-6 p-4 rounded-lg border border-orange-100 italic" style="background-color: rgba(254, 243, 199, 0.3); border: 1px solid #fde68a; color: #92400e; font-size: 14px; margin-bottom: 24px;">
+                "{{ solicitud().comentario || 'Estimados, favor revisar los puntos señalados.' }}"
+              </p>
+            }
+          </div>
+
+          <!-- Formulario de Corrección -->
+          <div class="bg-surface-white border border-border-subtle rounded-xl overflow-hidden shadow-sm" style="background-color: #ffffff; border: 1px solid #D9E2EC;">
+            <!-- Tabs -->
+            <div class="flex border-b border-border-subtle" style="border-bottom: 1px solid #D9E2EC;">
+              <button (click)="activeTab.set('Datos Generales')" [class.border-primary]="activeTab() === 'Datos Generales'" [class.text-primary]="activeTab() === 'Datos Generales'" [class.bg-primary/5]="activeTab() === 'Datos Generales'" class="px-6 py-4 font-label-md text-text-secondary border-b-2 border-transparent transition-all cursor-pointer bg-transparent" style="border-bottom-width: 2px; font-size: 12px; font-weight: 500;">Datos Generales</button>
+              <button (click)="activeTab.set('Condiciones')" [class.border-primary]="activeTab() === 'Condiciones'" [class.text-primary]="activeTab() === 'Condiciones'" [class.bg-primary/5]="activeTab() === 'Condiciones'" class="px-6 py-4 font-label-md text-text-secondary border-b-2 border-transparent transition-all cursor-pointer bg-transparent" style="border-bottom-width: 2px; font-size: 12px; font-weight: 500;">Condiciones</button>
+              <button (click)="activeTab.set('Requisitos')" [class.border-primary]="activeTab() === 'Requisitos'" [class.text-primary]="activeTab() === 'Requisitos'" [class.bg-primary/5]="activeTab() === 'Requisitos'" class="px-6 py-4 font-label-md text-text-secondary border-b-2 border-transparent transition-all cursor-pointer bg-transparent" style="border-bottom-width: 2px; font-size: 12px; font-weight: 500;">Requisitos</button>
+              <button (click)="activeTab.set('Beneficios')" [class.border-primary]="activeTab() === 'Beneficios'" [class.text-primary]="activeTab() === 'Beneficios'" [class.bg-primary/5]="activeTab() === 'Beneficios'" class="px-6 py-4 font-label-md text-text-secondary border-b-2 border-transparent transition-all cursor-pointer bg-transparent" style="border-bottom-width: 2px; font-size: 12px; font-weight: 500;">Beneficios</button>
+            </div>
+
+            <!-- Tab Content (Condiciones) -->
+            <div class="p-8 space-y-8">
+              @if (activeTab() === 'Condiciones') {
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6" style="margin-bottom: 24px;">
+                  <div>
+                    <label class="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2" style="font-size: 11px; font-weight: 700; color: #5C6B73; text-transform: uppercase;">Modalidad</label>
+                    <input class="w-full bg-surface-container-low border border-border-subtle rounded text-body-md px-4 py-2.5 opacity-60 outline-none" disabled type="text" [value]="solicitud().modalidad || 'Híbrido'" style="background-color: #f2f4f7; border: 1px solid #D9E2EC; height: 40px; font-size: 14px;">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2" style="font-size: 11px; font-weight: 700; color: #5C6B73; text-transform: uppercase;">Ubicación</label>
+                    <input class="w-full bg-surface-container-low border border-border-subtle rounded text-body-md px-4 py-2.5 opacity-60 outline-none" disabled type="text" value="Santa Cruz (Edificio Nacional)" style="background-color: #f2f4f7; border: 1px solid #D9E2EC; height: 40px; font-size: 14px;">
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2" style="font-size: 11px; font-weight: 700; color: #5C6B73; text-transform: uppercase;">Seniority</label>
+                    <input class="w-full bg-surface-container-low border border-border-subtle rounded text-body-md px-4 py-2.5 opacity-60 outline-none" disabled type="text" [value]="solicitud().seniority || 'Senior'" style="background-color: #f2f4f7; border: 1px solid #D9E2EC; height: 40px; font-size: 14px;">
+                  </div>
+                </div>
+
+                <!-- Campo Resaltado 1: Jornada Laboral -->
+                <div class="p-5 border border-orange-300 rounded-lg ring-1 ring-orange-200" style="background-color: rgba(254, 243, 199, 0.1); border: 1px solid #fde68a; margin-bottom: 24px;">
+                  <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                      <span class="material-symbols-outlined text-orange-600" style="color: #d97706;">warning</span>
+                      <label class="font-headline-sm text-label-md text-orange-950 font-bold" style="font-size: 14px; color: #78350f;">Jornada laboral</label>
+                    </div>
+                    <span class="text-[10px] font-bold text-orange-600 bg-orange-100 px-2 py-1 rounded uppercase" style="color: #d97706; background-color: #fef3c7;">Pendiente de respuesta</span>
+                  </div>
+                  <div class="flex items-start gap-3 mb-4 p-3 rounded border border-orange-100" style="background-color: #ffffff; border: 1px solid #fef3c7;">
+                    <span class="material-symbols-outlined text-orange-400 text-sm mt-0.5">chat_bubble</span>
+                    <p class="text-body-md text-orange-800" style="color: #92400e; font-size: 13px; margin: 0;">
+                      <span class="font-bold">Comentario RRHH:</span> Confirmar si el puesto tendrá horario administrativo o trabajo por turnos.
+                    </p>
+                  </div>
+                  <select [value]="jornadaSeleccionada()" (change)="jornadaSeleccionada.set($any($event.target).value)" class="w-full border-orange-300 focus:ring-orange-500 focus:border-orange-500 rounded text-body-md px-4 py-3 bg-white border outline-none" style="height: 48px; border: 1px solid #fcd34d; font-size: 14px;">
+                    <option value="">Seleccione una opción...</option>
+                    <option value="L-V 08:30 a 18:30">Horario Administrativo (08:30 - 18:30)</option>
+                    <option value="Trabajo por turnos">Trabajo por turnos</option>
+                    <option value="Flexible / Orientado a resultados">Flexible / Orientado a resultados</option>
+                  </select>
+                </div>
+
+                <!-- Campo Resaltado 2: Fecha Ideal de Ingreso -->
+                <div class="p-5 border border-orange-300 rounded-lg ring-1 ring-orange-200" style="background-color: rgba(254, 243, 199, 0.1); border: 1px solid #fde68a;">
+                  <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center gap-2">
+                      <span class="material-symbols-outlined text-orange-600" style="color: #d97706;">event_busy</span>
+                      <label class="font-headline-sm text-label-md text-orange-950 font-bold" style="font-size: 14px; color: #78350f;">Fecha ideal de ingreso</label>
+                    </div>
+                    <span class="text-[10px] font-bold text-orange-600 bg-orange-100 px-2 py-1 rounded uppercase" style="color: #d97706; background-color: #fef3c7;">Pendiente de respuesta</span>
+                  </div>
+                  <div class="flex items-start gap-3 mb-4 p-3 rounded border border-orange-100" style="background-color: #ffffff; border: 1px solid #fef3c7;">
+                    <span class="material-symbols-outlined text-orange-400 text-sm mt-0.5">chat_bubble</span>
+                    <p class="text-body-md text-orange-800" style="color: #92400e; font-size: 13px; margin: 0;">
+                      <span class="font-bold">Comentario RRHH:</span> Indicar fecha estimada para iniciar el proceso de incorporación.
+                    </p>
+                  </div>
+                  <input type="date" [value]="fechaIngresoSeleccionada()" (change)="fechaIngresoSeleccionada.set($any($event.target).value)" class="w-full border-orange-300 focus:ring-orange-500 focus:border-orange-500 rounded text-body-md px-4 py-3 bg-white border outline-none" style="height: 48px; border: 1px solid #fcd34d; font-size: 14px;">
+                </div>
+              } @else {
+                <div class="p-8 text-center text-text-secondary italic" style="color: #5C6B73;">
+                  Las pestañas de Datos Generales, Requisitos y Beneficios no presentan observaciones que requieran cambios. Por favor revise la pestaña 'Condiciones'.
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Sección de Respuesta -->
+          <div class="bg-surface-white border border-border-subtle rounded-xl p-8 shadow-sm" style="background-color: #ffffff; border: 1px solid #D9E2EC;">
+            <h3 class="font-headline-sm text-headline-sm text-primary mb-6" style="font-size: 18px; font-weight: 600; color: #004370; margin-top: 0;">Respuesta del área solicitante</h3>
+            <div class="space-y-6">
+              <div>
+                <label class="block text-xs font-bold text-text-secondary uppercase tracking-wider mb-2" style="font-size: 11px; font-weight: 700; color: #5C6B73; text-transform: uppercase;">Comentarios adicionales para RRHH</label>
+                <textarea [value]="comentarioSubsanacion()" (change)="comentarioSubsanacion.set($any($event.target).value)" class="w-full border border-border-subtle focus:ring-primary/20 focus:border-primary rounded text-body-md p-4 outline-none resize-none" placeholder="Explique brevemente los cambios realizados o proporcione información contextual extra..." rows="4" style="border: 1px solid #D9E2EC; font-size: 14px;"></textarea>
+              </div>
+              <div class="flex items-center justify-between p-4 border border-dashed border-border-subtle rounded-lg" style="background-color: #fafbfc; border: 1px dashed #D9E2EC;">
+                <div class="flex items-center gap-3">
+                  <span class="material-symbols-outlined text-text-secondary">attach_file</span>
+                  <span class="text-body-md text-text-secondary" style="font-size: 14px; color: #5C6B73;">¿Desea adjuntar algún documento de respaldo?</span>
+                </div>
+                <button class="text-primary font-label-md hover:underline border-none bg-transparent cursor-pointer font-bold" style="color: #004370; font-size: 12px;">Subir archivo</button>
+              </div>
+              <label class="flex items-center gap-3 cursor-pointer group">
+                <input type="checkbox" [checked]="confirmacionCheck()" (change)="confirmacionCheck.set(!confirmacionCheck())" class="w-5 h-5 rounded text-primary border-border-subtle focus:ring-primary/20" style="width: 20px; height: 20px; border: 1px solid #D9E2EC;">
+                <span class="text-body-md text-text-main group-hover:text-primary transition-colors select-none" style="font-size: 14px; color: #1F2933;">Confirmo que completé la información observada por RRHH.</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Acciones Finales -->
+          <div class="flex items-center justify-between pt-4 pb-12">
+            <button (click)="cancelarSubsanar()" class="px-6 py-3 border border-border-subtle text-text-secondary font-label-md rounded hover:bg-surface-container-low transition-colors bg-transparent cursor-pointer" style="border: 1px solid #D9E2EC; font-size: 12px; height: 40px; border-radius: 4px; padding: 0 24px;">Cancelar</button>
+            <div class="flex items-center gap-4">
+              <button (click)="cancelarSubsanar()" class="px-6 py-3 border border-primary text-primary font-label-md rounded hover:bg-primary/5 transition-colors bg-transparent cursor-pointer" style="border: 1px solid #004370; color: #004370; font-size: 12px; height: 40px; border-radius: 4px; padding: 0 24px;">Guardar borrador</button>
+              <button (click)="enviarSubsanacion()" [disabled]="isSubmittingAction()" class="px-8 py-3 bg-primary text-surface-white font-label-md rounded-lg shadow-lg hover:bg-primary-container transition-all flex items-center gap-2 border-none cursor-pointer" style="background-color: #004370; color: #fff; font-size: 12px; height: 40px; border-radius: 8px; padding: 0 32px;">
+                {{ isSubmittingAction() ? 'Enviando...' : 'Enviar corrección a RRHH' }}
+                <span class="material-symbols-outlined text-sm">send</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Sidebar Timeline -->
+        <div class="col-span-12 lg:col-span-3">
+          <div class="bg-surface-white border border-border-subtle rounded-xl p-6 shadow-sm sticky top-6" style="background-color: #ffffff; border: 1px solid #D9E2EC;">
+            <h3 class="font-headline-sm text-headline-sm text-primary mb-6" style="font-size: 16px; font-weight: 600; color: #004370; margin-top: 0; margin-bottom: 24px;">Seguimiento de la solicitud</h3>
+            <div class="relative space-y-8 before:absolute before:left-[15px] before:top-2 before:bottom-2 before:w-[2px] before:bg-border-subtle" style="position: relative;">
+              <!-- Hito 1: Registro -->
+              <div class="relative pl-10" style="position: relative; padding-left: 40px;">
+                <div class="absolute left-0 top-1 w-8 h-8 rounded-full bg-primary flex items-center justify-center z-10 border-4 border-white shadow-sm" style="background-color: #004370; border: 4px solid #fff; position: absolute; left: 0; top: 4px; width: 32px; height: 32px; border-radius: 9999px;">
+                  <span class="material-symbols-outlined text-white text-[16px]" style="font-variation-settings: 'FILL' 1; font-size: 16px; color: #fff;">check</span>
+                </div>
+                <p class="text-label-md font-bold text-primary" style="font-size: 13px; color: #004370; font-weight: 700; margin: 0;">Solicitud registrada</p>
+                <p class="text-[11px] text-text-secondary" style="margin: 2px 0 0 0; font-size: 11px; color: #5C6B73;">{{ solicitud().createdDate | date:'dd/MM/yyyy HH:mm' }}</p>
+                <p class="text-body-md text-on-surface-variant mt-1" style="font-size: 12px; margin: 4px 0 0 0; color: #414750;">Registrada por {{ solicitud().createdBy }}</p>
+              </div>
+
+              <!-- Hito 2: Enviada a revisión -->
+              <div class="relative pl-10" style="position: relative; padding-left: 40px;">
+                <div class="absolute left-0 top-1 w-8 h-8 rounded-full bg-primary flex items-center justify-center z-10 border-4 border-white shadow-sm" style="background-color: #004370; border: 4px solid #fff; position: absolute; left: 0; top: 4px; width: 32px; height: 32px; border-radius: 9999px;">
+                  <span class="material-symbols-outlined text-white text-[16px]" style="font-variation-settings: 'FILL' 1; font-size: 16px; color: #fff;">check</span>
+                </div>
+                <p class="text-label-md font-bold text-primary" style="font-size: 13px; color: #004370; font-weight: 700; margin: 0;">Enviada a revisión RRHH</p>
+                <p class="text-[11px] text-text-secondary" style="margin: 2px 0 0 0; font-size: 11px; color: #5C6B73;">{{ solicitud().createdDate | date:'dd/MM/yyyy HH:mm' }}</p>
+                <p class="text-body-md text-on-surface-variant mt-1" style="font-size: 12px; margin: 4px 0 0 0; color: #414750;">Aprobada por Gerencia</p>
+              </div>
+
+              <!-- Hito 3: Observaciones RRHH -->
+              <div class="relative pl-10" style="position: relative; padding-left: 40px;">
+                <div class="absolute left-0 top-1 w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center z-10 border-4 border-white shadow-sm ring-4 ring-orange-100" style="background-color: #f97316; border: 4px solid #fff; position: absolute; left: 0; top: 4px; width: 32px; height: 32px; border-radius: 9999px;">
+                  <span class="material-symbols-outlined text-white text-[16px]" style="font-variation-settings: 'FILL' 1; font-size: 16px; color: #fff;">error</span>
+                </div>
+                <p class="text-label-md font-bold text-orange-600" style="font-size: 13px; color: #ea580c; font-weight: 700; margin: 0;">Observaciones de RRHH</p>
+                <p class="text-[11px] text-text-secondary" style="margin: 2px 0 0 0; font-size: 11px; color: #5C6B73;">{{ (solicitud().lastModifiedDate || solicitud().createdDate) | date:'dd/MM/yyyy HH:mm' }}</p>
+                <p class="text-body-md text-on-surface-variant mt-1" style="font-size: 12px; margin: 4px 0 0 0; color: #414750;">{{ solicitud().modifiedBy || 'RRHH' }} solicitó aclaraciones</p>
+              </div>
+
+              <!-- Hito 4: Respuesta del área (Acción Pendiente) -->
+              <div class="relative pl-10" style="position: relative; padding-left: 40px;">
+                <div class="absolute left-0 top-1 w-8 h-8 rounded-full bg-white border-2 border-orange-500 flex items-center justify-center z-10 shadow-sm" style="border: 2px solid #ea580c; background-color: #fff; position: absolute; left: 0; top: 4px; width: 32px; height: 32px; border-radius: 9999px;">
+                  <span class="material-symbols-outlined text-orange-500 text-[16px]" style="font-size: 16px; color: #ea580c;">edit_note</span>
+                </div>
+                <p class="text-label-md font-bold text-orange-700" style="font-size: 13px; color: #c2410c; font-weight: 700; margin: 0;">Respuesta del área solicitante</p>
+                <p class="text-[11px] text-orange-600 font-medium" style="margin: 2px 0 0 0; color: #ea580c; font-size: 11px;">Acción requerida</p>
+                <p class="text-body-md text-on-surface-variant mt-1" style="font-size: 12px; margin: 4px 0 0 0; color: #414750;">Complete los campos observados y envíe la corrección.</p>
+              </div>
+
+              <!-- Hito 5: Nueva revisión -->
+              <div class="relative pl-10 opacity-40" style="position: relative; padding-left: 40px; opacity: 0.4;">
+                <div class="absolute left-0 top-1 w-8 h-8 rounded-full bg-surface-container-high flex items-center justify-center z-10 border-4 border-white" style="background-color: #e2e8f0; border: 4px solid #fff; position: absolute; left: 0; top: 4px; width: 32px; height: 32px; border-radius: 9999px;">
+                  <span class="material-symbols-outlined text-text-secondary text-[16px]" style="font-size: 16px; color: #5C6B73;">hourglass_empty</span>
+                </div>
+                <p class="text-label-md font-bold text-text-secondary" style="font-size: 13px; font-weight: 700; margin: 0; color: #5C6B73;">Nueva revisión RRHH</p>
+                <p class="text-body-md text-on-surface-variant mt-1" style="font-size: 12px; margin: 4px 0 0 0; color: #414750;">Se habilitará cuando envíe la corrección.</p>
+              </div>
+            </div>
+
+            <div class="mt-10 p-4 bg-primary/5 rounded-lg border border-primary/10" style="background-color: rgba(0, 67, 112, 0.03); border: 1px solid rgba(0, 67, 112, 0.1); margin-top: 40px; border-radius: 8px;">
+              <h4 class="text-label-caps text-primary mb-2" style="font-size: 10px; font-weight: 700; color: #004370; text-transform: uppercase; margin: 0 0 8px 0;">Ayuda</h4>
+              <p class="text-[12px] text-text-secondary leading-relaxed" style="font-size: 12px; margin: 0; color: #5C6B73;">
+                Si tiene dudas sobre las observaciones, contacte al analista asignado a través de Teams o correo corporativo.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    @} @else {
+      <div class="detail-page">
+        <!-- Breadcrumbs context -->
+        <div class="flex items-center gap-1.5 text-xs text-text-secondary mb-4 select-none">
+          <a routerLink="/solicitudes" class="hover:text-primary transition-colors cursor-pointer no-underline text-text-secondary">Solicitudes</a>
+          <span class="material-symbols-outlined text-[14px]">chevron_right</span>
+          <span class="text-text-main font-semibold">Resumen Estructurado</span>
+        </div>
+
+        <!-- Header Section -->
+        <div class="detail-header flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8">
+          <div class="detail-header-content">
+            <div class="detail-header-main">
+              <h2 class="detail-title font-headline-lg text-headline-lg text-primary mb-1">SOL-00{{ solicitud().solicitudId || solicitud().id }} · {{ solicitud().cargo || solicitud().nombreCargo }}</h2>
+              <p class="detail-subtitle text-text-secondary font-body-md text-body-md">
+                @if (isActingAsRrhh()) {
+                  RRHH - Resumen estructurado
+                } @else {
+                  Detalle de Solicitud · Área {{ solicitud().area || solicitud().areaSolicitante }}
+                }
+              </p>
+              <div class="detail-badges flex flex-wrap gap-2 items-center">
+                @if (solicitud().estadoCodigo === 'SOL-BOR' || solicitud().estadoNombre === 'Borrador') {
+                  <span class="detail-badge detail-badge-neutral px-3 py-1 bg-surface-container-high text-on-surface-variant border border-border-subtle rounded-full text-xs font-semibold flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm">edit_note</span>
+                    {{ solicitud().estadoNombre }}
+                  </span>
+                } @else if (solicitud().estadoCodigo === 'SOL-ENV' || isEstadoPendienteRevision()) {
+                  <span class="detail-badge detail-badge-blue px-3 py-1 chip-blue rounded-full text-xs font-semibold flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm animate-pulse" style="font-variation-settings: 'FILL' 1;">pending</span>
+                    {{ solicitud().estadoNombre }}
+                  </span>
+                } @else if (solicitud().estadoCodigo === 'SOL-OBS' || solicitud().estadoNombre === 'Con observaciones' || solicitud().estadoNombre === 'Observada') {
+                  <span class="detail-badge detail-badge-orange px-3 py-1 chip-orange rounded-full text-xs font-semibold flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">warning</span>
+                    {{ solicitud().estadoNombre }}
+                  </span>
+                } @else if (solicitud().estadoCodigo === 'SOL-RECH' || solicitud().estadoNombre === 'Rechazada' || solicitud().estadoNombre === 'Solicitud Rechazada') {
+                  <span class="detail-badge detail-badge-red px-3 py-1 chip-red rounded-full text-xs font-semibold flex items-center gap-1" style="background-color: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5;">
+                    <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1; color: #b91c1c;">cancel</span>
+                    {{ solicitud().estadoNombre }}
+                  </span>
+                } @else {
+                  <span class="detail-badge detail-badge-green px-3 py-1 chip-green rounded-full text-xs font-semibold flex items-center gap-1">
+                    <span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+                    {{ solicitud().estadoNombre }}
+                  </span>
+                }
+                <span class="detail-badge detail-badge-neutral px-3 py-1 bg-surface-container-high text-on-surface-variant border border-border-subtle rounded-full text-xs font-semibold">Prioridad: {{ solicitud().prioridad || 'Baja' }}</span>
+                <span class="detail-badge detail-badge-neutral px-3 py-1 bg-surface-container-high text-on-surface-variant border border-border-subtle rounded-full text-xs font-semibold">Registro: {{ (solicitud().createdDate || solicitud().fecha) | date:'dd/MM/yyyy' }}</span>
+              </div>
+            </div>
+            <div class="detail-header-meta" style="align-self: flex-end;">
+
+              <!-- Header Actions for RRHH -->
+              @if (isActingAsRrhh()) {
+                @if (isEstadoPendienteRevision()) {
+                  <div class="detail-header-actions">
+                    <button (click)="iniciarObservar()" class="detail-action-btn detail-action-observe">
+                      <span class="material-symbols-outlined">rate_review</span>
+                      <span>Observar</span>
+                    </button>
+                    <button (click)="iniciarRechazar()" class="detail-action-btn detail-action-reject">
+                      <span class="material-symbols-outlined">block</span>
+                      <span>Rechazar</span>
+                    </button>
+                    <button (click)="iniciarAprobar()" class="detail-action-btn detail-action-approve">
+                      <span class="material-symbols-outlined">task_alt</span>
+                      <span>Aprobar</span>
+                    </button>
+                  </div>
+                }
+              }
+
+              <!-- Header Actions for Solicitante (Subsanar Observación, Editar, Enviar a RRHH) -->
+              @if (isActingAsSolicitante()) {
+                @if (solicitud().estadoCodigo === 'SOL-OBS' || solicitud().estadoNombre === 'Solicitud Observada' || solicitud().estadoNombre === 'Observada' || solicitud().estadoNombre === 'Con observaciones') {
+                  <div class="detail-header-actions">
+                    <button [routerLink]="['/solicitudes/editar', solicitud().solicitudId || solicitud().id]" class="detail-action-btn detail-action-secondary">
+                      <span class="material-symbols-outlined">build</span>
+                      <span>Subsanar observación</span>
+                    </button>
+                  </div>
+                }
+                @if (solicitud().estadoCodigo === 'SOL-REG' || solicitud().estadoCodigo === 'SOL-PEN' || solicitud().estadoNombre === 'Solicitud Registrada' || solicitud().estadoNombre === 'Solicitud Pendiente' || solicitud().estadoNombre === 'Borrador') {
+                  <div class="detail-header-actions">
+                    <button [routerLink]="['/solicitudes/editar', solicitud().solicitudId || solicitud().id]" class="detail-action-btn detail-action-secondary">
+                      <span class="material-symbols-outlined">edit</span>
+                      <span>Editar solicitud</span>
+                    </button>
+                    <button (click)="enviarARrhh()" class="detail-action-btn detail-action-primary">
+                      <span class="material-symbols-outlined">send</span>
+                      <span>Enviar a RRHH</span>
+                    </button>
+                  </div>
+                }
+              }
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-layout grid grid-cols-12 gap-container-gap">
+          <!-- Left Column: Primary Content -->
+          <div class="detail-main col-span-12 lg:col-span-8 space-y-container-gap">
+            <!-- Success Banner -->
+            @if (solicitud().estadoNombre === 'Aprobada para perfil' || solicitud().estadoNombre === 'Aprobada') {
+              <section class="detail-status-banner detail-status-approved bg-success-container border border-success/20 rounded-xl p-padding-card flex gap-4">
+                <span class="material-symbols-outlined text-success text-3xl">task_alt</span>
+                <div>
+                  <h3 class="text-success font-headline-sm text-headline-sm mb-1">Solicitud aprobada</h3>
+                  <p class="text-on-surface-variant font-body-md text-body-md">
+                    La información de la solicitud ha sido validada. La siguiente etapa es la estructuración del perfil de vacante.
+                  </p>
+                </div>
+              </section>
+            }
+
+            <!-- Approval/Observation Context (Only if Approved or Observed) -->
+            @if (solicitud().estadoNombre === 'Aprobada' || solicitud().estadoNombre === 'Aprobada para perfil' || solicitud().estadoNombre === 'Observada' || solicitud().estadoNombre === 'Con observaciones') {
+              <div class="detail-card detail-context-card bg-surface-white border border-border-subtle rounded-xl p-padding-card">
+                <h4 class="detail-card-title detail-card-title-muted font-label-caps text-label-caps text-text-secondary uppercase mb-4">
+                  {{ (solicitud().estadoNombre === 'Observada' || solicitud().estadoNombre === 'Con observaciones') ? 'Datos de observación' : 'Datos de aprobación' }}
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div class="detail-field">
+                    <p class="detail-field-label text-[11px] uppercase tracking-wider font-bold text-text-secondary mb-1">Comentario / Observaciones</p>
+                    @if (solicitud().observacionesRrhh && solicitud().observacionesRrhh.length > 0) {
+                      <div class="space-y-1 mt-1">
+                        @for (obs of solicitud().observacionesRrhh; track obs.observacionId) {
+                          <p class="text-sm text-text-main italic m-0">• {{ obs.observacion }}</p>
+                        }
+                      </div>
+                    } @else {
+                      <p class="detail-field-value text-sm text-text-main italic">"{{ solicitud().comentario || 'Sin comentarios registrados.' }}"</p>
+                    }
+                  </div>
+                  <div class="detail-field">
+                    <p class="detail-field-label text-[11px] uppercase tracking-wider font-bold text-text-secondary mb-1">Responsable</p>
+                    <p class="detail-field-value text-sm text-text-main font-semibold">{{ solicitud().modifiedBy || 'Juan Delgado' }}</p>
+                    <p class="text-xs text-text-secondary mt-0.5">Fecha: {{ (solicitud().lastModifiedDate || solicitud().createdDate || solicitud().fecha) | date:'dd/MM/yyyy HH:mm' }}</p>
+                  </div>
+                </div>
+              </div>
+            }
+
+            <!-- Details Card -->
+            <div class="detail-card bg-surface-white border border-border-subtle rounded-xl p-padding-card">
+              <h3 class="detail-card-title font-headline-sm text-headline-sm text-primary mb-6 flex items-center gap-2">
+                <span class="material-symbols-outlined">badge</span>
+                Detalle del requerimiento
+              </h3>
+
+              <!-- Grupo 1: Puesto y Posición -->
+              <div class="detail-group-section mb-6">
+                <h4 class="detail-group-title">
+                  <span class="material-symbols-outlined">work</span>
+                  Puesto y Posición
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-y-5 gap-x-6">
+                  @if (hasValue(solicitud().cargo)) {
+                    <div class="detail-field" style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+                      <span class="detail-field-label" style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">CARGO REQUERIDO</span>
+                      <span class="detail-field-value" style="display: block; font-size: 14px; font-weight: 600; color: #1f2933; line-height: 1.4; word-break: break-word;">{{ solicitud().cargo }}</span>
+                    </div>
+                  }
+                  @if (hasValue(solicitud().area)) {
+                    <div class="detail-field" style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+                      <span class="detail-field-label" style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">ÁREA SOLICITANTE</span>
+                      <span class="detail-field-value" style="display: block; font-size: 14px; font-weight: 600; color: #1f2933; line-height: 1.4; word-break: break-word;">{{ solicitud().area }}</span>
+                    </div>
+                  }
+                  @if (hasValue(solicitud().seniority)) {
+                    <div class="detail-field" style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+                      <span class="detail-field-label" style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">SENIORITY</span>
+                      <span class="detail-field-value" style="display: block; font-size: 14px; font-weight: 600; color: #1f2933; line-height: 1.4; word-break: break-word;">{{ solicitud().seniority }}</span>
+                    </div>
+                  }
+                  @if (hasValue(solicitud().cantidadVacantes)) {
+                    <div class="detail-field" style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+                      <span class="detail-field-label" style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">CANTIDAD DE VACANTES</span>
+                      <span class="detail-field-value" style="display: block; font-size: 14px; font-weight: 600; color: #1f2933; line-height: 1.4; word-break: break-word;">{{ solicitud().cantidadVacantes }}</span>
+                    </div>
+                  }
+                  @if (hasValue(solicitud().tipoSolicitud)) {
+                    <div class="detail-field" style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+                      <span class="detail-field-label" style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">TIPO DE SOLICITUD</span>
+                      <span class="detail-field-value" style="display: block; font-size: 14px; font-weight: 600; color: #1f2933; line-height: 1.4; word-break: break-word;">{{ solicitud().tipoSolicitud?.nombre }}</span>
+                    </div>
+                  }
+                  @if (hasValue(solicitud().prioridad)) {
+                    <div class="detail-field" style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+                      <span class="detail-field-label" style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">PRIORIDAD</span>
+                      <span class="detail-field-value" style="display: block; font-size: 14px; font-weight: 600; color: #1f2933; line-height: 1.4; word-break: break-word;">{{ solicitud().prioridad }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Grupo 2: Condiciones y Ubicación -->
+              <div class="detail-group-section mb-6">
+                <h4 class="detail-group-title">
+                  <span class="material-symbols-outlined">location_on</span>
+                  Condiciones y Ubicación
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-y-5 gap-x-6">
+                  @if (hasValue(solicitud().regional)) {
+                    <div class="detail-field" style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+                      <span class="detail-field-label" style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">REGIONAL / UBICACIÓN</span>
+                      <span class="detail-field-value" style="display: block; font-size: 14px; font-weight: 600; color: #1f2933; line-height: 1.4; word-break: break-word;">{{ solicitud().regional?.nombre }}</span>
+                    </div>
+                  }
+                  @if (hasValue(solicitud().modalidadTrabajo)) {
+                    <div class="detail-field" style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+                      <span class="detail-field-label" style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">MODALIDAD</span>
+                      <span class="detail-field-value" style="display: block; font-size: 14px; font-weight: 600; color: #1f2933; line-height: 1.4; word-break: break-word;">{{ solicitud().modalidadTrabajo?.nombre }}</span>
+                    </div>
+                  }
+                  @if (hasValue(solicitud().jornada)) {
+                    <div class="detail-field" style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+                      <span class="detail-field-label" style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">JORNADA LABORAL</span>
+                      <span class="detail-field-value" style="display: block; font-size: 14px; font-weight: 600; color: #1f2933; line-height: 1.4; word-break: break-word;">{{ solicitud().jornada }}</span>
+                    </div>
+                  }
+                  @if (hasValue(solicitud().fechaIdeal)) {
+                    <div class="detail-field" style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+                      <span class="detail-field-label" style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">FECHA IDEAL INGRESO</span>
+                      <span class="detail-field-value" style="display: block; font-size: 14px; font-weight: 600; color: #1f2933; line-height: 1.4; word-break: break-word;">{{ solicitud().fechaIdeal | date:'dd/MM/yyyy' }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Grupo 3: Detalle Administrativo -->
+              <div class="detail-group-section mb-6">
+                <h4 class="detail-group-title">
+                  <span class="material-symbols-outlined">assignment_ind</span>
+                  Detalle Administrativo
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-y-5 gap-x-6">
+                  @if (hasValue(solicitud().solicitanteNombre)) {
+                    <div class="detail-field" style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+                      <span class="detail-field-label" style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">RESPONSABLE</span>
+                      <span class="detail-field-value" style="display: block; font-size: 14px; font-weight: 600; color: #1f2933; line-height: 1.4; word-break: break-word;">{{ solicitud().solicitanteNombre }}</span>
+                    </div>
+                  }
+                  @if (hasValue(solicitud().motivo)) {
+                    <div class="detail-field" style="display: flex; flex-direction: column; gap: 3px; min-width: 0;">
+                      <span class="detail-field-label" style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">MOTIVO DE LA SOLICITUD</span>
+                      <span class="detail-field-value" style="display: block; font-size: 14px; font-weight: 600; color: #1f2933; line-height: 1.4; word-break: break-word;">{{ solicitud().motivo }}</span>
+                    </div>
+                  }
+                </div>
+              </div>
+
+              <!-- Grid de 2 Bloques: Objetivo Principal y Funciones Principales -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                <!-- Objetivo Principal -->
+                @if (solicitud().objetivoCargo) {
+                  <div class="highlight-box" style="background-color: #fafbfc; border: 1px solid #e2e8f0; border-left: 4px solid #004370; border-radius: 10px; padding: 20px 24px; display: flex; gap: 14px; align-items: flex-start; height: 100%; box-sizing: border-box; min-width: 0; overflow: hidden;">
+                    <span class="material-symbols-outlined" style="color: #004370; font-size: 20px; margin-top: 2px; flex-shrink: 0;">target</span>
+                    <div class="highlight-content" style="flex: 1; min-width: 0;">
+                      <span class="detail-field-label" style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">OBJETIVO PRINCIPAL DEL CARGO</span>
+                      <p style="font-size: 14px; font-weight: 500; color: #1f2933; line-height: 1.55; margin: 0; word-break: break-word; overflow-wrap: anywhere;">
+                        {{ solicitud().objetivoCargo }}
+                      </p>
+                    </div>
+                  </div>
+                }
+
+                <!-- Funciones Principales -->
+                <div class="highlight-box" style="background-color: #fafbfc; border: 1px solid #e2e8f0; border-left: 4px solid #004370; border-radius: 10px; padding: 20px 24px; display: flex; gap: 14px; align-items: flex-start; height: 100%; box-sizing: border-box; min-width: 0; overflow: hidden;">
+                  <span class="material-symbols-outlined" style="color: #004370; font-size: 20px; margin-top: 2px; flex-shrink: 0;">fact_check</span>
+                  <div class="highlight-content" style="flex: 1; min-width: 0;">
+                    <span class="detail-field-label" style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">FUNCIONES PRINCIPALES</span>
+                    <ul class="detail-clean-list">
+                      @for (func of formatArrayOrText(solicitud().funciones); track func) {
+                        <li>
+                          <span class="material-symbols-outlined list-bullet-icon">arrow_right</span>
+                          <span class="list-item-text">{{ func }}</span>
+                        </li>
+                      } @empty {
+                        <li style="color: #64748b; font-size: 13.5px; font-style: italic;">No se especificaron funciones en la solicitud.</li>
+                      }
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Requirements/Skills Card -->
+            <div class="detail-card bg-surface-white border border-border-subtle rounded-xl p-padding-card">
+              <h3 class="detail-card-title font-headline-sm text-headline-sm text-primary mb-6 flex items-center gap-2">
+                <span class="material-symbols-outlined">style</span>
+                Requisitos y Competencias
+              </h3>
+              
+              <div class="requisitos-seccion-bloques space-y-6">
+                <!-- 1. Bloque: Formación y Experiencia -->
+                @if (hasValue(solicitud().formacionAcademica) || hasValue(solicitud().educacion) || hasValue(solicitud().experienciaMinima) || hasValue(solicitud().experienciaIndispensable) || hasValue(solicitud().disponibilidadRequerida)) {
+                  <div class="detail-group-section mb-6" style="padding: 24px 28px;">
+                    <h4 class="detail-group-title">
+                      <span class="material-symbols-outlined">school</span>
+                      Formación y Experiencia
+                    </h4>
+                    <div class="formacion-experiencia-grid">
+                      @if (hasValue(solicitud().formacionAcademica)) {
+                        <div class="detail-field" style="display: flex; flex-direction: column; gap: 5px; min-width: 0;">
+                          <span class="detail-field-label" style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">FORMACIÓN ACADÉMICA</span>
+                          <span class="detail-field-value" style="display: block; font-size: 14px; font-weight: 500; color: #1f2933; line-height: 1.55; word-break: break-word; overflow-wrap: anywhere;">{{ solicitud().formacionAcademica }}</span>
+                        </div>
+                      } @else if (hasValue(solicitud().educacion)) {
+                        <div class="detail-field" style="display: flex; flex-direction: column; gap: 5px; min-width: 0;">
+                          <span class="detail-field-label" style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">FORMACIÓN ACADÉMICA (EDUCACIÓN)</span>
+                          <span class="detail-field-value" style="display: block; font-size: 14px; font-weight: 500; color: #1f2933; line-height: 1.55; word-break: break-word; overflow-wrap: anywhere;">{{ solicitud().educacion }}</span>
+                        </div>
+                      }
+
+                      @if (hasValue(solicitud().experienciaMinima)) {
+                        <div class="detail-field" style="display: flex; flex-direction: column; gap: 5px; min-width: 0;">
+                          <span class="detail-field-label" style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">EXPERIENCIA MÍNIMA</span>
+                          <span class="detail-field-value" style="display: block; font-size: 14px; font-weight: 500; color: #1f2933; line-height: 1.55; word-break: break-word; overflow-wrap: anywhere;">{{ solicitud().experienciaMinima }}</span>
+                        </div>
+                      }
+
+                      @if (hasValue(solicitud().experienciaIndispensable)) {
+                        <div class="detail-field" style="display: flex; flex-direction: column; gap: 5px; min-width: 0;">
+                          <span class="detail-field-label" style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">EXPERIENCIA INDISPENSABLE / REQUERIDA</span>
+                          <span class="detail-field-value" style="display: block; font-size: 14px; font-weight: 500; color: #1f2933; line-height: 1.55; word-break: break-word; overflow-wrap: anywhere;">{{ solicitud().experienciaIndispensable }}</span>
+                        </div>
+                      }
+
+                      @if (hasValue(solicitud().disponibilidadRequerida)) {
+                        <div class="detail-field" style="display: flex; flex-direction: column; gap: 5px; min-width: 0;">
+                          <span class="detail-field-label" style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 2px;">DISPONIBILIDAD REQUERIDA</span>
+                          <span class="detail-field-value" style="display: block; font-size: 14px; font-weight: 500; color: #1f2933; line-height: 1.55; word-break: break-word; overflow-wrap: anywhere;">{{ solicitud().disponibilidadRequerida }}</span>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+
+                <!-- 2. Bloque: Conocimientos y Herramientas -->
+                @if (hasValue(solicitud().conocimientosTecnicos) || hasValue(solicitud().skillsList) || hasValue(solicitud().herramientasSistemas) || hasValue(solicitud().competenciasClave)) {
+                  <div class="detail-group-section mb-6" style="padding: 24px 28px;">
+                    <h4 class="detail-group-title">
+                      <span class="material-symbols-outlined">construction</span>
+                      Conocimientos y Herramientas
+                    </h4>
+                    <div class="skill-groups-container">
+                      <!-- Conocimientos Técnicos -->
+                      @if (hasValue(solicitud().conocimientosTecnicos) && formatArrayOrText(solicitud().conocimientosTecnicos).length > 0) {
+                        <div>
+                          <span class="detail-field-label" style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">CONOCIMIENTOS TÉCNICOS</span>
+                          <ul class="detail-clean-list">
+                            @for (item of formatArrayOrText(solicitud().conocimientosTecnicos); track item) {
+                              <li>
+                                <span class="material-symbols-outlined list-bullet-icon">arrow_right</span>
+                                <span class="list-item-text">{{ item }}</span>
+                              </li>
+                            }
+                          </ul>
+                        </div>
+                      } @else if (hasValue(solicitud().skillsList) && solicitud().skillsList.length > 0) {
+                        <div>
+                          <span class="detail-field-label" style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">HABILIDADES DETECTADAS</span>
+                          <ul class="detail-clean-list">
+                            @for (req of solicitud().skillsList; track req) {
+                              <li>
+                                <span class="material-symbols-outlined list-bullet-icon">arrow_right</span>
+                                <span class="list-item-text">{{ req }}</span>
+                              </li>
+                            }
+                          </ul>
+                        </div>
+                      }
+
+                      <!-- Herramientas y Sistemas -->
+                      @if (hasValue(solicitud().herramientasSistemas) && formatArrayOrText(solicitud().herramientasSistemas).length > 0) {
+                        <div>
+                          <span class="detail-field-label" style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">HERRAMIENTAS Y SISTEMAS</span>
+                          <ul class="detail-clean-list">
+                            @for (item of formatArrayOrText(solicitud().herramientasSistemas); track item) {
+                              <li>
+                                <span class="material-symbols-outlined list-bullet-icon">arrow_right</span>
+                                <span class="list-item-text">{{ item }}</span>
+                              </li>
+                            }
+                          </ul>
+                        </div>
+                      }
+
+                      <!-- Competencias Clave -->
+                      @if (hasValue(solicitud().competenciasClave) && formatArrayOrText(solicitud().competenciasClave).length > 0) {
+                        <div>
+                          <span class="detail-field-label" style="display: block; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">COMPETENCIAS CLAVE</span>
+                          <ul class="detail-clean-list">
+                            @for (item of formatArrayOrText(solicitud().competenciasClave); track item) {
+                              <li>
+                                <span class="material-symbols-outlined list-bullet-icon">arrow_right</span>
+                                <span class="list-item-text">{{ item }}</span>
+                              </li>
+                            }
+                          </ul>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                }
+
+                <!-- 3. Bloque: Criterios Especiales (Excluyentes y Deseables) -->
+                @if (hasValue(solicitud().criteriosExcluyentes) || hasValue(solicitud().criteriosDeseables)) {
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Excluyentes -->
+                    @if (hasValue(solicitud().criteriosExcluyentes)) {
+                      <div class="criterios-box excluyentes-box" style="background-color: #fef2f2; border: 1px solid #fecaca; border-left: 4px solid #ef4444; border-radius: 10px; padding: 22px 24px; display: flex; flex-direction: column; height: 100%; box-sizing: border-box; min-width: 0; overflow: hidden;">
+                        <h4 class="sub-card-title flex items-center gap-2 mb-4 pb-2" style="margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid rgba(239, 68, 68, 0.15);">
+                          <span class="material-symbols-outlined" style="font-size: 20px; color: #dc2626;">block</span>
+                          <span style="font-size: 12px; font-weight: 750; color: #991b1b; text-transform: uppercase; letter-spacing: 0.05em;">CRITERIOS EXCLUYENTES</span>
+                        </h4>
+                        <p style="margin: 0; font-size: 14px; font-weight: 500; line-height: 1.65; color: #7f1d1d; text-align: left; white-space: pre-line; word-break: break-word; overflow-wrap: anywhere;">
+                          {{ formatTextParagraph(solicitud().criteriosExcluyentes) }}
+                        </p>
+                      </div>
+                    }
+
+                    <!-- Deseables -->
+                    @if (hasValue(solicitud().criteriosDeseables)) {
+                      <div class="criterios-box deseables-box" style="background-color: #f0fdf4; border: 1px solid #bbf7d0; border-left: 4px solid #10b981; border-radius: 10px; padding: 22px 24px; display: flex; flex-direction: column; height: 100%; box-sizing: border-box; min-width: 0; overflow: hidden;">
+                        <h4 class="sub-card-title flex items-center gap-2 mb-4 pb-2" style="margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid rgba(16, 185, 129, 0.15);">
+                          <span class="material-symbols-outlined" style="font-size: 20px; color: #059669;">verified</span>
+                          <span style="font-size: 12px; font-weight: 750; color: #166534; text-transform: uppercase; letter-spacing: 0.05em;">CRITERIOS DESEABLES</span>
+                        </h4>
+                        <p style="margin: 0; font-size: 14px; font-weight: 500; line-height: 1.65; color: #14532d; text-align: left; white-space: pre-line; word-break: break-word; overflow-wrap: anywhere;">
+                          {{ formatTextParagraph(solicitud().criteriosDeseables) }}
+                        </p>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Documentación de la Solicitud Card (Estilo idéntico a Perfiles) -->
+            <div class="documento-tarjeta-contenedor" style="background: #ffffff; border: 1px solid #d9e2ec; border-radius: 12px; padding: 20px 24px; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04); display: flex; flex-direction: column; gap: 16px; width: 100%; box-sizing: border-box;">
+              <!-- Cabecera -->
+              <div class="documento-cabecera" style="display: flex; align-items: flex-start; gap: 12px;">
+                <span class="material-symbols-outlined icono-documento" style="font-size: 32px; color: #ef4444; flex-shrink: 0; font-variation-settings: 'FILL' 1;">picture_as_pdf</span>
+                <div class="documento-titulos" style="display: flex; flex-direction: column; gap: 2px; min-width: 0;">
+                  <h4 style="margin: 0; color: #1f2933; font-size: 15px; font-weight: 750;">Documentación de la solicitud</h4>
+                  <p style="margin: 0; color: #5c6b73; font-size: 12.5px; line-height: 1.4;">Consulte y descargue el documento de requerimientos completo de la solicitud en formato oficial PDF.</p>
+                </div>
+              </div>
+
+              <!-- Cuerpo / Metadata -->
+              <div class="documento-cuerpo" style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; background: #f8fafc; border: 1px solid #d9e2ec; border-radius: 6px; padding: 14px 16px; min-width: 0;">
+                <div class="info-documento-item" style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+                  <span class="info-label" style="color: #5c6b73; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em;">ARCHIVO:</span>
+                  <span class="info-valor" style="color: #1f2933; font-size: 13.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" [title]="'SOL-00' + (solicitud().solicitudId || solicitud().id) + '-v1.pdf'">
+                    SOL-00{{ solicitud().solicitudId || solicitud().id }}-v1.pdf
+                  </span>
+                </div>
+
+                <div class="info-documento-item" style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+                  <span class="info-label" style="color: #5c6b73; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em;">ESTADO:</span>
+                  <span class="info-valor badge-doc-estado" [style.color]="getPdfEstadoColor()" style="font-size: 13.5px; font-weight: 700;">
+                    {{ getPdfEstadoText() }}
+                  </span>
+                </div>
+
+                <div class="info-documento-item" style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">
+                  <span class="info-label" style="color: #5c6b73; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.02em;">FECHA DE GENERACIÓN:</span>
+                  <span class="info-valor" style="color: #1f2933; font-size: 13.5px; font-weight: 600;">
+                    @if (solicitud().pdfDocumentUrl) {
+                      {{ (solicitud().lastModifiedDate || solicitud().createdDate) | date:'dd/MM/yyyy HH:mm' }}
+                    } @else {
+                      {{ getPdfFechaText() }}
+                    }
+                  </span>
+                </div>
+              </div>
+
+              <!-- Acciones -->
+              <div class="documento-acciones" style="margin-top: 4px;">
+                @if (solicitud().pdfDocumentUrl) {
+                  <button
+                    type="button"
+                    (click)="descargarPdf($event)"
+                    class="boton-abrir-pdf inline-flex items-center gap-2 cursor-pointer"
+                    style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 6px; font-size: 13.5px; font-weight: 600; color: #004370; border: 1px solid #004370; background: #ffffff; cursor: pointer; transition: all 0.15s ease;"
+                    [title]="getPdfTooltipText()"
+                  >
+                    <span class="material-symbols-outlined text-[18px]">open_in_new</span>
+                    <span>Abrir documento</span>
+                  </button>
+                } @else if (isPollingPdf()) {
+                  <button
+                    type="button"
+                    disabled
+                    class="boton-abrir-pdf inline-flex items-center gap-2"
+                    style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 6px; font-size: 13.5px; font-weight: 600; color: #0284c7; border: 1px solid #bae6fd; background: #f0f9ff; cursor: wait;"
+                    [title]="getPdfTooltipText()"
+                  >
+                    <span class="material-symbols-outlined text-[18px] animate-spin">sync</span>
+                    <span>Generando documento PDF...</span>
+                  </button>
+                } @else {
+                  <button
+                    type="button"
+                    disabled
+                    class="boton-abrir-pdf deshabilitado inline-flex items-center gap-2"
+                    style="display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 6px; font-size: 13.5px; font-weight: 600; color: #94a3b8; border: 1px solid #e2e8f0; background: #f8fafc; cursor: not-allowed;"
+                    [title]="getPdfTooltipText()"
+                  >
+                    <span class="material-symbols-outlined text-[18px]">open_in_new</span>
+                    <span>Documento no disponible</span>
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+
+        <!-- Right Column: Sidebar content -->
+        <div class="detail-sidebar col-span-12 lg:col-span-4 space-y-container-gap">
+          <!-- Análisis del Agente Card -->
+          <div class="agent-analysis-card" style="border: 1px solid #b8d9f5; background-color: #f0f7fc; border-radius: 12px; padding: 22px 24px; box-shadow: 0 1px 3px rgba(0, 67, 112, 0.03);">
+            <!-- Header -->
+            <div class="agent-analysis-header flex items-center justify-between gap-3" style="margin-bottom: 20px;">
+              <h3 class="agent-analysis-title font-headline-sm text-primary flex items-center gap-2 m-0" style="font-size: 15px; font-weight: 750; color: #004370;">
+                <span class="material-symbols-outlined text-[20px]" style="color: #004370;">auto_awesome</span>
+                Análisis del agente
+              </h3>
+              <span class="agent-analysis-badge inline-flex items-center text-white font-bold leading-none whitespace-nowrap" style="background-color: #004370; color: #ffffff; border-radius: 9999px; font-size: 10px; padding: 4px 12px; letter-spacing: 0.05em;">
+                IA COMPLETA
+              </span>
+            </div>
+
+            <!-- Metrics 3-Column Grid -->
+            <div class="agent-analysis-metrics" style="display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: stretch; gap: 0;">
+              <!-- Col 1: Confianza de captura -->
+              <div class="agent-analysis-metric min-w-0" style="display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0 6px;">
+                <div style="height: 32px; display: flex; align-items: center; justify-content: center; width: 100%;">
+                  <p class="agent-analysis-value text-primary font-bold m-0" style="font-size: 22px; font-weight: 800; color: #004370; line-height: 1;">
+                    {{ solicitud().completitudPorcentaje != null ? (solicitud().completitudPorcentaje | number:'1.0-0') + '%' : '92%' }}
+                  </p>
+                </div>
+                <p class="agent-analysis-label uppercase m-0" style="font-size: 10px; font-weight: 700; color: #64748b; letter-spacing: 0.04em; margin-top: 8px; line-height: 1.25;">
+                  Confianza<br>de captura
+                </p>
+              </div>
+
+              <!-- Divider 1 -->
+              <span aria-hidden="true" style="display: block; width: 1px; background-color: rgba(0, 67, 112, 0.15); margin: 2px 0;"></span>
+
+              <!-- Col 2: Campos detectados -->
+              <div class="agent-analysis-metric min-w-0" style="display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0 6px;">
+                <div style="height: 32px; display: flex; align-items: center; justify-content: center; width: 100%;">
+                  <p class="agent-analysis-value text-primary font-bold m-0" style="font-size: 22px; font-weight: 800; color: #004370; line-height: 1;">
+                    {{ (solicitud().camposDetectados != null && solicitud().camposEsperados != null) ? solicitud().camposDetectados + '/' + solicitud().camposEsperados : '18/20' }}
+                  </p>
+                </div>
+                <p class="agent-analysis-label uppercase m-0" style="font-size: 10px; font-weight: 700; color: #64748b; letter-spacing: 0.04em; margin-top: 8px; line-height: 1.25;">
+                  Campos<br>detectados
+                </p>
+              </div>
+
+              <!-- Divider 2 -->
+              <span aria-hidden="true" style="display: block; width: 1px; background-color: rgba(0, 67, 112, 0.15); margin: 2px 0;"></span>
+
+              <!-- Col 3: Estado de captura -->
+              <div class="agent-analysis-metric min-w-0" style="display: flex; flex-direction: column; align-items: center; text-align: center; padding: 0 6px;">
+                <div style="height: 32px; display: flex; align-items: center; justify-content: center; width: 100%;">
+                  <p class="agent-analysis-value text-primary font-bold m-0" style="font-size: 13px; font-weight: 800; color: #004370; line-height: 1; text-transform: uppercase; letter-spacing: 0.02em;" [title]="solicitud().captureState || 'OK'">
+                    {{ solicitud().captureState || 'OK' }}
+                  </p>
+                </div>
+                <p class="agent-analysis-label uppercase m-0" style="font-size: 10px; font-weight: 700; color: #64748b; letter-spacing: 0.04em; margin-top: 8px; line-height: 1.25;">
+                  Estado de<br>captura
+                </p>
+              </div>
+            </div>
+
+            <!-- Description -->
+            <p class="agent-analysis-description m-0" style="font-size: 13px; line-height: 1.6; color: #1e293b; font-style: italic; margin-top: 20px; padding-top: 16px; border-top: 1px solid rgba(0, 67, 112, 0.1);">
+              "{{ solicitud().profileSummary || 'La solicitud es consistente y suficiente para revisión inicial. Se detectan campos pendientes que deben validarse antes de aprobar.' }}"
+            </p>
+          </div>
+
+          <!-- Timeline Section -->
+          <div class="detail-card detail-timeline-card bg-surface-white border border-border-subtle rounded-xl p-padding-card" style="position: relative; box-sizing: border-box;">
+            <h3 class="detail-card-title font-headline-sm text-headline-sm text-primary mb-5" style="font-size: 16px; font-weight: 700; color: #004370; margin-bottom: 20px;">
+              @if (isActingAsRrhh()) {
+                RRHH - Trazabilidad completa de solicitud
+              } @else {
+                Seguimiento de la solicitud
+              }
+            </h3>
+            <div class="detail-timeline" style="position: relative; display: flex; flex-direction: column; gap: 24px; margin-top: 12px; box-sizing: border-box;">
+              <!-- Línea vertical conectora -->
+              <div class="detail-timeline-line" style="position: absolute; left: 21px; top: 18px; bottom: 18px; width: 2px; background-color: #cbd5e1; z-index: 1;"></div>
+
+              @for (item of historial(); track item.historyId; let first = $first; let last = $last) {
+                <div class="detail-timeline-item" style="position: relative; display: flex; align-items: flex-start; gap: 16px; z-index: 2;">
+                  <div class="detail-timeline-marker"
+                       [class]="first ? (isWhatsAppOrigin(item) ? 'detail-timeline-marker-complete' : 'detail-timeline-marker-current') : getMarkerClass(item.estadoNuevo, last)"
+                       [style.background-color]="getTimelineItemColor(item, first)"
+                       style="width: 36px; height: 36px; min-width: 36px; min-height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 0 0 3px #ffffff; z-index: 3; border: none !important; outline: none !important;">
+                    @if (first && isWhatsAppOrigin(item)) {
+                      <svg class="w-3.5 h-3.5 fill-current text-white shrink-0" viewBox="0 0 24 24" style="width: 15px; height: 15px; fill: #ffffff; display: block;">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414-.074-.124-.272-.198-.57-.347zM12 2a10 10 0 0 0-8.47 15.319L2 22l4.821-1.464A10 10 0 1 0 12 2zm0 18a8 8 0 0 1-4.275-1.229l-.307-.184-2.854.867.88-2.784-.202-.321A8 8 0 1 1 12 20z"/>
+                      </svg>
+                    } @else {
+                      <span class="material-symbols-outlined" style="font-size: 15px; line-height: 1; display: flex; align-items: center; justify-content: center; color: #fff;">
+                        {{ getTimelineItemIcon(item, first) }}
+                      </span>
+                    }
+                  </div>
+                  <div class="detail-timeline-content" style="flex: 1; min-width: 0; padding-top: 2px;">
+                    <div style="display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-bottom: 4px;">
+                      <h4 class="detail-timeline-title" style="font-size: 14px; font-weight: 700; color: #1f2933; margin: 0; line-height: 1.35; display: inline-block;">
+                        @if (item.estadoAnterior) {
+                          {{ item.estadoAnterior }} &rarr; {{ item.estadoNuevo }}
+                        } @else {
+                          {{ item.estadoNuevo }}
+                        }
+                      </h4>
+                      @if (first && getTimelineItemCanalBadge(item, first); as badge) {
+                        <span style="display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; padding: 3px 10px; margin-left: 12px; border-radius: 9999px; vertical-align: middle; line-height: 1.1; white-space: nowrap; letter-spacing: 0.2px; box-shadow: 0 1px 2px rgba(0,0,0,0.04);"
+                              [style.color]="badge.color"
+                              [style.background-color]="badge.bg"
+                              [style.border]="'1px solid ' + badge.border">
+                          {{ badge.texto }}
+                        </span>
+                      }
+                    </div>
+                    <p class="detail-timeline-meta" style="font-size: 12.5px; color: #64748b; margin: 0 0 4px 0; line-height: 1.4;">
+                      {{ item.fechaCambio | date:'dd/MM/yyyy HH:mm' }} &middot; {{ getActorNombre(item, first) }}
+                      ({{ getActorRol(item, first) }})
+                    </p>
+                    <span class="detail-timeline-badge" style="font-size: 11px; font-weight: 600; color: #475569; background-color: #f1f5f9; border: 1px solid #e2e8f0; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-top: 2px; margin-bottom: 4px;">
+                      Iteración: {{ item.iteracion || 1 }}
+                    </span>
+                    @if (item.justificacion || getJustificacion(item, first)) {
+                      <span class="detail-timeline-status"
+                            [style.color]="getEstadoColor(item.estadoNuevo)"
+                            style="font-size: 12.5px; font-weight: 700; margin-top: 4px; display: block; line-height: 1.4; text-transform: uppercase; word-break: break-word; overflow-wrap: anywhere;">
+                        "{{ getJustificacion(item, first) }}"
+                      </span>
+                    }
+                  </div>
+                </div>
+              } @empty {
+                <div class="text-center py-6 text-text-secondary text-xs" style="text-align: center; padding: 24px 0; color: #64748b; font-size: 13px;">
+                  No hay transiciones de estado registradas.
+                </div>
+              }
+            </div>
+          </div>
+
+          <!-- Info Box -->
+          <div class="detail-info-card bg-primary/5 border border-primary/20 rounded-xl p-padding-card">
+            <div class="flex items-center gap-2 text-primary mb-2">
+              <span class="material-symbols-outlined text-xl">info</span>
+              <h4 class="font-label-md text-label-md">Nota Informativa</h4>
+            </div>
+            <p class="text-xs text-on-surface-variant leading-relaxed">
+              Como solicitante, usted será notificado una vez que el perfil sea estructurado para su validación final antes de la publicación externa.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer Actions -->
+      <div class="detail-actions">
+        <button (click)="volver()" class="detail-action-btn detail-action-secondary">
+          <span class="material-symbols-outlined">arrow_back</span>
+          <span>Volver a solicitudes</span>
+        </button>
+
+        @if (isActingAsRrhh()) {
+          @if (isEstadoPendienteRevision()) {
+            <button (click)="iniciarObservar()" class="detail-action-btn detail-action-observe">
+              <span class="material-symbols-outlined">rate_review</span>
+              <span>RRHH - Registrar Observación</span>
+            </button>
+            <button (click)="iniciarAprobar()" class="detail-action-btn detail-action-approve">
+              <span class="material-symbols-outlined">task_alt</span>
+              <span>RRHH - Aprobar Solicitud</span>
+            </button>
+          }
+        }
+
+        <button (click)="showTrazabilidad.set(true)" class="detail-action-btn detail-action-link">
+          <span>
+            @if (isActingAsRrhh()) {
+              RRHH - Trazabilidad completa de solicitud
+            } @else {
+              Ver trazabilidad completa
+            }
+          </span>
+          <span class="material-symbols-outlined">open_in_new</span>
+        </button>
+      </div>
+      </div>
+    }
+
+    <!-- Dialog Templates -->
+    <ng-template #observarDialog>
+      <div class="action-modal action-modal-observe bg-surface-white w-full overflow-hidden flex flex-col shadow-xl" style="border-radius: 12px; background-color: #ffffff; width: 100%; max-width: 100%; box-sizing: border-box;">
+        <!-- Modal Header -->
+        <div class="action-modal-header border-b border-border-subtle flex justify-between items-start" style="padding: 24px 28px 18px 28px; box-sizing: border-box;">
+          <div class="flex items-start gap-4 flex-1 min-w-0" style="align-items: flex-start; gap: 16px;">
+            <div class="action-modal-icon flex items-center justify-center shrink-0" style="width: 44px; height: 44px; min-width: 44px; min-height: 44px; flex: 0 0 44px; align-self: flex-start; background-color: #ffedd5; color: #ea580c; border-radius: 10px;">
+              <span class="material-symbols-outlined" style="font-size: 22px; width: 22px; height: 22px; line-height: 1; display: flex; align-items: center; justify-content: center; font-variation-settings: 'FILL' 1;">rate_review</span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <h3 class="action-modal-title font-headline-md text-headline-md text-text-main" style="font-size: 19px; font-weight: 700; line-height: 1.25; margin: 0; color: #1f2933;">Registrar observación</h3>
+              <p class="action-modal-subtitle font-body-md text-body-md text-text-secondary mt-1 leading-relaxed" style="font-size: 13.5px; font-weight: 400; margin: 4px 0 0 0; color: #5c6b73; line-height: 1.45;">
+                Registra una observación para dejar constancia de hallazgos o ajustes requeridos en la solicitud.
+              </p>
+            </div>
+          </div>
+          <button (click)="closeDialog()" class="action-modal-close material-symbols-outlined flex items-center justify-center transition-colors border-none bg-transparent cursor-pointer shrink-0" style="width: 32px; height: 32px; min-width: 32px; min-height: 32px; border: none; background: transparent; border-radius: 6px; cursor: pointer; color: #5c6b73; font-size: 20px; margin-left: 12px;" onmouseenter="this.style.backgroundColor='#f1f5f9'; this.style.color='#1f2933';" onmouseleave="this.style.backgroundColor='transparent'; this.style.color='#5c6b73';">close</button>
+        </div>
+
+        <!-- Modal Content Form -->
+        <div class="action-modal-body space-y-4" style="padding: 24px 28px; box-sizing: border-box; overflow: hidden; width: 100%;">
+          
+          <!-- Bloque Informativo de Tiempo y Costo -->
+          @if (costCheckData()) {
+            <div class="time-cost-info-block border flex flex-col gap-2.5 w-full"
+                 [style.background-color]="costCheckData().requiereConfirmacionWhatsapp ? '#fff7ed' : '#f0fdf4'"
+                 [style.border-color]="costCheckData().requiereConfirmacionWhatsapp ? '#ffedd5' : '#bbf7d0'"
+                 [style.color]="costCheckData().requiereConfirmacionWhatsapp ? '#9a3412' : '#166534'"
+                 style="font-size: 13.5px; border-radius: 10px; box-sizing: border-box; padding: 16px 20px; width: 100%;">
+              
+              <div class="flex flex-col gap-0.5">
+                <span style="font-weight: 700; text-transform: uppercase; font-size: 10px; opacity: 0.85; letter-spacing: 0.04em;">Última actualización del solicitante</span>
+                <span style="font-size: 15px; font-weight: 700;">{{ costCheckData().mensajeTiempo }}</span>
+              </div>
+              
+              <div class="flex gap-2.5 items-start" style="font-size: 13px; line-height: 1.45;">
+                <span class="material-symbols-outlined shrink-0 mt-0.5" style="font-size: 18px;" [style.color]="costCheckData().requiereConfirmacionWhatsapp ? '#ea580c' : '#22c55e'">
+                  {{ costCheckData().requiereConfirmacionWhatsapp ? 'warning' : 'check_circle' }}
+                </span>
+                <div style="font-size: 13px; line-height: 1.45;">
+                  @if (!costCheckData().requiereConfirmacionWhatsapp) {
+                    <span>La conversación de WhatsApp continúa activa.<br>El envío no generará costo adicional.</span>
+                  } @else {
+                    <span>Han transcurrido más de 24 horas.<br>Enviar una nueva notificación por WhatsApp tendrá un costo aproximado de <strong>USD 0,07</strong>.</span>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- Textarea: Comentario de RRHH -->
+          <div class="action-modal-field flex flex-col min-w-0 w-full" style="margin-top: 16px; width: 100%;">
+            <label class="action-modal-label font-label-md text-label-md text-text-main mb-2" style="font-size: 13px; font-weight: 700; color: #1f2933; display: block; margin-bottom: 8px;">Comentario de RRHH</label>
+            <textarea #obsComment class="action-modal-control w-full bg-surface-container-low border border-border-subtle rounded-lg px-4 py-3 text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all resize-none" placeholder="Describe el hallazgo o ajuste solicitado..." rows="4" style="font-size: 14px; border-radius: 8px; border: 1px solid #d9e2ec; min-height: 105px; height: 105px; box-sizing: border-box; width: 100%; max-width: 100%; font-family: inherit; color: #1f2933; line-height: 1.5;"></textarea>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="action-modal-footer bg-surface-container-low border-t border-border-subtle" style="display: flex; align-items: center; justify-content: flex-end; gap: 12px; padding: 18px 28px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; border-radius: 0 0 12px 12px; box-sizing: border-box; width: 100%;">
+          <button (click)="closeDialog()" class="detail-action-btn detail-action-secondary" style="height: 38px; min-height: 38px; border-radius: 6px; padding: 0 20px; font-size: 13px; font-weight: 700; cursor: pointer;">
+            Cancelar
+          </button>
+          <button (click)="confirmarObservacion(obsComment.value)" [disabled]="isSubmittingAction()" class="detail-action-btn detail-action-observe" style="height: 38px; min-height: 38px; border-radius: 6px; padding: 0 22px; font-size: 13px; font-weight: 700;" [style.cursor]="isSubmittingAction() ? 'not-allowed' : 'pointer'">
+            <span class="material-symbols-outlined text-[18px]">send</span>
+            {{ isSubmittingAction() ? 'Enviando...' : 'Enviar observación' }}
+          </button>
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template #costWarningDialog>
+      <div class="action-modal bg-surface-white w-full overflow-hidden flex flex-col shadow-xl animate-in fade-in duration-300" style="border-radius: 5px; background-color: #ffffff; max-width: 512px; box-sizing: border-box;">
+        <!-- Modal Header -->
+        <div class="action-modal-header border-b border-border-subtle flex justify-between items-start" style="padding: 22px 28px; box-sizing: border-box;">
+          <div class="flex gap-4 min-w-0">
+            <div class="action-modal-icon w-12 h-12 rounded-lg flex items-center justify-center shrink-0" style="background-color: #fee2e2; color: #b91c1c;">
+              <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">warning</span>
+            </div>
+            <div class="min-w-0">
+              <h3 class="action-modal-title font-headline-md text-headline-md text-text-main" style="font-size: 21px; font-weight: 700; line-height: 1.2; margin: 0;">Confirmación de costo de notificación</h3>
+            </div>
+          </div>
+          <button (click)="closeCostWarning(false)" class="action-modal-close material-symbols-outlined w-10 h-10 flex items-center justify-center text-outline hover:text-text-main hover:bg-surface-container-low transition-colors border-none bg-transparent cursor-pointer shrink-0" style="background-color: transparent; border-radius: 5px; cursor: pointer;">close</button>
+        </div>
+        <!-- Modal Content -->
+        <div class="action-modal-body space-y-4" style="padding: 22px 28px; box-sizing: border-box;">
+          <p class="text-body-md text-text-secondary leading-relaxed" style="font-size: 14px; margin: 0; color: #475569;">
+            Han transcurrido más de 24 horas desde la última actualización del solicitante. Enviar una nueva notificación por WhatsApp generará un costo aproximado de <strong>USD 0,07</strong>.
+          </p>
+        </div>
+        <!-- Modal Footer -->
+        <div class="action-modal-footer bg-surface-container-low border-t border-border-subtle" style="display: flex; align-items: center; justify-content: flex-end; gap: 12px; padding: 20px 28px; background-color: rgba(242, 244, 247, 0.5); box-sizing: border-box;">
+          <button (click)="closeCostWarning(false)" class="px-6 py-2.5 bg-surface-white border border-border-subtle rounded-lg font-label-md text-text-secondary hover:bg-surface-container-high hover:text-text-main transition-all active:scale-95 cursor-pointer" style="display: inline-flex; align-items: center; justify-content: center; min-height: 42px; border-radius: 5px; cursor: pointer;">
+            No enviar WhatsApp
+          </button>
+          <button (click)="closeCostWarning(true)" class="px-6 py-2.5 bg-primary text-surface-white rounded-lg font-label-md shadow-sm hover:opacity-90 transition-all active:scale-95 border-none cursor-pointer" style="display: inline-flex; align-items: center; justify-content: center; background-color: #004370; color: #fff; min-height: 42px; border-radius: 5px; cursor: pointer;">
+            Enviar WhatsApp
+          </button>
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template #rechazarDialog>
+      <div class="action-modal action-modal-reject bg-surface-white w-full overflow-hidden flex flex-col shadow-xl" style="border-radius: 12px; background-color: #ffffff; width: 100%; max-width: 100%; box-sizing: border-box;">
+        <!-- Modal Header -->
+        <div class="action-modal-header border-b border-border-subtle flex justify-between items-start" style="padding: 24px 28px 18px 28px; box-sizing: border-box;">
+          <div class="flex items-start gap-4 flex-1 min-w-0" style="align-items: flex-start; gap: 16px;">
+            <div class="action-modal-icon flex items-center justify-center shrink-0" style="width: 44px; height: 44px; min-width: 44px; min-height: 44px; flex: 0 0 44px; align-self: flex-start; background-color: #fee2e2; color: #b91c1c; border-radius: 10px;">
+              <span class="material-symbols-outlined" style="font-size: 22px; width: 22px; height: 22px; line-height: 1; display: flex; align-items: center; justify-content: center; font-variation-settings: 'FILL' 1;">block</span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <h3 class="action-modal-title font-headline-md text-headline-md text-text-main" style="font-size: 19px; font-weight: 700; line-height: 1.25; margin: 0; color: #1f2933;">Rechazar solicitud</h3>
+              <p class="action-modal-subtitle font-body-md text-body-md text-text-secondary mt-1 leading-relaxed" style="font-size: 13.5px; font-weight: 400; margin: 4px 0 0 0; color: #5c6b73; line-height: 1.45;">
+                Indique la justificación del rechazo de la solicitud.
+              </p>
+            </div>
+          </div>
+          <button (click)="closeDialog()" class="action-modal-close material-symbols-outlined flex items-center justify-center transition-colors border-none bg-transparent cursor-pointer shrink-0" style="width: 32px; height: 32px; min-width: 32px; min-height: 32px; border: none; background: transparent; border-radius: 6px; cursor: pointer; color: #5c6b73; font-size: 20px; margin-left: 12px;" onmouseenter="this.style.backgroundColor='#f1f5f9'; this.style.color='#1f2933';" onmouseleave="this.style.backgroundColor='transparent'; this.style.color='#5c6b73';">close</button>
+        </div>
+
+        <!-- Modal Content Form -->
+        <div class="action-modal-body space-y-4" style="padding: 24px 28px; box-sizing: border-box; overflow: hidden; width: 100%;">
+          <div class="action-modal-alert border flex gap-3 p-4 rounded-xl w-full" style="background-color: #fef2f2; border: 1px solid #fecaca; border-radius: 10px; padding: 14px 18px; width: 100%; box-sizing: border-box;">
+            <span class="material-symbols-outlined shrink-0 mt-0.5" style="color: #dc2626; font-size: 18px;">warning</span>
+            <div class="space-y-0.5">
+              <p style="font-size: 11px; font-weight: 700; color: #b91c1c; text-transform: uppercase; letter-spacing: 0.04em; margin: 0;">Acción irreversible</p>
+              <p style="font-size: 12.5px; color: #991b1b; margin: 2px 0 0 0; line-height: 1.45;">
+                Esta acción cambiará la solicitud a estado rechazado. Registre una justificación clara para trazabilidad del proceso.
+              </p>
+            </div>
+          </div>
+
+          <div class="action-modal-field flex flex-col min-w-0 w-full" style="margin-top: 16px; width: 100%;">
+            <label class="action-modal-label font-label-md text-label-md text-text-main mb-2" style="font-size: 13px; font-weight: 700; color: #1f2933; display: block; margin-bottom: 8px;">Justificación del rechazo</label>
+            <textarea #rechazoComment class="action-modal-control w-full bg-surface-container-low border border-border-subtle rounded-lg px-4 py-3 text-body-md focus:ring-2 focus:ring-red-100 focus:border-red-500 outline-none transition-all resize-none" placeholder="Explique el motivo del rechazo..." rows="4" style="font-size: 14px; border-radius: 8px; border: 1px solid #d9e2ec; min-height: 100px; height: 105px; box-sizing: border-box; width: 100%; max-width: 100%; font-family: inherit; color: #1f2933; line-height: 1.5;"></textarea>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="action-modal-footer bg-surface-container-low border-t border-border-subtle" style="display: flex; align-items: center; justify-content: flex-end; gap: 12px; padding: 18px 28px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; border-radius: 0 0 12px 12px; box-sizing: border-box; width: 100%;">
+          <button (click)="closeDialog()" class="detail-action-btn detail-action-secondary" style="height: 38px; min-height: 38px; border-radius: 6px; padding: 0 20px; font-size: 13px; font-weight: 700; cursor: pointer;">
+            Cancelar
+          </button>
+          <button (click)="confirmarRechazo(rechazoComment.value)" [disabled]="isSubmittingAction()" class="detail-action-btn detail-action-reject" style="height: 38px; min-height: 38px; border-radius: 6px; padding: 0 20px; font-size: 13px; font-weight: 700;" [style.cursor]="isSubmittingAction() ? 'not-allowed' : 'pointer'">
+            <span class="material-symbols-outlined text-[18px]">block</span>
+            {{ isSubmittingAction() ? 'Rechazando...' : 'Confirmar rechazo' }}
+          </button>
+        </div>
+      </div>
+    </ng-template>
+
+    <ng-template #aprobarDialog>
+      <div class="action-modal action-modal-approve bg-surface-white w-full overflow-hidden flex flex-col shadow-xl" style="border-radius: 12px; background-color: #ffffff; width: 100%; max-width: 100%; box-sizing: border-box;">
+        <!-- Modal Header -->
+        <div class="action-modal-header border-b border-border-subtle flex justify-between items-start" style="padding: 24px 28px 18px 28px; box-sizing: border-box;">
+          <div class="flex items-start gap-4 flex-1 min-w-0" style="align-items: flex-start; gap: 16px;">
+            <div class="action-modal-icon flex items-center justify-center shrink-0" style="width: 44px; height: 44px; min-width: 44px; min-height: 44px; flex: 0 0 44px; align-self: flex-start; background-color: #dcfce7; color: #15803d; border-radius: 10px;">
+              <span class="material-symbols-outlined" style="font-size: 22px; width: 22px; height: 22px; line-height: 1; display: flex; align-items: center; justify-content: center; font-variation-settings: 'FILL' 1;">check_circle</span>
+            </div>
+            <div class="min-w-0 flex-1">
+              <h3 class="action-modal-title font-headline-md text-headline-md text-text-main" style="font-size: 19px; font-weight: 700; line-height: 1.25; margin: 0; color: #1f2933;">Aprobar solicitud</h3>
+              <p class="action-modal-subtitle font-body-md text-body-md text-text-secondary mt-1 leading-relaxed" style="font-size: 13.5px; font-weight: 400; margin: 4px 0 0 0; color: #5c6b73; line-height: 1.45;">
+                Confirmación de aprobación de requerimiento
+              </p>
+            </div>
+          </div>
+          <button (click)="closeDialog()" class="action-modal-close material-symbols-outlined flex items-center justify-center transition-colors border-none bg-transparent cursor-pointer shrink-0" style="width: 32px; height: 32px; min-width: 32px; min-height: 32px; border: none; background: transparent; border-radius: 6px; cursor: pointer; color: #5c6b73; font-size: 20px; margin-left: 12px;" onmouseenter="this.style.backgroundColor='#f1f5f9'; this.style.color='#1f2933';" onmouseleave="this.style.backgroundColor='transparent'; this.style.color='#5c6b73';">close</button>
+        </div>
+
+        <!-- Modal Content Form -->
+        <div class="action-modal-body space-y-4 overflow-y-auto max-h-[70vh] hide-scrollbar" style="padding: 24px 28px; box-sizing: border-box; width: 100%;">
+          <p class="text-body-md text-text-secondary leading-relaxed" style="font-size: 13.5px; margin: 0; color: #475569; line-height: 1.5;">
+            Esta acción aprobará la solicitud y cambiará su estado a <span class="font-bold text-text-main" style="font-weight: 700; color: #1f2933;">‘Aprobada para estructuración del perfil’</span>. La siguiente etapa del proceso quedará habilitada.
+          </p>
+
+          <!-- Info Box Summary -->
+          <div class="action-modal-alert border rounded-xl p-4 grid grid-cols-2 gap-y-3 gap-x-4 w-full" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px 20px; width: 100%; box-sizing: border-box;">
+            <div class="flex flex-col">
+              <span class="text-[10px] uppercase font-bold text-text-secondary tracking-wider mb-0.5" style="font-size: 10px; font-weight: 700; color: #64748b;">Código</span>
+              <span class="text-sm font-medium" style="font-size: 13.5px; color: #1f2933; font-weight: 600;">SOL-00{{ solicitud().solicitudId || solicitud().id }}</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-[10px] uppercase font-bold text-text-secondary tracking-wider mb-0.5" style="font-size: 10px; font-weight: 700; color: #64748b;">Cargo</span>
+              <span class="text-sm font-medium text-primary font-bold" style="font-size: 13.5px; color: #004370; font-weight: 700;">{{ solicitud().cargo || solicitud().nombreCargo }}</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-[10px] uppercase font-bold text-text-secondary tracking-wider mb-0.5" style="font-size: 10px; font-weight: 700; color: #64748b;">Área</span>
+              <span class="text-sm font-medium" style="font-size: 13.5px; color: #1f2933;">{{ solicitud().area || solicitud().areaSolicitante }}</span>
+            </div>
+            <div class="flex flex-col">
+              <span class="text-[10px] uppercase font-bold text-text-secondary tracking-wider mb-0.5" style="font-size: 10px; font-weight: 700; color: #64748b;">Prioridad</span>
+              <span class="text-sm font-medium" style="font-size: 13.5px; color: #1f2933;">{{ solicitud().prioridad || 'Baja' }}</span>
+            </div>
+            <div class="flex flex-col col-span-2">
+              <span class="text-[10px] uppercase font-bold text-text-secondary tracking-wider mb-1" style="font-size: 10px; font-weight: 700; color: #64748b;">Completitud</span>
+              <div class="flex items-center gap-2.5 mt-0.5">
+                <div class="flex-1 rounded-full overflow-hidden" style="background-color: #e2e8f0; height: 8px; border-radius: 9999px;">
+                  <div class="h-full rounded-full transition-all duration-500 ease-out" [style.width]="((solicitud().completitudPorcentaje != null ? solicitud().completitudPorcentaje : getCompletitudPorcentaje(solicitud().estadoCodigo)) || 68) + '%'" style="background-color: #10b981;"></div>
+                </div>
+                <span class="text-xs font-bold" style="font-size: 12.5px; font-weight: 700; color: #15803d; min-width: 36px; text-align: right;">{{ ((solicitud().completitudPorcentaje != null ? solicitud().completitudPorcentaje : getCompletitudPorcentaje(solicitud().estadoCodigo)) || 68) | number:'1.0-0' }}%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Warning Box -->
+          @if (solicitud().completitudPorcentaje !== 100) {
+            <div class="action-modal-alert border flex gap-3 p-4 rounded-xl w-full" style="background-color: #fff7ed; border: 1px solid #ffedd5; border-radius: 10px; padding: 14px 18px; width: 100%; box-sizing: border-box;">
+              <span class="material-symbols-outlined shrink-0 mt-0.5" style="color: #ea580c; font-size: 18px;">warning</span>
+              <div class="space-y-0.5">
+                <p style="font-size: 11px; font-weight: 700; color: #ea580c; text-transform: uppercase; letter-spacing: 0.04em; margin: 0;">Atención</p>
+                <p style="font-size: 12.5px; color: #9a3412; margin: 2px 0 0 0; line-height: 1.45;">
+                  Existen algunos datos complementarios detectados como pendientes (por ejemplo, Jornada laboral y Fecha ideal). Al aprobar, estos deberán ser validados en la etapa de estructuración del perfil de vacante.
+                </p>
+              </div>
+            </div>
+          }
+
+          <!-- User Input Confirmation -->
+          <div class="space-y-4" style="margin-top: 14px;">
+            <label class="flex items-start gap-3 cursor-pointer group">
+              <div class="mt-0.5">
+                <input type="checkbox" [checked]="confirmarCheckAprobacion()" (change)="confirmarCheckAprobacion.set(!confirmarCheckAprobacion())" class="w-4 h-4 rounded border-outline text-primary focus:ring-primary cursor-pointer disabled:cursor-not-allowed" style="cursor: pointer;">
+              </div>
+              <span class="text-xs text-text-main leading-relaxed transition-colors" style="font-size: 12.5px; color: #1f2933; line-height: 1.45;">
+                Confirmo que revisé la información disponible y autorizo continuar con la estructuración del perfil.
+              </span>
+            </label>
+            <div class="action-modal-field flex flex-col min-w-0 w-full" style="margin-top: 14px; width: 100%;">
+              <label class="action-modal-label font-label-md text-label-md text-text-main mb-2" style="font-size: 13px; font-weight: 700; color: #1f2933; display: block; margin-bottom: 8px;">Comentario de aprobación (Opcional)</label>
+              <textarea #aprobComment class="action-modal-control w-full bg-surface-container-low border border-border-subtle rounded-lg px-4 py-3 text-body-md focus:ring-2 focus:ring-green-100 focus:border-green-500 outline-none transition-all resize-none" placeholder="Añadir notas adicionales..." rows="3" style="font-size: 14px; border-radius: 8px; border: 1px solid #d9e2ec; min-height: 80px; height: 85px; box-sizing: border-box; width: 100%; max-width: 100%; font-family: inherit; color: #1f2933; line-height: 1.5;"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="action-modal-footer bg-surface-container-low border-t border-border-subtle" style="display: flex; align-items: center; justify-content: flex-end; gap: 12px; padding: 18px 28px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; border-radius: 0 0 12px 12px; box-sizing: border-box; width: 100%;">
+          <button (click)="closeDialog()" class="detail-action-btn detail-action-secondary" style="height: 38px; min-height: 38px; border-radius: 6px; padding: 0 20px; font-size: 13px; font-weight: 700; cursor: pointer;">
+            Cancelar
+          </button>
+          <button (click)="confirmarAprobacion(aprobComment.value)" [disabled]="isSubmittingAction() || !confirmarCheckAprobacion()" class="detail-action-btn detail-action-approve" style="height: 38px; min-height: 38px; border-radius: 6px; padding: 0 20px; font-size: 13px; font-weight: 700;" [style.opacity]="confirmarCheckAprobacion() ? '1' : '0.5'" [style.cursor]="(isSubmittingAction() || !confirmarCheckAprobacion()) ? 'not-allowed' : 'pointer'">
+            <span class="material-symbols-outlined text-[18px]">check_circle</span>
+            {{ isSubmittingAction() ? 'Aprobando...' : 'Confirmar aprobación' }}
+          </button>
+        </div>
+      </div>
+    </ng-template>
+
+  </div>
+}
+

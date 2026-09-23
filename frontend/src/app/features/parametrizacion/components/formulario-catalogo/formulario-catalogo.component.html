@@ -1,0 +1,54 @@
+<form [formGroup]="formulario" (ngSubmit)="onSubmit()" class="formulario-catalogo-container">
+  @if (esCargo) {
+    <div class="campo-control-grupo">
+      <label for="selectAreaCargo">Área de Cargo *</label>
+      <select
+        id="selectAreaCargo"
+        formControlName="areaCargoId"
+        class="input-control"
+      >
+        <option [ngValue]="null" disabled>-- Seleccione un Área --</option>
+        @for (area of listadoAreasCargo; track area.idAreaCargo) {
+          <option [value]="area.idAreaCargo">{{ area.nombre }}</option>
+        }
+      </select>
+      @if (formulario.get('areaCargoId')?.touched && formulario.get('areaCargoId')?.hasError('required')) {
+        <span class="error-validacion">El área de cargo es obligatoria.</span>
+      }
+    </div>
+  }
+
+  <div class="campo-control-grupo">
+    <label for="inputNombre">Nombre del elemento *</label>
+    <input
+      id="inputNombre"
+      formControlName="nombre"
+      type="text"
+      class="input-control"
+      placeholder="Ingrese el nombre..."
+      autocomplete="off"
+    />
+    
+    @if (formulario.get('nombre')?.touched && formulario.get('nombre')?.hasError('required')) {
+      <span class="error-validacion">El nombre es obligatorio.</span>
+    }
+    @if (formulario.get('nombre')?.touched && formulario.get('nombre')?.hasError('minlength')) {
+      <span class="error-validacion">Debe tener al menos 3 caracteres.</span>
+    }
+    @if (formulario.get('nombre')?.touched && formulario.get('nombre')?.hasError('maxlength')) {
+      <span class="error-validacion">No puede exceder los 100 caracteres.</span>
+    }
+    @if (errorDuplicado) {
+      <span class="error-validacion">Este nombre ya existe en el catálogo.</span>
+    }
+  </div>
+
+  <div class="acciones-formulario">
+    <button type="button" class="btn-cancelar" (click)="onCancelar()">
+      Cancelar
+    </button>
+    <button type="submit" class="btn-guardar" [disabled]="esFormularioInvalido">
+      {{ esEdicion ? 'Guardar cambios' : 'Agregar elemento' }}
+    </button>
+  </div>
+</form>

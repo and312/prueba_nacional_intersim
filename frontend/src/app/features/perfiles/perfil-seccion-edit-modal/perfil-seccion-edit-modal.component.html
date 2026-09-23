@@ -1,0 +1,130 @@
+<div class="edit-modal-container">
+  <h2 mat-dialog-title class="modal-title">
+    <span class="material-symbols-outlined header-icon">edit_note</span>
+    Editar Sección: {{ nombreSeccion }}
+  </h2>
+
+  <mat-dialog-content class="modal-content">
+    <form [formGroup]="editForm" class="modal-form">
+      
+      <!-- Caso 1: Texto Simple (Sección 1 a 5) -->
+      <ng-container *ngIf="numeroSeccion >= 1 && numeroSeccion <= 5">
+        <div class="form-field">
+          <label>Contenido de la Sección</label>
+          <textarea formControlName="texto" rows="8" placeholder="Escriba los detalles aquí..."></textarea>
+          <span class="error-msg" *ngIf="editForm.get('texto')?.touched && editForm.get('texto')?.invalid">
+            Este campo es requerido.
+          </span>
+        </div>
+      </ng-container>
+
+      <!-- Caso 2: Listas de Items (Sección 6 a 11) -->
+      <ng-container *ngIf="numeroSeccion >= 6 && numeroSeccion <= 11">
+        <div class="list-section">
+          <div class="list-header">
+            <label>Elementos de la Lista</label>
+            <button type="button" class="btn-add-item" (click)="addItem()">
+              <span class="material-symbols-outlined">add</span> Agregar
+            </button>
+          </div>
+
+          <div formArrayName="items" class="list-items">
+            <div *ngFor="let control of itemsFormArray.controls; let i = index" class="list-row">
+              <input [formControlName]="i" type="text" placeholder="Ej. Detalle o requerimiento del cargo..." />
+              <button type="button" class="btn-remove-item" (click)="removeItem(i)">
+                <span class="material-symbols-outlined">delete</span>
+              </button>
+            </div>
+            <div class="empty-list-text" *ngIf="itemsFormArray.length === 0">
+              No hay elementos registrados en esta lista. Haga clic en Agregar para añadir uno.
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- Caso 3: Sección 12 (Herramientas, KPIs y Riesgos) -->
+      <ng-container *ngIf="numeroSeccion === 12">
+        <!-- Subsección Herramientas -->
+        <div class="list-section">
+          <div class="list-header">
+            <label>Herramientas y Sistemas</label>
+            <button type="button" class="btn-add-item" (click)="addItem('herramientas')">
+              <span class="material-symbols-outlined">add</span> Agregar
+            </button>
+          </div>
+          <div formArrayName="herramientas" class="list-items">
+            <div *ngFor="let control of herramientasFormArray.controls; let i = index" class="list-row">
+              <input [formControlName]="i" type="text" placeholder="Ej. Microsoft Excel Avanzado..." />
+              <button type="button" class="btn-remove-item" (click)="removeItem(i, 'herramientas')">
+                <span class="material-symbols-outlined">delete</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Subsección KPIs -->
+        <div class="list-section">
+          <div class="list-header">
+            <label>Indicadores Clave de Desempeño (KPI)</label>
+            <button type="button" class="btn-add-item" (click)="addItem('kpis')">
+              <span class="material-symbols-outlined">add</span> Agregar
+            </button>
+          </div>
+          <div formArrayName="kpis" class="list-items">
+            <div *ngFor="let control of kpisFormArray.controls; let i = index" class="list-row">
+              <input [formControlName]="i" type="text" placeholder="Ej. Cumplimiento de cronograma en un 95%..." />
+              <button type="button" class="btn-remove-item" (click)="removeItem(i, 'kpis')">
+                <span class="material-symbols-outlined">delete</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Subsección Riesgos -->
+        <div class="list-section">
+          <div class="list-header">
+            <label>Riesgos del Cargo</label>
+            <button type="button" class="btn-add-item" (click)="addItem('riesgos')">
+              <span class="material-symbols-outlined">add</span> Agregar
+            </button>
+          </div>
+          <div formArrayName="riesgos" class="list-items">
+            <div *ngFor="let control of riesgosFormArray.controls; let i = index" class="list-row">
+              <input [formControlName]="i" type="text" placeholder="Ej. Exposición a información confidencial..." />
+              <button type="button" class="btn-remove-item" (click)="removeItem(i, 'riesgos')">
+                <span class="material-symbols-outlined">delete</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Observaciones IA -->
+        <div class="form-field">
+          <label>Observaciones de la Generación / Feedback IA</label>
+          <textarea formControlName="observacionesIA" rows="3" placeholder="Comentarios del Agente IA..."></textarea>
+        </div>
+      </ng-container>
+
+    </form>
+
+    <!-- Auditoría: Motivo de Cambio (Obligatorio) -->
+    <form [formGroup]="motivoForm" class="motivo-form">
+      <div class="form-field highlight-field">
+        <label for="motivo">Motivo de la Modificación (Requerido para la bitácora de auditoría) *</label>
+        <input id="motivo" formControlName="motivo" type="text" placeholder="Ej. Corrección ortográfica, adición de herramientas requeridas por el área..." />
+        <span class="error-msg" *ngIf="motivoForm.get('motivo')?.touched && motivoForm.get('motivo')?.invalid">
+          Debe ingresar el motivo del cambio para registrar en auditoría.
+        </span>
+      </div>
+    </form>
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="modal-actions" align="end">
+    <button (click)="onCancel()" class="btn-cancel">
+      Cancelar
+    </button>
+    <button (click)="onSave()" class="btn-save" [disabled]="editForm.invalid || motivoForm.invalid">
+      <span class="material-symbols-outlined">save</span> Guardar Versión
+    </button>
+  </mat-dialog-actions>
+</div>

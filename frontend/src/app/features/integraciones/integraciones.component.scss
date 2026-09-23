@@ -1,0 +1,66 @@
+// Estilos específicos para la gestión de Integraciones
+
+.admin-tabs {
+  ::ng-deep .mat-mdc-tab-header {
+    background-color: var(--surface-color);
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  ::ng-deep .mat-mdc-tab {
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.01em;
+    height: 48px;
+  }
+}
+
+.text-error {
+  color: #dc2626;
+}
+
+.text-success {
+  color: #16a34a;
+}
+
+.text-warning {
+  color: #d97706;
+}
+
+.bg-amber-50 {
+  background-color: #fffbeb;
+}
+
+.border-amber-200 {
+  border-color: #fde68a;
+}
+
+.text-amber-900 {
+  color: #78350f;
+}
+
+.bg-black\/50 {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.text-error {
+  color: #dc2626;
+}
+
+.font-mono {
+  font-family: SFMono-Regular, Consolas, "Liberation Mono", Menlo, monospace;
+}

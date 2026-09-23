@@ -1,0 +1,92 @@
+<div class="observaciones-modulo-contenedor">
+  <div class="formulario-observacion-card" [formGroup]="formularioObs">
+    <h3 class="titulo-seccion-obs">Registrar observación</h3>
+    <p class="subtitulo-seccion-obs">Agregue observaciones específicas para ajustar los campos sugeridos por la IA.</p>
+
+    <div class="campos-formulario-obs">
+      <!-- Tipo de Observación Dropdown -->
+      <div class="control-obs">
+        <label for="selectTipo">Tipo de observación *</label>
+        <select id="selectTipo" formControlName="tipoObservacionId">
+          <option value="">Seleccione un tipo...</option>
+          @for (tipo of tiposObservacion(); track tipo.idTipoObservacion) {
+            <option [value]="tipo.idTipoObservacion">{{ tipo.nombre }}</option>
+          }
+        </select>
+        @if (formularioObs.get('tipoObservacionId')?.touched && formularioObs.get('tipoObservacionId')?.invalid) {
+          <span class="error-validacion">El tipo de observación es obligatorio.</span>
+        }
+      </div>
+
+      <!-- Comentario -->
+      <div class="control-obs col-completa-obs">
+        <label for="inputComentario">Comentario aclaratorio *</label>
+        <textarea
+          id="inputComentario"
+          formControlName="comentario"
+          placeholder="Describa la observación a corregir en este perfil (mínimo 5 caracteres)..."
+        ></textarea>
+        @if (formularioObs.get('comentario')?.touched && formularioObs.get('comentario')?.invalid) {
+          <span class="error-validacion">El comentario es obligatorio y debe tener al menos 5 caracteres.</span>
+        }
+      </div>
+    </div>
+
+    <button
+      class="boton-agregar-obs"
+      [disabled]="formularioObs.invalid || isSubmitting()"
+      (click)="agregarObservacion()"
+      type="button"
+    >
+      <span class="material-symbols-outlined">{{ isSubmitting() ? 'sync' : 'add_comment' }}</span>
+      <span>{{ isSubmitting() ? 'Agregando...' : 'Agregar observación' }}</span>
+    </button>
+  </div>
+
+  <!-- Observaciones Agregadas -->
+  <div class="lista-observaciones-agregadas">
+    <div class="cabecera-lista-obs">
+      <h4>Observaciones agregadas</h4>
+      <span class="contador-obs-badge">{{ observaciones().length }}</span>
+    </div>
+
+    @for (obs of observaciones(); track obs.idObservacionPerfil) {
+      <div class="tarjeta-observacion-item" [class.resuelta]="obs.estado === 'RESUELTA'">
+        <div class="obs-item-cabecera">
+          <div class="obs-item-meta">
+            <span class="obs-item-tipo">{{ obs.tipoObservacion?.nombre || 'Observación' }}</span>
+            <span class="badge-estado" [class]="obs.estado.toLowerCase()">
+              {{ obs.estado }}
+            </span>
+          </div>
+          
+          @if (obs.estado === 'PENDIENTE') {
+            <button
+              class="boton-eliminar-obs"
+              (click)="eliminarObservacion(obs.idObservacionPerfil)"
+              title="Eliminar observación"
+              type="button"
+            >
+              <span class="material-symbols-outlined">delete</span>
+            </button>
+          }
+        </div>
+        <p class="obs-item-comentario">"{{ obs.comentario }}"</p>
+        <div class="obs-item-autor-info">
+          <span>Registrado por: <strong>{{ obs.nombreUsuarioSolicitante || 'Solicitante' }}</strong> el {{ obs.fechaRegistro | date:'dd/MM/yyyy HH:mm' }}</span>
+          @if (obs.estado === 'RESUELTA') {
+            <span class="obs-item-resolucion">
+              <span class="material-symbols-outlined icono-resuelto">check_circle</span>
+              Resuelto por: <strong>{{ obs.nombreUsuarioRRHH || 'RRHH' }}</strong> el {{ obs.fechaResolucion | date:'dd/MM/yyyy HH:mm' }}
+            </span>
+          }
+        </div>
+      </div>
+    } @empty {
+      <div class="estado-vacio-observaciones">
+        <span class="material-symbols-outlined icono-vacio">forum</span>
+        <p>No se registraron observaciones para este perfil.</p>
+      </div>
+    }
+  </div>
+</div>

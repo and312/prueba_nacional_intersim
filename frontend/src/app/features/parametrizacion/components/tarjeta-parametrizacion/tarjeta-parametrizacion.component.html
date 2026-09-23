@@ -1,0 +1,39 @@
+<mat-card class="tarjeta-catalogo-card">
+  <div class="tarjeta-catalogo-cabecera">
+    <div class="tarjeta-icono-contenedor">
+      <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">{{ config.icono }}</span>
+    </div>
+    <div class="tarjeta-titulo-meta">
+      <h3>{{ config.titulo }}</h3>
+      <span class="badge-activos">{{ activos }} activos</span>
+    </div>
+  </div>
+
+  <div class="tarjeta-catalogo-contenido">
+    <p class="descripcion-catalogo">{{ config.descripcion }}</p>
+
+    <div class="vista-previa-seccion">
+      <p class="titulo-vista-previa">Valores sugeridos / activos:</p>
+      <ul class="lista-previa">
+        @for (item of vistaPrevia; track item) {
+          <li>
+            <span class="material-symbols-outlined bullet-icono notranslate" translate="no" aria-hidden="true">arrow_right</span>
+            <span class="texto-item">{{ item }}</span>
+          </li>
+        } @empty {
+          <li class="sin-registros">Sin registros activos</li>
+        }
+      </ul>
+      @if (tieneMas) {
+        <span class="texto-mas">+{{ cantidadMas }} más</span>
+      }
+    </div>
+  </div>
+
+  <div class="tarjeta-catalogo-pie">
+    <button mat-button class="boton-administrar-tarjeta" (click)="onAdministrar()">
+      <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">settings</span>
+      <span>Administrar</span>
+    </button>
+  </div>
+</mat-card>

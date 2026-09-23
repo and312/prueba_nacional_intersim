@@ -1,0 +1,11 @@
+@if (isLoading) {
+  <div class="local-loader-container">
+    <div class="local-loader-content">
+      <img src="assets/images/nacional-seguros-vida-y-salud.png" alt="Nacional Seguros" class="local-loader-logo" />
+      <div class="local-loader-spinner-wrapper">
+        <mat-progress-spinner mode="indeterminate" diameter="32" color="primary" class="local-loader-spinner"></mat-progress-spinner>
+      </div>
+      <p class="local-loader-text">{{ message }}</p>
+    </div>
+  </div>
+}

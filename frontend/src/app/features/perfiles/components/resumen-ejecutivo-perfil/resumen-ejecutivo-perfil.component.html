@@ -1,0 +1,262 @@
+<div class="resumen-ejecutivo-contenedor">
+  <!-- 1. LOADING STATE -->
+  @if (isLoading() || (resumen()?.estadoGeneracion === EstadoGeneracionResumen.Generando)) {
+    <div class="resumen-skeleton-grid">
+      <div class="skeleton-item full-width height-large animate-pulse"></div>
+      <div class="skeleton-item full-width height-medium animate-pulse"></div>
+      <div class="skeleton-item three-cols height-small animate-pulse"></div>
+      <div class="skeleton-item half-width height-medium animate-pulse"></div>
+      <div class="skeleton-item half-width height-medium animate-pulse"></div>
+      <div class="skeleton-item full-width height-large animate-pulse"></div>
+    </div>
+  }
+
+  <!-- 2. ERROR STATE -->
+  @else if (isError() || (resumen()?.estadoGeneracion === EstadoGeneracionResumen.ErrorGeneracion)) {
+    <div class="resumen-error-card">
+      <span class="material-symbols-outlined icono-error">report</span>
+      <h4>No fue posible cargar el resumen ejecutivo</h4>
+      <p>{{ errorMessage() || 'Ocurrió un error al procesar el resumen ejecutivo.' }}</p>
+      <button class="boton-reintentar" (click)="reintentar()" type="button">
+        <span class="material-symbols-outlined">refresh</span>
+        <span>Reintentar</span>
+      </button>
+    </div>
+  }
+
+  <!-- 3. PENDIENTE GENERACION STATE -->
+  @else if (resumen()?.estadoGeneracion === EstadoGeneracionResumen.PendienteGeneracion) {
+    <div class="resumen-pendiente-card">
+      <span class="material-symbols-outlined icono-pendiente">hourglass_empty</span>
+      <h4>Resumen ejecutivo en proceso</h4>
+      <p>El resumen ejecutivo estará disponible una vez que Recursos Humanos revise y envíe el perfil al Área Solicitante.</p>
+    </div>
+  }
+
+  <!-- 4. GENERADO STATE -->
+  @else if (resumen()?.estadoGeneracion === EstadoGeneracionResumen.Generado) {
+    @let r = resumen()!;
+    <div class="resumen-contenido-grid">
+
+      <!-- Resumen del Rol (Ancho Completo) -->
+      @if (r.resumenRol) {
+        <div class="resumen-card col-completa">
+          <div class="card-cabecera">
+            <span class="material-symbols-outlined card-icono">psychology_alt</span>
+            <h5>Resumen ejecutivo del rol</h5>
+          </div>
+          <p class="texto-principal">{{ r.resumenRol }}</p>
+        </div>
+      } @else {
+        <div class="resumen-card col-completa">
+          <div class="card-cabecera">
+            <span class="material-symbols-outlined card-icono">psychology_alt</span>
+            <h5>Resumen ejecutivo del rol</h5>
+          </div>
+          <p class="texto-vacio">Información no disponible.</p>
+        </div>
+      }
+
+      <!-- Objetivo del Cargo (Ancho Completo) -->
+      @if (r.objetivoCargo) {
+        <div class="resumen-card col-completa">
+          <div class="card-cabecera">
+            <span class="material-symbols-outlined card-icono">ads_click</span>
+            <h5>Objetivo del cargo</h5>
+          </div>
+          <p class="texto-principal">{{ r.objetivoCargo }}</p>
+        </div>
+      }
+
+      <!-- Condiciones del Cargo (Tarjeta Horizontal Adaptable - Columnas Flexibles) -->
+      @if (r.modalidad || r.ubicacion || r.salario) {
+        <div class="resumen-card col-completa condiciones-tarjeta">
+          <div class="condiciones-grid">
+            @if (r.modalidad) {
+              <div class="condicion-item">
+                <span class="material-symbols-outlined condicion-icono">work_history</span>
+                <div class="condicion-detalles">
+                  <span class="condicion-label">Modalidad</span>
+                  <span class="condicion-valor">{{ r.modalidad }}</span>
+                </div>
+              </div>
+            }
+            @if (r.ubicacion) {
+              <div class="condicion-item">
+                <span class="material-symbols-outlined condicion-icono">location_on</span>
+                <div class="condicion-detalles">
+                  <span class="condicion-label">Ubicación</span>
+                  <span class="condicion-valor">{{ r.ubicacion }}</span>
+                </div>
+              </div>
+            }
+            @if (r.salario) {
+              <div class="condicion-item">
+                <span class="material-symbols-outlined condicion-icono">payments</span>
+                <div class="condicion-detalles">
+                  <span class="condicion-label">Banda salarial</span>
+                  <span class="condicion-valor">{{ r.salario }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Requisitos Mínimos (Compartible) -->
+      @if (r.requisitosMinimos && r.requisitosMinimos.length > 0) {
+        <div class="resumen-card">
+          <div class="card-cabecera">
+            <span class="material-symbols-outlined card-icono">checklist</span>
+            <h5>Requisitos mínimos</h5>
+          </div>
+          <ul class="lista-vineta">
+            @for (req of r.requisitosMinimos; track req) {
+              <li>{{ req }}</li>
+            }
+          </ul>
+        </div>
+      }
+
+      <!-- Formación y Experiencia (Compartible) -->
+      @if (r.experienciaMinima || (r.formacionAcademica && r.formacionAcademica.length > 0) || (r.experienciaIndispensable && r.experienciaIndispensable.length > 0) || (r.experienciaDeseable && r.experienciaDeseable.length > 0)) {
+        <div class="resumen-card">
+          <div class="card-cabecera">
+            <span class="material-symbols-outlined card-icono">school</span>
+            <h5>Formación y experiencia</h5>
+          </div>
+          
+          <div class="sub-bloques-contenedor">
+            @if (r.formacionAcademica && r.formacionAcademica.length > 0) {
+              <div class="sub-bloque">
+                <span class="sub-titulo-seccion">Formación académica</span>
+                <ul class="lista-vineta compacta">
+                  @for (form of r.formacionAcademica; track form) {
+                    <li>{{ form }}</li>
+                  }
+                </ul>
+              </div>
+            }
+
+            @if (r.experienciaMinima) {
+              <div class="sub-bloque">
+                <span class="sub-titulo-seccion">Experiencia mínima</span>
+                <p class="texto-simple">{{ r.experienciaMinima }}</p>
+              </div>
+            }
+
+            @if (r.experienciaIndispensable && r.experienciaIndispensable.length > 0) {
+              <div class="sub-bloque">
+                <span class="sub-titulo-seccion">Experiencia indispensable</span>
+                <ul class="lista-vineta compacta">
+                  @for (exp of r.experienciaIndispensable; track exp) {
+                    <li>{{ exp }}</li>
+                  }
+                </ul>
+              </div>
+            }
+
+            @if (r.experienciaDeseable && r.experienciaDeseable.length > 0) {
+              <div class="sub-bloque">
+                <span class="sub-titulo-seccion">Experiencia deseable</span>
+                <ul class="lista-vineta compacta deseable">
+                  @for (expD of r.experienciaDeseable; track expD) {
+                    <li>{{ expD }}</li>
+                  }
+                </ul>
+              </div>
+            }
+          </div>
+        </div>
+      }
+
+      <!-- Funciones Principales (Compartible) -->
+      @if (r.funcionesPrincipales && r.funcionesPrincipales.length > 0) {
+        <div class="resumen-card">
+          <div class="card-cabecera">
+            <span class="material-symbols-outlined card-icono">assignment</span>
+            <h5>Funciones principales</h5>
+          </div>
+          <ul class="lista-ordenada">
+            @for (func of r.funcionesPrincipales; track func) {
+              <li>{{ func }}</li>
+            }
+          </ul>
+        </div>
+      }
+
+      <!-- Criterios de Evaluación (Compartible) -->
+      @if (r.criteriosEvaluacion && r.criteriosEvaluacion.length > 0) {
+        <div class="resumen-card">
+          <div class="card-cabecera">
+            <span class="material-symbols-outlined card-icono">fact_check</span>
+            <h5>Criterios de evaluación</h5>
+          </div>
+          <ul class="lista-vineta">
+            @for (crit of r.criteriosEvaluacion; track crit) {
+              <li>{{ crit }}</li>
+            }
+          </ul>
+        </div>
+      }
+
+      <!-- Características Clave (Compartible) -->
+      @if (r.caracteristicasClave && r.caracteristicasClave.length > 0) {
+        <div class="resumen-card">
+          <div class="card-cabecera">
+            <span class="material-symbols-outlined card-icono">star</span>
+            <h5>Características clave</h5>
+          </div>
+          <ul class="lista-vineta">
+            @for (char of r.caracteristicasClave; track char) {
+              <li>{{ char }}</li>
+            }
+          </ul>
+        </div>
+      }
+
+      <!-- Hard Skills (Técnicas) (Listado Limpio) -->
+      @if (r.habilidadesTecnicas && r.habilidadesTecnicas.length > 0) {
+        <div class="resumen-card">
+          <div class="card-cabecera">
+            <span class="material-symbols-outlined card-icono">code</span>
+            <h5>Hard skills (Técnicas)</h5>
+          </div>
+          <ul class="detail-clean-list">
+            @for (skill of r.habilidadesTecnicas; track skill) {
+              <li>
+                <span class="material-symbols-outlined list-bullet-icon">arrow_right</span>
+                <span class="list-item-text">{{ skill }}</span>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
+      <!-- Soft Skills (Blandas) (Listado Limpio) -->
+      @if (r.habilidadesBlandas && r.habilidadesBlandas.length > 0) {
+        <div class="resumen-card">
+          <div class="card-cabecera">
+            <span class="material-symbols-outlined card-icono">diversity_3</span>
+            <h5>Soft skills (Blandas)</h5>
+          </div>
+          <ul class="detail-clean-list">
+            @for (skill of r.habilidadesBlandas; track skill) {
+              <li>
+                <span class="material-symbols-outlined list-bullet-icon">arrow_right</span>
+                <span class="list-item-text">{{ skill }}</span>
+              </li>
+            }
+          </ul>
+        </div>
+      }
+
+      <!-- Valoración del Perfil (Ancho Completo) -->
+      @if (r.valoracion) {
+        <div class="col-completa">
+          <app-valoracion-perfil [valoracion]="r.valoracion"></app-valoracion-perfil>
+        </div>
+      }
+    </div>
+  }
+</div>

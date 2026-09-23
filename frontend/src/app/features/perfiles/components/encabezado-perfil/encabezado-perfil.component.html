@@ -1,0 +1,39 @@
+<div class="encabezado-contenedor">
+  <button class="boton-volver" (click)="volverClick.emit()">
+    <span class="material-symbols-outlined">arrow_back</span>
+    <span>Volver al listado</span>
+  </button>
+
+  <div class="encabezado-contenido">
+    <div class="encabezado-principal">
+      <div class="meta-identificador">
+        <span class="codigo-perfil">{{ perfil.codigo }}</span>
+        <span class="separador">·</span>
+        <span class="cargo-nombre">{{ perfil.cargo }}</span>
+      </div>
+      
+      <div class="detalles-secundarios">
+        <div class="detalle-item">
+          <span class="etiqueta-meta">Solicitud origen:</span>
+          <span class="valor-meta fuerte">{{ perfil.solicitudCodigo }}</span>
+        </div>
+        <div class="detalle-item">
+          <span class="etiqueta-meta">Versión:</span>
+          <span class="version-chip">v{{ perfil.version }}</span>
+        </div>
+        <div class="detalle-item">
+          <span class="etiqueta-meta">Área:</span>
+          <span class="valor-meta">{{ perfil.areaNombre }}</span>
+        </div>
+        <div class="detalle-item">
+          <span class="etiqueta-meta">Actualizado:</span>
+          <span class="valor-meta">{{ perfil.ultimaActualizacion | date:'dd/MM/yyyy HH:mm' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="encabezado-estado">
+      <app-profile-status-badge [estado]="estadoComoIngles" [estadoCodigo]="perfil.estadoCodigo" [rol]="rol"></app-profile-status-badge>
+    </div>
+  </div>
+</div>

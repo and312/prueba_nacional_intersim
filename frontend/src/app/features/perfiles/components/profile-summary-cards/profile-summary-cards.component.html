@@ -1,0 +1,18 @@
+<div class="perfiles-metrics">
+  @for (metric of metrics; track metric.key) {
+    <div 
+      class="perfiles-metric-card" 
+      [ngClass]="[metric.class || 'metric-registered', activeKey === metric.key ? 'is-active' : '']"
+      (click)="onCardClick(metric.key)"
+      [title]="'Filtrar por ' + metric.label"
+    >
+      <div class="perfiles-metric-icon" [ngClass]="metric.class || 'metric-registered'">
+        <span class="material-symbols-outlined">{{ metric.icon }}</span>
+      </div>
+      <div class="perfiles-metric-content">
+        <p>{{ metric.label }}</p>
+        <strong>{{ getMetricValue(metric.key) }}</strong>
+      </div>
+    </div>
+  }
+</div>

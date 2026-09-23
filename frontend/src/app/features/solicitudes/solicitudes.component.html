@@ -1,0 +1,309 @@
+<div class="solicitudes-page">
+  <div class="solicitudes-page-header">
+    <div>
+      <h2 class="solicitudes-title">Solicitudes de contratación</h2>
+      <p class="solicitudes-subtitle">
+        @if (authService.getUserArea() === 'Recursos Humanos' || authService.getUserRole() === 'RRHH') {
+          Consulta y gestiona las solicitudes de vacantes enviadas por las distintas áreas.
+        } @else {
+          Registra y consulta las solicitudes de vacantes realizadas por tu área.
+        }
+      </p>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 16px;">
+      @if (authService.getUserRole() === 'RRHH' || authService.getUserArea() === 'Recursos Humanos') {
+        <div class="solicitudes-tabs-container">
+          <button (click)="setSoloMisSolicitudes(true)" [class.active]="soloMisSolicitudes()" class="solicitudes-tab-btn">
+            <span class="material-symbols-outlined">person</span>
+            Modo Solicitante
+          </button>
+          <button (click)="setSoloMisSolicitudes(false)" [class.active]="!soloMisSolicitudes()" class="solicitudes-tab-btn">
+            <span class="material-symbols-outlined">groups</span>
+            Modo RRHH
+          </button>
+        </div>
+      }
+
+      @if ((authService.getUserRole() !== 'Administrador' && authService.getUserRole() !== 'RRHH' && authService.getUserArea() !== 'Recursos Humanos') || soloMisSolicitudes()) {
+        <button routerLink="/solicitudes/nueva" class="solicitudes-primary-action">
+          <span class="material-symbols-outlined">add</span>
+          Nueva solicitud
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Banner de Notificación de Éxito -->
+  @if (successMessage()) {
+    <div class="success-banner" style="display: flex; align-items: flex-start; gap: 16px; padding: 16px 20px; border: 1px solid #10b981; border-radius: 10px; background: #ecfdf5; color: #065f46; box-shadow: 0 2px 6px rgba(16, 185, 129, 0.12); margin-bottom: 8px;">
+      <span class="material-symbols-outlined notranslate" translate="no" style="font-size: 26px; color: #10b981; flex: 0 0 26px; margin-top: 1px;">check_circle</span>
+      <div style="display: flex; flex-direction: column; gap: 4px; flex: 1;">
+        <h4 style="margin: 0; font-size: 15px; font-weight: 700; color: #065f46;">{{ successMessage() }}</h4>
+        <p style="margin: 0; font-size: 13.5px; color: #047857;">La solicitud ya se encuentra visible y disponible en la lista de solicitudes.</p>
+      </div>
+      <button (click)="successMessage.set(null)" style="background: transparent; border: none; cursor: pointer; color: #047857; padding: 0;">
+        <span class="material-symbols-outlined notranslate" translate="no" style="font-size: 20px;">close</span>
+      </button>
+    </div>
+  }
+
+  <div class="solicitudes-metrics">
+    <div 
+      class="solicitudes-metric-card metric-registered" 
+      (click)="filterByCardFilter('ALL')" 
+      [class.is-active]="selectedCardFilter() === 'ALL'"
+      title="Mostrar todas las solicitudes registradas"
+    >
+      <div class="solicitudes-metric-icon metric-registered">
+        <span class="material-symbols-outlined">inventory_2</span>
+      </div>
+      <div class="solicitudes-metric-content">
+        <p>Registradas</p>
+        <strong>{{ totalCount() }}</strong>
+      </div>
+    </div>
+
+    <div 
+      class="solicitudes-metric-card metric-review" 
+      (click)="filterByCardFilter('REV')" 
+      [class.is-active]="selectedCardFilter() === 'REV'"
+      title="Filtrar solicitudes en revisión RRHH"
+    >
+      <div class="solicitudes-metric-icon metric-review">
+        <span class="material-symbols-outlined">manage_search</span>
+      </div>
+      <div class="solicitudes-metric-content">
+        <p>En revisión RRHH</p>
+        <strong>{{ enRevisionCount() }}</strong>
+      </div>
+    </div>
+
+    <div 
+      class="solicitudes-metric-card metric-observed" 
+      (click)="filterByCardFilter('OBS')" 
+      [class.is-active]="selectedCardFilter() === 'OBS'"
+      title="Filtrar solicitudes con observaciones"
+    >
+      <div class="solicitudes-metric-icon metric-observed">
+        <span class="material-symbols-outlined">rate_review</span>
+      </div>
+      <div class="solicitudes-metric-content">
+        <p>Con observaciones</p>
+        <strong>{{ observadasCount() }}</strong>
+      </div>
+    </div>
+
+    <div 
+      class="solicitudes-metric-card metric-approved" 
+      (click)="filterByCardFilter('APR')" 
+      [class.is-active]="selectedCardFilter() === 'APR'"
+      title="Filtrar solicitudes aprobadas para perfil"
+    >
+      <div class="solicitudes-metric-icon metric-approved">
+        <span class="material-symbols-outlined">task_alt</span>
+      </div>
+      <div class="solicitudes-metric-content">
+        <p>Aprobadas para perfil</p>
+        <strong>{{ aprobadasCount() }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <div class="solicitudes-table-card">
+    <app-loader [isLoading]="componentLoading.isLoading('solicitudes')()" message="Cargando solicitudes..."></app-loader>
+    <div class="solicitudes-filters-card">
+      <div class="solicitudes-filters-grid">
+        <div class="solicitudes-filter-field solicitudes-search-filter">
+          <label>Buscar</label>
+          <div class="solicitudes-filter-search">
+            <span class="material-symbols-outlined">search</span>
+            <input (input)="updateSearch($event)" [value]="searchQuery()" type="text" placeholder="Buscar por cargo o área...">
+          </div>
+        </div>
+
+        <div class="solicitudes-filter-field">
+          <label>Estado</label>
+          <select (change)="updateEstado($event)" [value]="selectedEstado()">
+            <option value="">Todos los estados</option>
+            <option value="Solicitud Enviada a RRHH">Enviada a RRHH</option>
+            <option value="Solicitud Observada">Observada</option>
+            <option value="Solicitud Aprobada">Aprobada</option>
+            <option value="Solicitud Rechazada">Rechazada</option>
+          </select>
+        </div>
+
+        <div class="solicitudes-filter-field">
+          <label>Área del solicitante</label>
+          <select (change)="updateArea($event)" [value]="selectedArea()">
+            <option value="">Todas las áreas</option>
+            @for (area of availableAreas(); track area) {
+              <option [value]="area">{{ area }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="solicitudes-filter-field">
+          <label>Desde</label>
+          <input (change)="updateFechaDesde($event)" [value]="selectedFechaDesde()" type="date">
+        </div>
+
+        <div class="solicitudes-filter-field">
+          <label>Hasta</label>
+          <input (change)="updateFechaHasta($event)" [value]="selectedFechaHasta()" type="date">
+        </div>
+
+        <div class="solicitudes-filter-field">
+          <label>Prioridad</label>
+          <select (change)="updatePrioridad($event)" [value]="selectedPrioridad()">
+            <option value="">Todas</option>
+            <option value="Alta">Alta</option>
+            <option value="Media">Media</option>
+            <option value="Baja">Baja</option>
+            <option value="Critica">Critica</option>
+          </select>
+        </div>
+      </div>
+
+      <button (click)="clearFilters()" class="solicitudes-clear-filters">
+        <span class="material-symbols-outlined">filter_list_off</span>
+        Limpiar filtros
+      </button>
+    </div>
+
+    <div class="solicitudes-table-wrap">
+      <table class="solicitudes-table">
+        <thead>
+          <tr>
+            <th>Número</th>
+            <th>Área</th>
+            @if (!isSolicitante()) {
+              <th>Solicitante</th>
+            }
+            <th>Cargo</th>
+            <th>Origen</th>
+            <th>Prioridad</th>
+            <th>Estado</th>
+            <th>Fecha de solicitud</th>
+            <th>Última actualización</th>
+            <th class="table-actions-header">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of paginatedSolicitudes(); track (item.solicitudId || item.id)) {
+            <tr>
+              <td>
+                <span class="solicitud-code">SOL-00{{ item.solicitudId || item.id }}</span>
+              </td>
+              <td class="area-cell" [title]="item.area || item.areaSolicitante || 'No disponible'">
+                <span class="muted-text area-title">{{ item.area || item.areaSolicitante || 'No disponible' }}</span>
+              </td>
+              @if (!isSolicitante()) {
+                <td class="solicitante-cell" [title]="item.solicitanteNombre || item.createdBy || 'No disponible'">
+                  <span class="muted-text strong-muted solicitante-title">{{ item.solicitanteNombre || item.createdBy || 'No disponible' }}</span>
+                </td>
+              }
+              <td class="cargo-cell" [title]="item.cargo || item.nombreCargo || 'No especificado'">
+                <span class="cargo-text cargo-title">{{ item.cargo || item.nombreCargo || 'No especificado' }}</span>
+              </td>
+              <td>
+                <span [class]="obtenerOrigenBadge(item.canalOrigen).cssClass">
+                  <span class="material-symbols-outlined origin-icon notranslate" translate="no" aria-hidden="true">{{ obtenerOrigenBadge(item.canalOrigen).icon }}</span>
+                  <span>{{ obtenerOrigenBadge(item.canalOrigen).label }}</span>
+                </span>
+              </td>
+              <td>
+                @if (item.prioridad === 'Alta' || item.prioridad === 'Critica') {
+                  <span class="priority-badge priority-high">Alta</span>
+                } @else if (item.prioridad === 'Media') {
+                  <span class="priority-badge priority-medium">Media</span>
+                } @else {
+                  <span class="priority-badge priority-low">Baja</span>
+                }
+              </td>
+              <td>
+                @if (item.estadoCodigo === 'SOL-ENV' || item.estadoNombre === 'Solicitud Enviada a RRHH' || item.estadoNombre === 'En Validación' || item.estadoNombre === 'En revisión') {
+                  <span class="status-badge badge-review">
+                    <span class="material-symbols-outlined status-icon">rate_review</span>
+                    <span class="status-label">{{ item.estadoNombre }}</span>
+                  </span>
+                } @else if (item.estadoCodigo === 'SOL-OBS' || item.estadoNombre === 'Solicitud Observada' || item.estadoNombre === 'Observada' || item.estadoNombre === 'Con observaciones') {
+                  <span class="status-badge badge-observed">
+                    <span class="material-symbols-outlined status-icon">error_outline</span>
+                    <span class="status-label">{{ item.estadoNombre }}</span>
+                  </span>
+                } @else if (item.estadoCodigo === 'SOL-REG' || item.estadoCodigo === 'SOL-PEN' || item.estadoNombre === 'Solicitud Registrada' || item.estadoNombre === 'Solicitud Pendiente' || item.estadoNombre === 'Borrador') {
+                  <span class="status-badge badge-automatic">
+                    <span class="material-symbols-outlined status-icon">hourglass_empty</span>
+                    <span class="status-label">{{ item.estadoNombre }}</span>
+                  </span>
+                } @else if (item.estadoCodigo === 'SOL-RECH' || item.estadoNombre === 'Solicitud Rechazada' || item.estadoNombre === 'Rechazada') {
+                  <span class="status-badge badge-error">
+                    <span class="material-symbols-outlined status-icon">cancel</span>
+                    <span class="status-label">{{ item.estadoNombre }}</span>
+                  </span>
+                } @else {
+                  <span class="status-badge badge-approved">
+                    <span class="material-symbols-outlined status-icon">check_circle</span>
+                    <span class="status-label">{{ item.estadoNombre }}</span>
+                  </span>
+                }
+              </td>
+              <td class="date-cell">
+                <span class="muted-text date-text">{{ (item.createdDate || item.fecha) | date:'dd/MM/yyyy HH:mm' }}</span>
+              </td>
+              <td class="date-cell">
+                <span class="muted-text date-text">{{ (item.lastModifiedDate || item.createdDate || item.fecha) | date:'dd/MM/yyyy HH:mm' }}</span>
+              </td>
+              <td class="table-actions-cell">
+                <button [routerLink]="obtenerAccion(item).route" [queryParams]="soloMisSolicitudes() ? { modo: 'solicitante' } : {}" [class]="obtenerAccion(item).cssClass">
+                  <span class="material-symbols-outlined">{{ obtenerAccion(item).icon }}</span>
+                  <span>{{ obtenerAccion(item).label }}</span>
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <div class="solicitudes-table-footer">
+      <div class="pagination-summary">
+        <label for="solicitudesPageSize">Items por página:</label>
+        <div class="pagination-page-size" id="solicitudesPageSize">
+          <button type="button" class="pagination-page-size-trigger" (click)="togglePageSizeMenu()" [attr.aria-expanded]="isPageSizeMenuOpen()">
+            <span>{{ pageSize() }}</span>
+            <span class="material-symbols-outlined">expand_less</span>
+          </button>
+
+          @if (isPageSizeMenuOpen()) {
+            <div class="pagination-page-size-menu">
+              @for (option of pageSizeOptions; track option) {
+                <button type="button" (click)="updatePageSizeValue(option)" [class.is-selected]="pageSize() === option">
+                  {{ option }}
+                </button>
+              }
+            </div>
+          }
+        </div>
+        <span>{{ rangeStart() }} - {{ rangeEnd() }} de {{ totalItems() }}</span>
+      </div>
+
+      <div class="pagination-actions">
+        <button (click)="goToFirstPage()" [disabled]="currentPage() === 1 || totalItems() === 0" aria-label="Primera página">
+          <span class="material-symbols-outlined">first_page</span>
+        </button>
+        <button (click)="goToPreviousPage()" [disabled]="currentPage() === 1 || totalItems() === 0" aria-label="Página anterior">
+          <span class="material-symbols-outlined">chevron_left</span>
+        </button>
+        <button (click)="goToNextPage()" [disabled]="currentPage() === totalPages() || totalItems() === 0" aria-label="Página siguiente">
+          <span class="material-symbols-outlined">chevron_right</span>
+        </button>
+        <button (click)="goToLastPage()" [disabled]="currentPage() === totalPages() || totalItems() === 0" aria-label="Última página">
+          <span class="material-symbols-outlined">last_page</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+

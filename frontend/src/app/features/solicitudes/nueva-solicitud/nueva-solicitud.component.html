@@ -1,0 +1,587 @@
+<div class="request-form-page">
+  <div class="request-form-header">
+    <nav class="request-breadcrumb">
+      <a routerLink="/dashboard">
+        <span class="material-symbols-outlined home-icon notranslate" translate="no">home</span>
+        Inicio
+      </a>
+      <span class="material-symbols-outlined chevron-icon notranslate" translate="no">chevron_right</span>
+      <span>{{ isEditMode() ? 'Editar solicitud' : 'Nueva solicitud' }}</span>
+    </nav>
+
+    <div>
+      <h3>{{ isEditMode() ? 'Editar solicitud de contratación' : 'Nueva solicitud de contratación' }}</h3>
+      <p>{{ isEditMode() ? 'Modifique la información requerida para actualizar la solicitud.' : 'Completa la información requerida para registrar una solicitud de vacante.' }}</p>
+    </div>
+  </div>
+
+  <!-- Banners de Notificación -->
+  @if (successMessage()) {
+    <div class="success-banner">
+      <span class="material-symbols-outlined banner-icon notranslate" translate="no">check_circle</span>
+      <div class="banner-content">
+        <h4>{{ successMessage() }}</h4>
+        <p>Redirigiendo al módulo de solicitudes...</p>
+      </div>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="error-banner" style="display: flex; align-items: flex-start; gap: 16px; padding: 16px 20px; margin-bottom: 20px; border: 1px solid #ef4444; border-radius: 8px; background: #fef2f2; color: #991b1b;">
+      <span class="material-symbols-outlined notranslate" translate="no" style="font-size: 24px; color: #ef4444;">error</span>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <h4 style="margin: 0; font-size: 15px; font-weight: 700;">Ocurrió un error</h4>
+        <p style="margin: 0; font-size: 13.5px; color: #b91c1c;">{{ errorMessage() }}</p>
+      </div>
+    </div>
+  }
+
+  <!-- Estado de Carga General de Catálogos -->
+  @if (catalogosCargando()) {
+    <div class="catalog-loading-panel">
+      <span class="material-symbols-outlined spinner-icon notranslate" translate="no">sync</span>
+      <p>Cargando catálogos del sistema...</p>
+    </div>
+  } @else if (catalogosError()) {
+    <div class="catalog-error-panel">
+      <span class="material-symbols-outlined error-icon notranslate" translate="no">error</span>
+      <p>Ocurrió un error al cargar los catálogos obligatorios de parametrización.</p>
+      <button type="button" class="retry-btn" (click)="cargarCatalogos()">
+        <span class="material-symbols-outlined notranslate" translate="no">replay</span>
+        Reintentar carga
+      </button>
+    </div>
+  } @else {
+    <form [formGroup]="solicitudForm" class="request-form">
+      <!-- Panel de Observación de RRHH (Solo Lectura) -->
+      @if (isEditMode() && solicitud()?.estadoCodigo === 'SOL-OBS' && solicitud()?.ultimaObservacionRRHH) {
+        <div class="observation-panel">
+          <div class="observation-header">
+            <span class="material-symbols-outlined obs-icon notranslate" translate="no">warning</span>
+            <span class="obs-title">OBSERVACIÓN DE RRHH</span>
+          </div>
+          <div class="observation-body">
+            <p class="obs-text">"{{ solicitud()?.ultimaObservacionRRHH?.texto }}"</p>
+          </div>
+          <div class="observation-footer">
+            <div class="obs-meta">
+              <span class="obs-label">Fecha:</span>
+              <span class="obs-value">{{ solicitud()?.ultimaObservacionRRHH?.fecha | date: 'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+            <div class="obs-meta">
+              <span class="obs-label">Registrado por:</span>
+              <span class="obs-value">{{ solicitud()?.ultimaObservacionRRHH?.usuario }}</span>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- SECCIÓN 1: DATOS GENERALES DE LA SOLICITUD -->
+      <mat-card class="request-section-card">
+        <div class="request-section-header">
+          <h4>
+            <span class="material-symbols-outlined notranslate" translate="no">info</span>
+            1. Datos generales de la solicitud
+          </h4>
+        </div>
+
+        <div class="request-section-body">
+          <!-- A. Datos automáticos del solicitante -->
+          <div class="automatic-data-block">
+            <div class="automatic-data-header">
+              <span class="material-symbols-outlined lock-icon notranslate" translate="no">lock</span>
+              <span class="automatic-title">Datos del sistema</span>
+              <span class="automatic-subtitle">Información obtenida automáticamente del usuario autenticado.</span>
+            </div>
+
+            <div class="automatic-data-grid">
+              <div class="automatic-field">
+                <span class="auto-label">Fecha de solicitud</span>
+                <span class="auto-value">{{ isEditMode() && solicitud()?.createdDate ? (solicitud()?.createdDate | date: 'dd/MM/yyyy') : fechaHoyFormateada }}</span>
+              </div>
+              <div class="automatic-field">
+                <span class="auto-label">Área solicitante</span>
+                <span class="auto-value">{{ authService.getUserArea() }}</span>
+              </div>
+              <div class="automatic-field">
+                <span class="auto-label">Solicitante responsable</span>
+                <span class="auto-value">
+                  {{ authService.getUserFullName() }}
+                  <small class="auto-subvalue">{{ authService.getUserEmail() }}</small>
+                </span>
+              </div>
+              <div class="automatic-field">
+                <span class="auto-label">Cargo del solicitante</span>
+                <span class="auto-value">{{ authService.getUserCargo() }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- B. Datos que completa el usuario -->
+          <div class="request-form-grid">
+            <div class="request-field">
+              <label for="areaCargoId">Área del Cargo <span class="text-required-orange">*</span></label>
+              <select 
+                id="areaCargoId" 
+                class="form-select" 
+                formControlName="areaCargoId" 
+                (change)="onAreaCargoChange($any($event.target).value)"
+              >
+                <option [value]="null" disabled selected>Seleccione un Área de Cargo</option>
+                @for (a of areasCargo(); track a.idAreaCargo) {
+                  <option [value]="a.idAreaCargo">{{ a.nombre }}</option>
+                }
+              </select>
+              @if (solicitudForm.controls.areaCargoId.touched && solicitudForm.controls.areaCargoId.invalid) {
+                <p class="field-error">Seleccione un área de cargo</p>
+              }
+            </div>
+
+            <div class="request-field">
+              <label for="cargoId">Cargo requerido <span class="text-required-orange">*</span></label>
+              <select 
+                id="cargoId" 
+                class="form-select" 
+                formControlName="cargoId"
+                (change)="onCargoSelectChange($any($event.target).value)"
+                [disabled]="!solicitudForm.controls.areaCargoId.value || cargosFiltrados().length === 0"
+              >
+                <option [value]="null" disabled selected>
+                  {{ !solicitudForm.controls.areaCargoId.value ? 'Primero seleccione un área' : 'Seleccione un Cargo' }}
+                </option>
+                @for (c of cargosFiltrados(); track c.idCargo) {
+                  <option [value]="c.idCargo">{{ c.nombre }}</option>
+                }
+              </select>
+              @if (solicitudForm.controls.cargoId.touched && solicitudForm.controls.cargoId.invalid) {
+                <p class="field-error">Seleccione el cargo requerido</p>
+              }
+            </div>
+
+            <div class="request-field">
+              <label for="regionalId">Regional <span class="text-required-orange">*</span></label>
+              <select id="regionalId" class="form-select" formControlName="regionalId">
+                <option [value]="null" disabled selected>Seleccione una regional</option>
+                @for (r of regionales(); track r.idRegional) {
+                  <option [value]="r.idRegional">{{ r.nombre }}</option>
+                }
+              </select>
+              @if (solicitudForm.controls.regionalId.touched && solicitudForm.controls.regionalId.invalid) {
+                <p class="field-error">Seleccione una regional</p>
+              }
+            </div>
+
+            <div class="request-field request-field-short">
+              <label for="cantidadVacantes">Cantidad de vacantes <span class="text-required-orange">*</span></label>
+              <input 
+                id="cantidadVacantes"
+                class="form-input" 
+                formControlName="cantidadVacantes" 
+                min="1" 
+                type="number"
+              />
+              @if (solicitudForm.controls.cantidadVacantes.touched && solicitudForm.controls.cantidadVacantes.invalid) {
+                <p class="field-error">La cantidad de vacantes debe ser mayor a cero (entero)</p>
+              }
+            </div>
+
+            <div class="request-field">
+              <label for="tipoSolicitudId">Tipo de solicitud <span class="text-required-orange">*</span></label>
+              <select id="tipoSolicitudId" class="form-select" formControlName="tipoSolicitudId">
+                <option [value]="null" disabled selected>Seleccione un tipo de solicitud</option>
+                @for (t of tiposSolicitud(); track t.idTipoSolicitud) {
+                  <option [value]="t.idTipoSolicitud">{{ t.nombre }}</option>
+                }
+              </select>
+              @if (solicitudForm.controls.tipoSolicitudId.touched && solicitudForm.controls.tipoSolicitudId.invalid) {
+                <p class="field-error">Seleccione un tipo de solicitud</p>
+              }
+            </div>
+
+            <div class="request-field request-field-full">
+              <label for="motivo">Motivo de la vacante <span class="text-required-orange">*</span></label>
+              <textarea 
+                id="motivo"
+                class="form-textarea" 
+                formControlName="motivo" 
+                placeholder="Describa brevemente el motivo de la vacante..." 
+                rows="3"
+              ></textarea>
+              @if (solicitudForm.controls.motivo.touched && solicitudForm.controls.motivo.invalid) {
+                <p class="field-error">El motivo de la vacante es obligatorio (mínimo 10 caracteres)</p>
+              }
+            </div>
+          </div>
+        </div>
+      </mat-card>
+
+      <!-- SECCIÓN 2: PERFIL REQUERIDO -->
+      <mat-card class="request-section-card">
+        <div class="request-section-header">
+          <h4>
+            <span class="material-symbols-outlined notranslate" translate="no">psychology</span>
+            2. Perfil requerido
+          </h4>
+        </div>
+
+        <div class="request-section-body">
+          <!-- A. Información Obligatoria -->
+          <div class="sub-section-title-divider">
+            <h5>Información obligatoria</h5>
+          </div>
+
+          <div class="request-form-grid">
+            <div class="request-field request-field-full">
+              <label for="objetivoCargo">Objetivo principal del cargo <span class="text-required-orange">*</span></label>
+              <textarea 
+                id="objetivoCargo"
+                class="form-textarea" 
+                formControlName="objetivoCargo" 
+                placeholder="Describa el propósito principal del cargo dentro de la organización..." 
+                rows="3"
+              ></textarea>
+              @if (solicitudForm.controls.objetivoCargo.touched && solicitudForm.controls.objetivoCargo.invalid) {
+                <p class="field-error">El objetivo principal del cargo es obligatorio</p>
+              }
+            </div>
+
+            <div class="request-field">
+              <label for="experienciaMinima">Experiencia mínima requerida <span class="text-required-orange">*</span></label>
+              <textarea 
+                id="experienciaMinima"
+                class="form-textarea" 
+                formControlName="experienciaMinima" 
+                placeholder="Ej. Mínimo 2 años de experiencia en cargos similares." 
+                rows="2"
+              ></textarea>
+              @if (solicitudForm.controls.experienciaMinima.touched && solicitudForm.controls.experienciaMinima.invalid) {
+                <p class="field-error">La experiencia mínima requerida es obligatoria</p>
+              }
+            </div>
+
+            <div class="request-field">
+              <label for="conocimientosTecnicos">Conocimientos técnicos requeridos <span class="text-required-orange">*</span></label>
+              <textarea 
+                id="conocimientosTecnicos"
+                class="form-textarea" 
+                formControlName="conocimientosTecnicos" 
+                placeholder="Detalle conocimientos técnicos, metodologías o especialidades indispensables." 
+                rows="3"
+              ></textarea>
+              @if (solicitudForm.controls.conocimientosTecnicos.touched && solicitudForm.controls.conocimientosTecnicos.invalid) {
+                <p class="field-error">Los conocimientos técnicos requeridos son obligatorios</p>
+              }
+            </div>
+
+            <div class="request-field request-field-full">
+              <label for="funciones">Funciones principales <span class="text-required-orange">*</span></label>
+              <textarea 
+                id="funciones"
+                class="form-textarea" 
+                formControlName="funciones" 
+                placeholder="Describa las principales funciones y responsabilidades del cargo." 
+                rows="4"
+              ></textarea>
+              <span class="field-helper-text">Puede ingresar una función por línea.</span>
+              @if (solicitudForm.controls.funciones.touched && solicitudForm.controls.funciones.invalid) {
+                <p class="field-error">Las funciones principales son obligatorias</p>
+              }
+            </div>
+          </div>
+
+          <!-- B. Información Recomendada u Opcional Plegable -->
+          <details class="recommendation-details" open>
+            <summary class="recommendation-summary">
+              <div class="summary-content">
+                <div class="summary-title-row">
+                  <h5>Información recomendada</h5>
+                  <span class="badge-optional-text">6 campos opcionales</span>
+                </div>
+                <p class="summary-subtitle">Completar estos datos mejora la precisión del perfil generado.</p>
+              </div>
+              <span class="material-symbols-outlined expand-icon notranslate" translate="no">expand_more</span>
+            </summary>
+
+            <div class="request-form-grid recommendation-content-grid">
+              <div class="request-field">
+                <label for="formacionAcademica">
+                  Formación académica requerida
+                  <span class="badge-optional-text">Opcional</span>
+                </label>
+                <textarea 
+                  id="formacionAcademica"
+                  class="form-textarea" 
+                  formControlName="formacionAcademica" 
+                  placeholder="Ej. Licenciatura en Administración de Empresas, Economía o carreras afines." 
+                  rows="2"
+                ></textarea>
+              </div>
+
+              <div class="request-field">
+                <label for="experienciaIndispensable">
+                  Experiencia específica indispensable
+                  <span class="badge-optional-text">Opcional</span>
+                </label>
+                <textarea 
+                  id="experienciaIndispensable"
+                  class="form-textarea" 
+                  formControlName="experienciaIndispensable" 
+                  placeholder="Detalle la experiencia específica que resulta indispensable para el cargo." 
+                  rows="2"
+                ></textarea>
+              </div>
+
+              <div class="request-field">
+                <label for="herramientasSistemas">
+                  Herramientas o sistemas requeridos
+                  <span class="badge-optional-text">Opcional</span>
+                </label>
+                <textarea 
+                  id="herramientasSistemas"
+                  class="form-textarea" 
+                  formControlName="herramientasSistemas" 
+                  placeholder="Ej. SAP, Power BI, Excel avanzado." 
+                  rows="2"
+                ></textarea>
+                <span class="field-helper-text">Puede ingresar una herramienta o sistema por línea.</span>
+              </div>
+
+              <div class="request-field">
+                <label for="competenciasClave">
+                  Competencias clave del perfil
+                  <span class="badge-optional-text">Opcional</span>
+                </label>
+                <textarea 
+                  id="competenciasClave"
+                  class="form-textarea" 
+                  formControlName="competenciasClave" 
+                  placeholder="Ej. Orientación a resultados, comunicación efectiva, pensamiento analítico." 
+                  rows="3"
+                ></textarea>
+                <span class="field-helper-text">Puede ingresar una competencia por línea.</span>
+              </div>
+
+              <div class="request-field">
+                <label for="criteriosExcluyentes">
+                  Criterios excluyentes
+                  <span class="badge-optional-text">Opcional</span>
+                </label>
+                <textarea 
+                  id="criteriosExcluyentes"
+                  class="form-textarea" 
+                  formControlName="criteriosExcluyentes" 
+                  placeholder="Condiciones cuya ausencia impide continuar con el candidato." 
+                  rows="2"
+                ></textarea>
+                <span class="field-helper-text">Condiciones cuya ausencia impide continuar con el candidato.</span>
+              </div>
+
+              <div class="request-field">
+                <label for="criteriosDeseables">
+                  Criterios deseables
+                  <span class="badge-optional-text">Opcional</span>
+                </label>
+                <textarea 
+                  id="criteriosDeseables"
+                  class="form-textarea" 
+                  formControlName="criteriosDeseables" 
+                  placeholder="Condiciones valoradas que no son obligatorias." 
+                  rows="2"
+                ></textarea>
+                <span class="field-helper-text">Condiciones valoradas que no son obligatorias.</span>
+              </div>
+            </div>
+          </details>
+        </div>
+
+      </mat-card>
+
+      <!-- SECCIÓN 3: CONDICIONES DE LA VACANTE -->
+      <mat-card class="request-section-card">
+        <div class="request-section-header">
+          <h4>
+            <span class="material-symbols-outlined notranslate" translate="no">assignment_ind</span>
+            3. Condiciones de la vacante
+          </h4>
+        </div>
+
+        <div class="request-section-body request-form-grid">
+          <div class="request-field">
+            <label for="modalidadTrabajoId">Modalidad de trabajo <span class="text-required-orange">*</span></label>
+            <select id="modalidadTrabajoId" class="form-select" formControlName="modalidadTrabajoId">
+              <option [value]="null" disabled selected>Seleccione una modalidad</option>
+              @for (m of modalidades(); track m.idModalidad) {
+                <option [value]="m.idModalidad">{{ m.nombre }}</option>
+              }
+            </select>
+            @if (solicitudForm.controls.modalidadTrabajoId.touched && solicitudForm.controls.modalidadTrabajoId.invalid) {
+              <p class="field-error">Seleccione una modalidad</p>
+            }
+          </div>
+
+          <div class="request-field">
+            <label for="seniority">Seniority <span class="text-required-orange">*</span></label>
+            <select id="seniority" class="form-select" formControlName="seniority">
+              <option value="Junior">Junior</option>
+              <option value="SemiSenior">Semi-Senior</option>
+              <option value="Senior">Senior</option>
+              <option value="Especialista / Jefe">Especialista / Jefe</option>
+            </select>
+            @if (solicitudForm.controls.seniority.touched && solicitudForm.controls.seniority.invalid) {
+              <p class="field-error">Seleccione un seniority</p>
+            }
+          </div>
+
+          <div class="request-field">
+            <label for="prioridad">Prioridad <span class="text-required-orange">*</span></label>
+            <select id="prioridad" class="form-select" formControlName="prioridad">
+              <option value="Baja">Baja</option>
+              <option value="Media">Media</option>
+              <option value="Alta">Alta</option>
+            </select>
+            @if (solicitudForm.controls.prioridad.touched && solicitudForm.controls.prioridad.invalid) {
+              <p class="field-error">Seleccione una prioridad</p>
+            }
+          </div>
+
+          <div class="request-field request-field-full">
+            <label for="disponibilidadRequerida">
+              Disponibilidad requerida
+              <span class="badge-optional-text">Opcional</span>
+            </label>
+            <textarea 
+              id="disponibilidadRequerida"
+              class="form-textarea" 
+              formControlName="disponibilidadRequerida" 
+              placeholder="Ej. Indique turnos, viajes, trabajo de campo, horarios extendidos o atención de emergencias." 
+              rows="2"
+            ></textarea>
+            <span class="field-helper-text">Indique turnos, viajes, trabajo de campo, horarios extendidos, atención de emergencias u otras condiciones relevantes.</span>
+          </div>
+        </div>
+      </mat-card>
+
+      <!-- SECCIÓN 4: RESUMEN DE LA SOLICITUD -->
+      <mat-card class="request-section-card request-summary-card">
+        <div class="request-section-header">
+          <h4>
+            <span class="material-symbols-outlined notranslate" translate="no">fact_check</span>
+            4. Resumen de la solicitud
+          </h4>
+        </div>
+
+        <div class="request-section-body">
+          <div class="request-summary-grid">
+            <div>
+              <p>Cargo requerido</p>
+              <strong>{{ solicitudForm.value.cargo || 'No especificado' }}</strong>
+            </div>
+            <div>
+              <p>Regional</p>
+              <strong>{{ obtenerNombreCatalogo('regional', solicitudForm.value.regionalId) }}</strong>
+            </div>
+            <div>
+              <p>Tipo de solicitud</p>
+              <strong>{{ obtenerNombreCatalogo('tipo', solicitudForm.value.tipoSolicitudId) }}</strong>
+            </div>
+            <div>
+              <p>Cantidad de vacantes</p>
+              <strong>{{ solicitudForm.value.cantidadVacantes || 'No especificado' }}</strong>
+            </div>
+            <div>
+              <p>Modalidad</p>
+              <strong>{{ obtenerNombreCatalogo('modalidad', solicitudForm.value.modalidadTrabajoId) }}</strong>
+            </div>
+            <div>
+              <p>Seniority</p>
+              <strong>{{ solicitudForm.value.seniority === 'SemiSenior' ? 'Semi-Senior' : (solicitudForm.value.seniority || 'No especificado') }}</strong>
+            </div>
+            <div>
+              <p>Prioridad</p>
+              <strong>{{ solicitudForm.value.prioridad || 'No especificado' }}</strong>
+            </div>
+          </div>
+
+          <div class="request-info-message">
+            <span class="material-symbols-outlined info-blue-icon notranslate" translate="no">help_outline</span>
+            <p>Por favor, revisa que toda la información ingresada sea correcta antes de registrar la solicitud. Una vez enviada, se iniciará el proceso de validación por la unidad correspondiente.</p>
+          </div>
+        </div>
+      </mat-card>
+
+      <!-- BOTONES DE ACCIÓN -->
+      <div class="request-actions-bar">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button routerLink="/solicitudes" class="action-btn cancel" type="button" [disabled]="isSubmitting()">Cancelar</button>
+          <button (click)="limpiarFormulario()" class="action-btn" type="button" [disabled]="isSubmitting()" style="background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; padding: 0 16px; height: 38px; border-radius: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">
+            Limpiar formulario
+          </button>
+        </div>
+
+        <div class="request-actions-primary">
+          <button 
+            (click)="onPrimarySubmit()" 
+            [disabled]="isSubmitting() || solicitudForm.invalid || catalogosCargando()" 
+            class="action-btn submit" 
+            type="button"
+          >
+            @if (isSubmitting()) {
+              <span class="material-symbols-outlined spinner-icon" style="font-size: 18px; margin-right: 4px;">sync</span>
+              {{ isEditMode() ? (solicitud()?.estadoCodigo === 'SOL-OBS' ? 'Enviando a RRHH...' : 'Guardando cambios...') : 'Registrando y enviando...' }}
+            } @else {
+              <span class="material-symbols-outlined" style="font-size: 18px; margin-right: 4px;">send</span>
+              {{ isEditMode() ? (solicitud()?.estadoCodigo === 'SOL-OBS' ? 'Revisar y Enviar a RRHH' : 'Guardar cambios') : 'Registrar y Enviar a RRHH' }}
+            }
+          </button>
+        </div>
+      </div>
+    </form>
+  }
+</div>
+
+<!-- MODAL: REVISAR Y ENVIAR RESPUESTA A RRHH -->
+<ng-template #reenviarDialog>
+  <div class="action-modal bg-surface-white w-full overflow-hidden flex flex-col shadow-xl" style="border-radius: 12px; background-color: #ffffff; width: 100%; max-width: 100%; box-sizing: border-box;">
+    <!-- Modal Header -->
+    <div class="action-modal-header border-b border-border-subtle flex justify-between items-start" style="padding: 24px 28px 18px 28px; box-sizing: border-box;">
+      <div class="flex items-start gap-4 flex-1 min-w-0" style="align-items: flex-start; gap: 16px;">
+        <div class="action-modal-icon flex items-center justify-center shrink-0" style="width: 44px; height: 44px; min-width: 44px; min-height: 44px; flex: 0 0 44px; align-self: flex-start; background-color: #eff6ff; color: #004370; border-radius: 10px;">
+          <span class="material-symbols-outlined" style="font-size: 22px; width: 22px; height: 22px; line-height: 1; display: flex; align-items: center; justify-content: center;">send</span>
+        </div>
+        <div class="min-w-0 flex-1">
+          <h3 class="action-modal-title font-headline-md text-headline-md text-text-main" style="font-size: 19px; font-weight: 700; line-height: 1.25; margin: 0; color: #1f2933;">Revisar y Enviar a RRHH</h3>
+          <p class="action-modal-subtitle font-body-md text-body-md text-text-secondary mt-1 leading-relaxed" style="font-size: 13.5px; font-weight: 400; margin: 4px 0 0 0; color: #5c6b73; line-height: 1.45;">
+            Estás a punto de enviar la solicitud corregida a RRHH. El estado cambiará a "Solicitud Enviada a RRHH".
+          </p>
+        </div>
+      </div>
+      <button (click)="cerrarModalReenvio()" class="action-modal-close material-symbols-outlined flex items-center justify-center transition-colors border-none bg-transparent cursor-pointer shrink-0" style="width: 32px; height: 32px; min-width: 32px; min-height: 32px; border: none; background: transparent; border-radius: 6px; cursor: pointer; color: #5c6b73; font-size: 20px; margin-left: 12px;">close</button>
+    </div>
+
+    <!-- Modal Content Form -->
+    <div class="action-modal-body space-y-4" style="padding: 24px 28px; box-sizing: border-box; overflow: hidden; width: 100%;">
+      @if (obtenerTextoObservacionRRHH()) {
+        <div style="background-color: #fffbeb; border: 1px solid #fde68a; border-radius: 8px; padding: 14px 16px; margin-bottom: 16px;">
+          <span style="font-size: 11px; font-weight: 700; text-transform: uppercase; color: #b45309; letter-spacing: 0.04em; display: block; margin-bottom: 4px;">Observación de RRHH atendida:</span>
+          <p style="margin: 0; font-size: 13.5px; color: #92400e; font-style: italic;">"{{ obtenerTextoObservacionRRHH() }}"</p>
+        </div>
+      }
+
+      <div class="action-modal-field flex flex-col min-w-0 w-full" style="width: 100%;">
+        <label class="action-modal-label font-label-md text-label-md text-text-main mb-2" style="font-size: 13px; font-weight: 700; color: #1f2933; display: block; margin-bottom: 8px;">Comentario o aclaración para RRHH (Opcional)</label>
+        <textarea #comentarioCtrl class="action-modal-control w-full bg-surface-container-low border border-border-subtle rounded-lg px-4 py-3 text-body-md focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all resize-none" placeholder="Ej. Se completó la disponibilidad requerida y se aclararon las funciones del puesto." rows="3" style="font-size: 14px; border-radius: 8px; border: 1px solid #d9e2ec; min-height: 90px; height: 90px; box-sizing: border-box; width: 100%; max-width: 100%; font-family: inherit; color: #1f2933; line-height: 1.5;"></textarea>
+      </div>
+    </div>
+
+    <!-- Modal Footer -->
+    <div class="action-modal-footer bg-surface-container-low border-t border-border-subtle" style="display: flex; align-items: center; justify-content: flex-end; gap: 12px; padding: 18px 28px; background-color: #f8fafc; border-top: 1px solid #e2e8f0; border-radius: 0 0 12px 12px; box-sizing: border-box; width: 100%;">
+      <button (click)="cerrarModalReenvio()" class="detail-action-btn detail-action-secondary" style="height: 38px; min-height: 38px; border-radius: 6px; padding: 0 20px; font-size: 13px; font-weight: 700; cursor: pointer; background: #ffffff; border: 1px solid #d9e2ec; color: #5c6b73;">
+        Cancelar
+      </button>
+      <button (click)="confirmarReenvio(comentarioCtrl.value)" [disabled]="isSubmitting()" class="detail-action-btn" style="height: 38px; min-height: 38px; border-radius: 6px; padding: 0 22px; font-size: 13px; font-weight: 700; background: #004370; color: #ffffff; border: none; display: inline-flex; align-items: center; gap: 8px;" [style.cursor]="isSubmitting() ? 'not-allowed' : 'pointer'">
+        <span class="material-symbols-outlined text-[18px]" style="font-size: 18px;">send</span>
+        {{ isSubmitting() ? 'Enviando a RRHH...' : 'Confirmar y Enviar a RRHH' }}
+      </button>
+    </div>
+  </div>
+</ng-template>

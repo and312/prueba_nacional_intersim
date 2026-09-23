@@ -1,0 +1,80 @@
+.pestanas-contenedor {
+  display: flex;
+  gap: 8px;
+  border-bottom: 2px solid var(--border-subtle, #d9e2ec);
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  padding-bottom: 0;
+  box-sizing: border-box;
+
+  @media (max-width: 640px) {
+    gap: 4px;
+    
+    .pestana-boton {
+      padding: 10px 12px;
+      font-size: 13px;
+      gap: 6px;
+    }
+  }
+}
+
+.pestana-boton {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 22px;
+  background: transparent;
+  border: 0;
+  border-bottom: 4px solid transparent;
+  border-radius: 8px 8px 0 0;
+  color: var(--text-secondary, #5c6b73);
+  font-size: 14.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  margin-bottom: -2px;
+
+  &:hover:not(.deshabilitada) {
+    color: var(--primary-color, #004370);
+    background-color: rgba(0, 67, 112, 0.04);
+  }
+
+  &.activa {
+    color: var(--primary-color, #004370);
+    font-weight: 700;
+    border-bottom: 4px solid var(--primary-color, #004370);
+    background: linear-gradient(180deg, rgba(0, 67, 112, 0.08) 0%, rgba(0, 67, 112, 0.02) 100%);
+
+    .icono-pestana {
+      color: var(--primary-color, #004370);
+      font-size: 20px;
+      font-weight: 700;
+    }
+  }
+
+  &.deshabilitada {
+    opacity: 0.55;
+    cursor: default;
+  }
+
+  .icono-pestana {
+    font-size: 20px;
+    transition: transform 0.2s ease;
+  }
+}
+
+.badge-bloqueado {
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #64748b;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-left: 4px;
+}

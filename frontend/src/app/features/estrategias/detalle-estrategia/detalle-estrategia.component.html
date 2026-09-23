@@ -1,0 +1,2800 @@
+<div class="perfiles-page">
+
+  <!-- Toast Feedback -->
+  @if (toastMessage()) {
+    <div [class]="'toast-notification ' + toastMessage()?.type">
+      <span class="material-symbols-outlined">
+        {{ toastMessage()?.type === 'success' ? 'check_circle' : 'info' }}
+      </span>
+      <span>{{ toastMessage()?.text }}</span>
+    </div>
+  }
+
+  <app-loader [isLoading]="isLoading()" message="Cargando detalle de la estrategia..."></app-loader>
+
+  @if (!isLoading() && estrategia()) {
+    @let est = estrategia()!;
+
+    <!-- CABECERA SUPERIOR (Estilo Perfiles / Conservada intacta) -->
+    <div class="encabezado-contenedor">
+      <!-- Volver al listado -->
+      <button class="boton-volver" (click)="volver()" type="button">
+        <span class="material-symbols-outlined">arrow_back</span>
+        <span>Volver al listado</span>
+      </button>
+
+      <div class="encabezado-contenido">
+        <div class="encabezado-principal">
+          <!-- Título principal: CÓDIGO ESTRATEGIA · Nombre del puesto + Estado -->
+          <div class="meta-identificador">
+            <span class="codigo-perfil">{{ est.codigoEstrategia }}</span>
+            <span class="separador">·</span>
+            <span class="cargo-nombre">{{ est.cargo }}</span>
+            <span [class]="'status-badge ' + getEstadoConfig(est.estado).chipClass">
+              <span class="material-symbols-outlined status-icon">
+                {{ getEstadoConfig(est.estado).icon }}
+              </span>
+              <span class="status-label">{{ getEstadoConfig(est.estado).label }}</span>
+            </span>
+          </div>
+
+          <!-- Detalles secundarios (Perfil Origen, versión, área, actualización) -->
+          <div class="detalles-secundarios">
+            <div class="detalle-item">
+              <span class="etiqueta-meta">Perfil origen:</span>
+              <span class="valor-meta fuerte">{{ est.codigoPerfil }}</span>
+            </div>
+            <div class="detalle-item">
+              <span class="etiqueta-meta">Versión:</span>
+              <span class="version-chip">v{{ est.versionPerfil }}</span>
+            </div>
+            <div class="detalle-item">
+              <span class="etiqueta-meta">Área:</span>
+              <span class="valor-meta">{{ est.area }}</span>
+            </div>
+            <div class="detalle-item">
+              <span class="etiqueta-meta">Actualizado:</span>
+              <span class="valor-meta">{{ est.ultimaActualizacion | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Botones de Acción a la Derecha -->
+        @if (isRRHH()) {
+          <div class="acciones-cabecera-derecha">
+            <button
+              type="button"
+              (click)="abrirModalAprobacion()"
+              [disabled]="est.estado === 'AprobadaEstrategia'"
+              class="boton-accion btn-primary-approve"
+            >
+              <span class="material-symbols-outlined">check_circle</span>
+              <span>{{ est.estado === 'AprobadaEstrategia' ? 'Estrategia Aprobada' : 'Aprobar estrategia' }}</span>
+            </button>
+          </div>
+        } @else if (isAdmin()) {
+          <div class="admin-read-only-badge">
+            <span class="material-symbols-outlined text-base">visibility</span>
+            <span>Vista de consulta (Administrador)</span>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- ESTADO ESPECIAL: ALERTA DE ERROR SI EXISTE -->
+    @if (est.mensajeError) {
+      <div class="alert-banner-error mb-4">
+        <span class="material-symbols-outlined alert-icon">error_outline</span>
+        <div class="flex-1">
+          <p class="font-semibold text-rose-900 text-sm">Error en la ejecución del matching</p>
+          <p class="text-xs text-rose-700 mt-0.5">{{ est.mensajeError }}</p>
+        </div>
+      </div>
+    }
+
+    <!-- CONTENEDOR PRINCIPAL: GRID 2 COLUMNAS (CONTENIDO + ESTADO PROCESO LATERAL) -->
+    <div class="estrategia-grid-layout">
+
+      <!-- COLUMNA PRINCIPAL (IZQUIERDA) -->
+      <div class="columna-principal space-y-6">
+
+        <!-- 1. RECOMENDACIÓN PRINCIPAL DEL MATCHING -->
+        <div class="detail-card-section matching-recommendation-card">
+          <div>
+            <div class="w-full">
+              <!-- Encabezado del bloque + Badge prioritaria verde -->
+              <div class="flex items-center gap-3 flex-wrap recommendation-header-row mb-2">
+                <h3 class="section-card-title font-bold text-lg text-[#004370]">
+                  Recomendación principal del matching
+                </h3>
+                <span class="strategy-priority-badge">
+                  Priorizar estrategia {{ est.recomendacion.estrategiaPrioritaria === 'INTERNA' ? 'interna' : 'externa' }}
+                </span>
+              </div>
+
+              <!-- Justificación -->
+              <p class="justification-text text-sm text-slate-600 leading-relaxed mb-5">
+                {{ est.recomendacion.justificacion }}
+              </p>
+
+              <!-- Row 1: NIVEL DE CONFIANZA & COMPATIBILIDAD PROMEDIO (Estilo IMG2) -->
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-7 mt-6 mb-6">
+                <!-- Card 1: Nivel de confianza -->
+                <div class="header-metric-card">
+                  <div class="flex items-center gap-2 mb-3">
+                    <span class="material-symbols-outlined metric-card-icon-blue">track_changes</span>
+                    <span class="metric-card-title-gray">NIVEL DE CONFIANZA</span>
+                  </div>
+                  <div class="flex items-center gap-4">
+                    <span class="metric-card-number-bold shrink-0">
+                      {{ getPorcentajeNivelConfianza() }}%
+                    </span>
+                    <div class="progress-bar-track flex-1">
+                      <div class="progress-bar-fill-blue" [style.width]="getPorcentajeNivelConfianza() + '%'"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Card 2: Compatibilidad promedio -->
+                <div class="header-metric-card">
+                  <div class="flex items-center gap-2 mb-3">
+                    <span class="material-symbols-outlined metric-card-icon-green">trending_up</span>
+                    <span class="metric-card-title-gray">COMPATIBILIDAD PROMEDIO</span>
+                  </div>
+                  <div class="flex items-center gap-4">
+                    <span class="metric-card-number-bold shrink-0">
+                      {{ getPorcentajeCompatibilidad() }}%
+                    </span>
+                    <div class="progress-bar-track flex-1">
+                      <div class="progress-bar-fill-green" [style.width]="getPorcentajeCompatibilidad() + '%'"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Row 2: 3 Cards en una sola línea con mejor padding y separación (Estilo IMG2) -->
+              <div class="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
+                <!-- Card A: Acción inmediata (Verde) -->
+                <div class="header-subcard-green">
+                  <span class="subcard-label-green">Acción inmediata</span>
+                  <p class="subcard-value-dark">
+                    {{ est.recomendacion.accionInmediata }}
+                  </p>
+                </div>
+
+                <!-- Card B: Contingencia (Gris/Azul suave) -->
+                <div class="header-subcard-slate">
+                  <span class="subcard-label-slate">Contingencia</span>
+                  <p class="subcard-value-dark">
+                    {{ est.recomendacion.estrategiaContingencia }}
+                  </p>
+                </div>
+
+                <!-- Card C: Principal brecha (Gris/Azul suave) -->
+                <div class="header-subcard-slate">
+                  <span class="subcard-label-slate">Principal brecha</span>
+                  <p class="subcard-value-dark">
+                    {{ cleanPrincipalBrecha(est.recomendacion.principalBrecha) }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Estados Especiales (Warnings sin candidatos) -->
+              @if (est.recomendacion.internosViables === 0) {
+                <div class="empty-candidate-alert alert-amber">
+                  <span class="material-symbols-outlined text-amber-600 text-lg">info</span>
+                  <span>No se identificaron candidatos internos viables.</span>
+                </div>
+              }
+              @if (est.recomendacion.historicosViables === 0) {
+                <div class="empty-candidate-alert alert-slate">
+                  <span class="material-symbols-outlined text-slate-500 text-lg">info</span>
+                  <span>No se identificaron postulantes históricos viables como contingencia.</span>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. RESUMEN DE LA EJECUCIÓN (MatchingEjecuciones - ESTILO EXACTO IMG2 CON RECTURA Y SPACING GARANTIZADO) -->
+        @if (est.ejecucionMatching) {
+          @let exec = est.ejecucionMatching;
+          <div class="execution-summary-card-img2">
+            <!-- Header Row -->
+            <div class="exec-card-header flex items-center justify-between gap-x-4 gap-y-2.5 flex-wrap mb-3.5">
+              <div class="flex items-center gap-3">
+                <div class="exec-icon-box">
+                  <span class="material-symbols-outlined exec-icon">bar_chart</span>
+                </div>
+                <h3 class="exec-title font-bold text-[#004370] text-base sm:text-lg">
+                  Resumen de la ejecución
+                </h3>
+              </div>
+              <div class="flex items-center gap-2 text-xs pl-11 sm:pl-0">
+                <span class="font-mono text-slate-400 font-medium text-xs sm:text-sm">{{ exec.codigoMatching }}</span>
+                <span class="text-slate-300 font-normal mx-1">·</span>
+                <span class="status-badge-rrhh">
+                  {{ getEstadoFormateado(exec.estado) }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Middle Metrics Band (Alineado a la 'R' de Resumen: padding-left 44px via SCSS) -->
+            <div class="exec-metrics-band my-3.5">
+              <div class="flex items-center flex-wrap gap-y-2 text-xs sm:text-sm">
+                <div class="flex items-center">
+                  <span class="exec-metric-number font-bold text-slate-900 text-xs sm:text-sm">{{ exec.totalEvaluados }}</span>&nbsp;
+                  <span class="text-slate-500 font-normal">evaluados</span>
+                </div>
+
+                <span class="dot-separator-img2">·</span>
+
+                <div class="flex items-center">
+                  <span class="exec-metric-number font-bold text-slate-900 text-xs sm:text-sm">{{ exec.potenciales }}</span>&nbsp;
+                  <span class="text-slate-500 font-normal">potenciales</span>
+                </div>
+
+                <span class="dot-separator-img2">·</span>
+
+                <div class="flex items-center">
+                  <span class="exec-metric-number font-bold text-slate-900 text-xs sm:text-sm">{{ exec.descartados }}</span>&nbsp;
+                  <span class="text-slate-500 font-normal">descartados</span>
+                </div>
+
+                <span class="dot-separator-img2">·</span>
+
+                <div class="flex items-center">
+                  <span class="exec-metric-number font-bold text-slate-900 text-xs sm:text-sm">{{ exec.compatibilidadPromedio | number:'1.1-1' }}%</span>&nbsp;
+                  <span class="text-slate-500 font-normal">de compatibilidad promedio</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Bottom Timestamps Row (Alineado a la 'R' de Resumen: padding-left 44px via SCSS) -->
+            <div class="exec-timestamps-row flex items-center flex-wrap gap-y-2 text-xs text-slate-500">
+              <div class="flex items-center">
+                <span class="exec-timestamp-label text-slate-400 font-normal">Inicio:</span>&nbsp;
+                <strong class="text-slate-700 font-semibold">{{ exec.fechaInicio | date:'dd/MM/yyyy HH:mm' }}</strong>
+              </div>
+
+              <span class="dot-separator-img2">·</span>
+
+              <div class="flex items-center">
+                <span class="exec-timestamp-label text-slate-400 font-normal">Finalización:</span>&nbsp;
+                <strong class="text-slate-700 font-semibold">{{ exec.fechaFin ? (exec.fechaFin | date:'dd/MM/yyyy HH:mm') : 'Ejecución en proceso' }}</strong>
+              </div>
+
+              <span class="dot-separator-img2">·</span>
+
+              <div class="flex items-center">
+                <span class="exec-timestamp-label text-slate-400 font-normal">Duración:</span>&nbsp;
+                <strong class="text-slate-700 font-semibold">{{ exec.duracionTexto }}</strong>
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- 4. RESUMEN POR ORIGEN (Lado a lado: Personal Interno & Postulantes Históricos) -->
+        <div class="summaries-side-by-side-grid">
+          <!-- Resumen Personal Interno -->
+          <div class="detail-card-section">
+            <h3 class="section-card-title mb-4 flex items-center gap-2">
+              <span class="material-symbols-outlined text-[#004370]">badge</span>
+              Resumen de personal interno
+            </h3>
+
+            <div class="metrics-key-value-list">
+              <div class="key-value-row">
+                <span>Recibidos (filtro mecánico)</span>
+                <strong>{{ est.resumenPersonalInterno.recibidos }}</strong>
+              </div>
+              <div class="key-value-row">
+                <span>Evaluados</span>
+                <strong>{{ est.resumenPersonalInterno.evaluados }}</strong>
+              </div>
+              <div class="key-value-row">
+                <span>Match alto</span>
+                <strong class="text-emerald-700">{{ est.resumenPersonalInterno.matchAlto ?? '—' }}</strong>
+              </div>
+              <div class="key-value-row">
+                <span>Match parcial</span>
+                <strong class="text-amber-700">{{ est.resumenPersonalInterno.matchParcial ?? '—' }}</strong>
+              </div>
+              <div class="key-value-row">
+                <span>Match bajo</span>
+                <strong class="text-slate-600">{{ est.resumenPersonalInterno.matchBajo ?? '—' }}</strong>
+              </div>
+              <div class="key-value-row">
+                <span>Descartados</span>
+                <strong class="text-rose-600">{{ est.resumenPersonalInterno.descartados }}</strong>
+              </div>
+              <div class="key-value-row highlighted-row">
+                <span>Viables</span>
+                <strong class="text-[#004370] text-base">{{ est.resumenPersonalInterno.viables }}</strong>
+              </div>
+              <div class="key-value-row">
+                <span>Mejor match</span>
+                <span
+                  class="pill-mejor-match"
+                  [class.pill-alto]="(est.resumenPersonalInterno.mejorMatch ?? 0) >= 80"
+                  [class.pill-parcial]="(est.resumenPersonalInterno.mejorMatch ?? 0) < 80"
+                >
+                  {{ est.resumenPersonalInterno.mejorMatch ? (est.resumenPersonalInterno.mejorMatch + ' %') : '—' }}
+                </span>
+              </div>
+              <div class="key-value-row">
+                <span>Promedio matching</span>
+                <strong>{{ est.resumenPersonalInterno.promedioMatching ? (est.resumenPersonalInterno.promedioMatching + ' %') : '—' }}</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Resumen Postulantes Históricos -->
+          <div class="detail-card-section">
+            <h3 class="section-card-title mb-4 flex items-center gap-2">
+              <span class="material-symbols-outlined text-[#004370]">history</span>
+              Resumen de postulantes históricos
+            </h3>
+
+            <div class="metrics-key-value-list">
+              <div class="key-value-row">
+                <span>Recibidos (filtro mecánico)</span>
+                <strong>{{ est.resumenPostulantesHistoricos.recibidos }}</strong>
+              </div>
+              <div class="key-value-row">
+                <span>Evaluados</span>
+                <strong>{{ est.resumenPostulantesHistoricos.evaluados }}</strong>
+              </div>
+              <div class="key-value-row">
+                <span>Match alto</span>
+                <strong class="text-emerald-700">{{ est.resumenPostulantesHistoricos.matchAlto ?? '—' }}</strong>
+              </div>
+              <div class="key-value-row">
+                <span>Match parcial</span>
+                <strong class="text-amber-700">{{ est.resumenPostulantesHistoricos.matchParcial ?? '—' }}</strong>
+              </div>
+              <div class="key-value-row">
+                <span>Match bajo</span>
+                <strong class="text-slate-600">{{ est.resumenPostulantesHistoricos.matchBajo ?? '—' }}</strong>
+              </div>
+              <div class="key-value-row">
+                <span>Descartados</span>
+                <strong class="text-rose-600">{{ est.resumenPostulantesHistoricos.descartados }}</strong>
+              </div>
+              <div class="key-value-row highlighted-row">
+                <span>Viables</span>
+                <strong class="text-[#004370] text-base">{{ est.resumenPostulantesHistoricos.viables }}</strong>
+              </div>
+              <div class="key-value-row">
+                <span>Mejor match</span>
+                <span
+                  class="pill-mejor-match"
+                  [class.pill-alto]="(est.resumenPostulantesHistoricos.mejorMatch ?? 0) >= 80"
+                  [class.pill-parcial]="(est.resumenPostulantesHistoricos.mejorMatch ?? 0) < 80"
+                >
+                  {{ est.resumenPostulantesHistoricos.mejorMatch ? (est.resumenPostulantesHistoricos.mejorMatch + ' %') : '—' }}
+                </span>
+              </div>
+              <div class="key-value-row">
+                <span>Promedio matching</span>
+                <strong>{{ est.resumenPostulantesHistoricos.promedioMatching ? (est.resumenPostulantesHistoricos.promedioMatching + ' %') : '—' }}</strong>
+              </div>
+              <div class="key-value-row">
+                <span>Requieren actualizar datos</span>
+                <strong class="text-amber-700">{{ est.resumenPostulantesHistoricos.requierenActualizarDatos }}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. RESUMEN DE DESCARTES (Motivos de descarte) -->
+        @if (est.resumenDescartes && est.resumenDescartes.length > 0) {
+          <div class="detail-card-section overflow-hidden">
+            <h3 class="section-card-title mb-4 flex items-center gap-2">
+              <span class="material-symbols-outlined text-[#004370]">do_not_disturb_on</span>
+              Principales motivos de descarte
+            </h3>
+
+            <div class="descartes-scroll-wrapper overflow-x-auto w-full max-w-full rounded-lg border border-slate-200/90 bg-white shadow-2xs">
+              <table class="descartes-table w-full text-left border-collapse min-w-[560px]">
+                <thead>
+                  <tr class="bg-slate-50/90 border-b border-slate-200 text-[11px] sm:text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    <th class="py-3 px-3.5 whitespace-nowrap text-left">Origen</th>
+                    <th class="py-3 px-3.5 whitespace-nowrap text-left">Tipo de descarte</th>
+                    <th class="py-3 px-3.5 whitespace-nowrap text-center">Cantidad</th>
+                    <th class="py-3 px-3.5 text-left min-w-[160px]">Comentario</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-200/80 text-xs">
+                  @for (desc of est.resumenDescartes; track desc.tipoDescarte + desc.origen) {
+                    <tr class="hover:bg-slate-50/60 transition-colors">
+                      <td class="py-3 px-3.5 whitespace-nowrap text-left">
+                        <span class="origen-badge inline-flex items-center whitespace-nowrap" [class.origen-interna]="desc.origen === 'BD_INTERNA'">
+                          {{ getOrigenLabel(desc.origen) }}
+                        </span>
+                      </td>
+                      <td class="py-3 px-3.5 whitespace-nowrap text-left">
+                        <span class="tipo-descarte-badge inline-flex items-center whitespace-nowrap">
+                          {{ getTipoDescarteLabel(desc.tipoDescarte) }}
+                        </span>
+                      </td>
+                      <td class="py-3 px-3.5 text-center font-bold font-mono text-[#004370] whitespace-nowrap">
+                        {{ desc.cantidad }}
+                      </td>
+                      <td class="py-3 px-3.5 text-slate-600 font-normal leading-relaxed text-left min-w-[160px]">
+                        {{ desc.comentario || '—' }}
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        }
+
+        <!-- 6. PARÁMETROS UTILIZADOS (Acordeón desplegable) -->
+        @if (est.parametrosMatching) {
+          @let params = est.parametrosMatching;
+          <div class="detail-card-section accordion-section">
+            <button
+              type="button"
+              (click)="toggleParametros()"
+              class="accordion-header-btn w-full flex items-center justify-between py-2 text-left focus:outline-none"
+            >
+              <h3 class="section-card-title flex items-center gap-2">
+                <span class="material-symbols-outlined text-[#004370]">tune</span>
+                Parámetros utilizados en el matching
+              </h3>
+              <span class="material-symbols-outlined text-slate-500 transition-transform duration-200" [class.rotate-180]="isParametrosOpen()">
+                expand_more
+              </span>
+            </button>
+
+            @if (isParametrosOpen()) {
+              <div class="accordion-content">
+                <div class="accordion-divider"></div>
+                <div class="params-container">
+                  <div class="param-box param-box-alto">
+                    <span class="param-label">Ajuste alto:</span>
+                    <span class="param-value">desde {{ params.ajusteAltoDesde }} %</span>
+                  </div>
+                  <div class="param-box param-box-medio">
+                    <span class="param-label">Ajuste medio:</span>
+                    <span class="param-value">desde {{ params.ajusteMedioDesde }} %</span>
+                  </div>
+                  <div class="param-box param-box-bajo">
+                    <span class="param-label">Ajuste bajo:</span>
+                    <span class="param-value">desde {{ params.ajusteBajoDesde }} %</span>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        <!-- TABS Y SECCIÓN DE ESTRATEGIA CON MODO AMPLIADO -->
+        <div
+          class="detail-card-section p-0 overflow-hidden transition-all duration-300 relative"
+          [class.modo-ampliado-fixed]="modoAmpliado()"
+        >
+          <div class="strategy-tabs-header-container border-b border-slate-200 bg-slate-50/70 flex items-center justify-between px-2 relative">
+            <div class="strategy-tabs-list flex items-center overflow-x-auto flex-1 min-w-0">
+              <button
+                type="button"
+                (click)="setTab('INTERNA')"
+                [class.active-tab]="activeTab() === 'INTERNA'"
+                class="strategy-tab-btn"
+              >
+                <span class="tab-title-text">Estrategia interna</span>
+                <span [class]="est.recomendacion.estrategiaPrioritaria === 'INTERNA' ? 'tab-badge-prioritaria' : 'tab-badge-contingencia'">
+                  {{ est.recomendacion.estrategiaPrioritaria === 'INTERNA' ? 'Prioritaria' : 'Contingencia preparada' }}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                (click)="setTab('EXTERNA')"
+                [class.active-tab]="activeTab() === 'EXTERNA'"
+                class="strategy-tab-btn"
+              >
+                <span class="tab-title-text">Estrategia externa</span>
+                <span [class]="est.recomendacion.estrategiaPrioritaria === 'EXTERNA' ? 'tab-badge-prioritaria' : 'tab-badge-contingencia'">
+                  {{ est.recomendacion.estrategiaPrioritaria === 'EXTERNA' ? 'Prioritaria' : 'Contingencia preparada' }}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                (click)="setTab('EVALUACION')"
+                [class.active-tab]="activeTab() === 'EVALUACION'"
+                class="strategy-tab-btn"
+              >
+                <span class="tab-title-text">Evaluación de postulantes</span>
+                <span class="tab-badge-contingencia badge-pool-manual">
+                  Pool manual
+                </span>
+              </button>
+            </div>
+
+            <!-- Botón de Modo Ampliado (Flex item alineado a la derecha sin sobreposición) -->
+            <div class="strategy-expand-btn-wrap shrink-0 flex items-center px-2">
+              <button
+                type="button"
+                (click)="toggleModoAmpliado()"
+                [title]="modoAmpliado() ? 'Salir del modo ampliado' : 'Ver en modo ampliado'"
+                class="btn-modo-ampliado-icon"
+                [class.btn-ampliado-active]="modoAmpliado()"
+              >
+                <span class="material-symbols-outlined text-lg leading-none select-none">
+                  {{ modoAmpliado() ? 'fullscreen_exit' : 'fullscreen' }}
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <div class="bg-white">
+            @if (activeTab() === 'INTERNA') {
+              <div class="estrategia-interna-container space-y-6 p-6 text-left">
+
+                <!-- 1. BLOQUE SUPERIOR: ESTRATEGIA INTERNA (DISEÑO ALINEADO SEGÚN REFERENCIA IMG2 CON DATOS REALES) -->
+                <div class="estrategia-recomendada-card mb-4">
+                  <div class="mb-4">
+                    <div class="mb-2.5">
+                      <span
+                        [class.badge-interna-recomendada]="est.recomendacion.estrategiaPrioritaria === 'INTERNA'"
+                        [class.badge-interna-contingencia]="est.recomendacion.estrategiaPrioritaria !== 'INTERNA'"
+                      >
+                        {{ est.recomendacion.estrategiaPrioritaria === 'INTERNA' ? 'Interna recomendada' : 'Interna contingencia' }}
+                      </span>
+                    </div>
+                    <p class="descripcion-recomendada">
+                      Se recomienda priorizar la estrategia interna. Se identificaron <strong>{{ totalViablesGlobal() }} colaboradores viables</strong>, de los cuales <strong>{{ totalMatchAltoGlobal() }} tienen match alto</strong>. El colaborador <strong>{{ topCandidatoGlobal() }}</strong> presenta el mayor potencial y la menor brecha.
+                    </p>
+                  </div>
+
+                  <!-- METRICS GRID (5 CARDS CON DATOS CONSOLIDADOS COMBINADOS) -->
+                  <div class="metrics-horizontal-grid">
+                    <div class="card-metric-img2">
+                      <span class="material-symbols-outlined metric-icon-img2 icon-color-blue">group</span>
+                      <span class="metric-val-img2 text-slate-800">{{ totalViablesGlobal() }}</span>
+                      <span class="metric-label-img2">Viables</span>
+                    </div>
+
+                    <div class="card-metric-img2">
+                      <span class="material-symbols-outlined metric-icon-img2 icon-color-green">trending_up</span>
+                      <span class="metric-val-img2 text-emerald-600">{{ totalMatchAltoGlobal() }}</span>
+                      <span class="metric-label-img2">Match alto</span>
+                    </div>
+
+                    <div class="card-metric-img2">
+                      <span class="material-symbols-outlined metric-icon-img2 icon-color-orange">trending_up</span>
+                      <span class="metric-val-img2 text-amber-600">{{ totalMatchParcialGlobal() }}</span>
+                      <span class="metric-label-img2">Match parcial</span>
+                    </div>
+
+                    <div class="card-metric-img2">
+                      <span class="material-symbols-outlined metric-icon-img2 icon-color-green">workspace_premium</span>
+                      <span class="metric-val-img2 text-[#004370] font-mono text-sm sm:text-base">{{ topCandidatoGlobal() }}</span>
+                      <span class="metric-label-img2">Mejor candidato</span>
+                    </div>
+
+                    <div class="card-metric-img2">
+                      <span class="material-symbols-outlined metric-icon-img2 icon-color-blue">calendar_today</span>
+                      <span class="metric-val-img2 text-slate-800">{{ plazoInternoDiasGlobal() }} días</span>
+                      <span class="metric-label-img2">Plazo interno</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- BANNER / CALLOUT INFORMATIVO (AFUERA DEL CARD CON DISTANCIA) -->
+                <div class="info-callout-box flex items-center gap-3 mt-4 mb-6">
+                  <span class="material-symbols-outlined text-sky-600 shrink-0 text-xl">info</span>
+                  <span class="text-xs sm:text-sm text-sky-900 font-medium leading-normal">
+                    Evitar búsquedas externas durante los primeros cinco días para priorizar la cultura de crecimiento y movilidad interna.
+                  </span>
+                </div>
+
+                <!-- 2. TABLA: POSTULANTE INTERNOS -->
+                <div class="tabla-seccion-wrapper">
+                  <div class="tabla-header-bar flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 sm:mb-5 w-full">
+                    <div class="tabla-title-ranking-group flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 shrink-0">
+                      <h4 class="seccion-titulo-azul" style="margin-bottom: 0 !important;">
+                        <span class="material-symbols-outlined seccion-icono-azul">badge</span>
+                        <span>Postulantes internos</span>
+                      </h4>
+                      <!-- Selector Ranking (Fila 2 en móvil, Al lado del título en desktop) -->
+                      <div class="inline-flex items-center gap-1.5 text-xs text-slate-500 font-medium shrink-0">
+                        <span>Ranking:</span>
+                        <select
+                          [value]="pageSizeInterno()"
+                          (change)="pageSizeInterno.set(+$any($event.target).value); pageInterno.set(1)"
+                          class="select-ranking-modern"
+                        >
+                          <option [value]="5">Top 5</option>
+                          <option [value]="10">Top 10</option>
+                          <option [value]="25">Top 25</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <!-- Buscador a la rectura del título en su extremo derecho en Desktop -->
+                    <div class="tabla-search-input relative flex items-center bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-2xs focus-within:border-[#004370] focus-within:ring-1 focus-within:ring-[#004370]/20 transition-all w-full sm:w-56 shrink-0 mt-1 sm:mt-0 sm:ml-auto">
+                      <span class="material-symbols-outlined text-slate-400 text-base shrink-0 mr-2 select-none">search</span>
+                      <input
+                        type="text"
+                        [value]="searchInterno()"
+                        (input)="searchInterno.set($any($event.target).value); pageInterno.set(1)"
+                        placeholder="Buscar..."
+                        class="input-search-clean w-full text-xs text-slate-700 placeholder:text-slate-400 font-normal"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="overflow-hidden border border-slate-200 rounded-lg bg-[#f8fafc] shadow-xs w-full max-w-full">
+                    <div class="tabla-scroll-wrapper overflow-x-auto w-full">
+                      <table class="tabla-estrategia w-full text-left border-collapse bg-[#f8fafc]">
+                        <colgroup>
+                          <col style="width: 28px; min-width: 28px;">
+                          <col style="width: 28px; min-width: 28px;">
+                          <col style="width: 75px; min-width: 70px;">
+                          <col style="width: 24%; min-width: 130px; max-width: 180px;">
+                          <col style="width: 28%; min-width: 150px; max-width: 220px;">
+                          <col style="width: 85px; min-width: 80px;">
+                          <col style="width: 115px; min-width: 105px;">
+                          <col style="width: 100px; min-width: 95px;">
+                        </colgroup>
+                        <thead>
+                          <tr class="bg-slate-100/80 border-b border-slate-200 text-xs font-semibold text-slate-600">
+                            <th class="text-center py-2.5 px-1.5"></th>
+                            <th class="text-left py-2.5 px-2">#</th>
+                            <th class="text-left py-2.5 px-2.5 whitespace-nowrap">Código</th>
+                            <th class="text-left py-2.5 px-2.5 whitespace-nowrap">Postulante</th>
+                            <th class="text-left py-2.5 px-2.5 whitespace-nowrap">Cargo / área</th>
+                            <th class="text-left py-2.5 px-2.5 whitespace-nowrap">Regional</th>
+                            <th class="text-left py-2.5 px-2.5 whitespace-nowrap">Match</th>
+                            <th class="text-left py-2.5 px-2.5 whitespace-nowrap">Clasificación</th>
+                          </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200/70 bg-[#f8fafc]">
+                          @for (item of talentoInternoPaginado(); track item.id; let idx = $index) {
+                            <tr class="hover:bg-slate-100/60 transition-colors bg-[#f8fafc]" [class.bg-sky-50\/40]="isInternoExpanded(item.id)">
+                              <td class="text-center py-2 px-1.5">
+                                <button
+                                  type="button"
+                                  (click)="toggleExpandInterno(item.id)"
+                                  class="btn-expander-chevron"
+                                  [title]="isInternoExpanded(item.id) ? 'Contraer detalle' : 'Expandir detalle'"
+                                >
+                                  <span class="inline-block material-symbols-outlined text-lg leading-none transition-transform duration-300 ease-in-out" [class.rotate-180]="isInternoExpanded(item.id)">
+                                    keyboard_arrow_down
+                                  </span>
+                                </button>
+                              </td>
+                              <td class="text-left font-mono text-slate-400 text-xs py-2 px-2 whitespace-nowrap">{{ (pageInterno() - 1) * pageSizeInterno() + idx + 1 }}</td>
+                              <td class="text-left font-mono text-xs font-bold text-[#004370] py-2 px-2.5 whitespace-nowrap">{{ item.codigo }}</td>
+                              <td class="text-left py-2 px-2.5">
+                                <span class="font-medium text-slate-800 block text-xs truncate max-w-[180px]" [title]="item.nombre">{{ item.nombre }}</span>
+                              </td>
+                              <td class="text-left py-2 px-2.5">
+                                <span class="text-slate-700 font-medium text-xs block leading-snug truncate max-w-[220px]" [title]="formatCargoText(item.cargo, item.area)">{{ formatCargoText(item.cargo, item.area) }}</span>
+                              </td>
+                              <td class="text-left text-xs text-slate-600 font-normal py-2 px-2.5 whitespace-nowrap">{{ item.regional }}</td>
+                              <td class="text-left py-2 px-2.5">
+                                <div class="flex items-center gap-1.5">
+                                  <div class="progress-bar-bg flex-1 h-2 rounded-full overflow-hidden bg-slate-100 min-w-[45px]">
+                                    <div
+                                      [class]="'progress-bar-fill h-full rounded-full ' + getProgressBarClass(item.clasificacion, item.matchPorcentaje)"
+                                      [style.width.%]="item.matchPorcentaje"
+                                    ></div>
+                                  </div>
+                                  <span class="text-xs font-bold font-mono text-slate-800 shrink-0 w-8 text-right">{{ item.matchPorcentaje }}%</span>
+                                </div>
+                              </td>
+                              <td class="text-left py-2 px-2.5">
+                                <span
+                                  class="chip-clasificacion whitespace-nowrap"
+                                  [class.chip-match-alto]="isMatchAlto(item.clasificacion)"
+                                  [class.chip-match-parcial]="isMatchParcial(item.clasificacion)"
+                                  [class.chip-match-bajo]="isMatchBajo(item.clasificacion, item.matchPorcentaje)"
+                                  [class.chip-descartado]="isDescartado(item.clasificacion)"
+                                >
+                                  {{ getClasificacionLabel(item.clasificacion) }}
+                                </span>
+                              </td>
+                            </tr>
+
+                            <!-- FILA DESPLEGABLE CON DETALLE DE EVALUACIÓN (ESTILO SUBPANEL IMG18) -->
+                            @if (isInternoExpanded(item.id)) {
+                              <tr class="bg-[#f8fafc] border-b border-slate-300">
+                                <td colspan="8" class="p-0 border-0">
+                                  <div class="subpanel-evaluacion-container">
+                                    <!-- Cabecera del Subpanel -->
+                                    <div class="subpanel-header-flex border-b border-slate-200 pb-2.5 mb-3">
+                                      <div class="flex items-center gap-2.5">
+                                        <span class="badge-codigo-postulante">
+                                          {{ item.codigo }}
+                                        </span>
+                                        <h5 class="font-bold text-sm text-slate-800 tracking-tight">
+                                          Evaluación de criterios — <span class="font-semibold text-slate-700">{{ item.nombre }}</span>
+                                        </h5>
+                                      </div>
+                                      <div [class]="item.matchPorcentaje >= 80 ? 'badge-match-global-alto' : (item.matchPorcentaje >= 60 ? 'badge-match-global-medio' : 'badge-match-global-bajo')">
+                                        <span>Match global:</span>
+                                        <span class="font-bold font-mono text-xs">{{ item.matchPorcentaje }}%</span>
+                                      </div>
+                                    </div>
+
+                                    <!-- 3 Columnas con CSS Nativo (Grid + Gap 24px) -->
+                                    <div class="subpanel-evaluacion-grid">
+                                      <!-- 1. Fortalezas -->
+                                      <div class="column-criterio-box">
+                                        <div>
+                                          <div class="flex justify-start text-left">
+                                            <span class="badge-criterio-cumplido">FORTALEZAS</span>
+                                          </div>
+                                          <div class="criterio-cards-list">
+                                            @for (fort of item.detalleCriterios?.fortalezas; track fort.texto) {
+                                              <div class="card-criterio-item">
+                                                <div class="flex items-center justify-between gap-2">
+                                                  <span class="font-medium text-slate-700 text-xs text-left leading-snug">{{ fort.texto }}</span>
+                                                </div>
+                                              </div>
+                                            }
+                                            @if (!item.detalleCriterios?.fortalezas?.length) {
+                                              <div class="card-criterio-item opacity-60">
+                                                <p class="text-xs text-slate-400 italic text-left">No se registran fortalezas clave</p>
+                                              </div>
+                                            }
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      <!-- 2. Brechas -->
+                                      <div class="column-criterio-box">
+                                        <div>
+                                          <div class="flex justify-start text-left">
+                                            <span class="badge-criterio-nocumplido">BRECHAS</span>
+                                          </div>
+                                          <div class="criterio-cards-list">
+                                            @for (brech of item.detalleCriterios?.brechas; track brech.texto) {
+                                              <div class="card-criterio-item">
+                                                <div class="flex items-center justify-between gap-2">
+                                                  <span class="font-medium text-slate-700 text-xs text-left leading-snug">{{ brech.texto }}</span>
+                                                </div>
+                                              </div>
+                                            }
+                                            @if (!item.detalleCriterios?.brechas?.length) {
+                                              <div class="card-criterio-item border-emerald-100 bg-emerald-50/30">
+                                                <p class="text-xs text-emerald-700 font-medium text-left">Sin brechas críticas identificadas</p>
+                                              </div>
+                                            }
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      <!-- 3. Desglose de Criterios -->
+                                      <div class="column-criterio-box">
+                                        <div>
+                                          <div class="flex justify-start text-left">
+                                            <span class="badge-match-global-alto">DESGLOSE DE CRITERIOS</span>
+                                          </div>
+                                          <div class="criterio-cards-list">
+                                            @for (crit of item.detalleCriterios?.desglose; track crit.criterio) {
+                                              <div class="card-criterio-item">
+                                                <div class="flex items-center justify-between gap-2">
+                                                  <span class="font-bold text-slate-800 text-xs text-left leading-snug shrink min-w-0 max-w-[65%]">{{ crit.criterio }}</span>
+                                                  @if (crit.puntaje) {
+                                                    <span [class]="getCriterioBadgeClass(crit)">
+                                                      {{ crit.puntaje }}
+                                                    </span>
+                                                  }
+                                                </div>
+                                                <p class="text-xs text-slate-500 mt-1 font-normal leading-normal text-left">
+                                                  {{ cleanEncontradoPrefix(crit.resultadoEncontrado) }}
+                                                </p>
+                                              </div>
+                                            }
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            }
+                          } @empty {
+                            <tr>
+                              <td colspan="8" class="text-center py-10 px-4 bg-white">
+                                <div class="flex flex-col items-center justify-center max-w-sm mx-auto text-center gap-1.5">
+                                  <span class="material-symbols-outlined text-3xl text-slate-400">group_off</span>
+                                  <h5 class="text-xs sm:text-sm font-semibold text-slate-700">Sin colaboradores internos evaluados</h5>
+                                  <p class="text-xs text-slate-500 leading-normal">
+                                    No se identificaron resultados de colaboradores internos en la evaluación inicial de esta estrategia.
+                                  </p>
+                                </div>
+                              </td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <!-- PAGINACIÓN INFERIOR SEPARADA DE TABLA 1 -->
+                  <div class="flex items-center justify-between gap-3 mt-4 pt-1 px-1 text-xs text-slate-500 flex-wrap">
+                    <span class="font-normal text-slate-500">
+                      Mostrando {{ talentoInternoFiltrado().length === 0 ? 0 : (pageInterno() - 1) * pageSizeInterno() + 1 }}
+                      a {{ pageInterno() * pageSizeInterno() > talentoInternoFiltrado().length ? talentoInternoFiltrado().length : pageInterno() * pageSizeInterno() }}
+                      de {{ talentoInternoFiltrado().length }} postulantes
+                    </span>
+                    <div class="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        (click)="cambiarPaginaInterno(-1)"
+                        [disabled]="pageInterno() <= 1"
+                        class="btn-paginacion-texto"
+                      >
+                        Anterior
+                      </button>
+                      <div class="paginacion-numero-indicador">
+                        {{ pageInterno() }}
+                      </div>
+                      <button
+                        type="button"
+                        (click)="cambiarPaginaInterno(1)"
+                        [disabled]="pageInterno() >= totalInternoPages()"
+                        class="btn-paginacion-texto"
+                      >
+                        Siguiente
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 3. TABLA: POSTULANTES EXTERNOS/HISTÓRICOS (COMPACTADA CON MATCH IDÉNTICO) -->
+                <div class="tabla-seccion-wrapper">
+                  <div class="tabla-header-bar flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 sm:mb-5 w-full">
+                    <div class="tabla-title-ranking-group flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 shrink-0">
+                      <h4 class="seccion-titulo-azul" style="margin-bottom: 0 !important;">
+                        <span class="material-symbols-outlined seccion-icono-azul">person_search</span>
+                        <span>Postulantes externos/históricos</span>
+                      </h4>
+                      <!-- Selector Ranking (Fila 2 en móvil, Al lado del título en desktop) -->
+                      <div class="inline-flex items-center gap-1.5 text-xs text-slate-500 font-medium shrink-0">
+                        <span>Ranking:</span>
+                        <select
+                          [value]="pageSizeHistorico()"
+                          (change)="pageSizeHistorico.set(+$any($event.target).value); pageHistorico.set(1)"
+                          class="select-ranking-modern"
+                        >
+                          <option [value]="5">Top 5</option>
+                          <option [value]="10">Top 10</option>
+                          <option [value]="25">Top 25</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <!-- Buscador a la rectura del título en su extremo derecho en Desktop -->
+                    <div class="tabla-search-input relative flex items-center bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-2xs focus-within:border-[#004370] focus-within:ring-1 focus-within:ring-[#004370]/20 transition-all w-full sm:w-56 shrink-0 mt-1 sm:mt-0 sm:ml-auto">
+                      <span class="material-symbols-outlined text-slate-400 text-base shrink-0 mr-2 select-none">search</span>
+                      <input
+                        type="text"
+                        [value]="searchHistorico()"
+                        (input)="searchHistorico.set($any($event.target).value); pageHistorico.set(1)"
+                        placeholder="Buscar..."
+                        class="input-search-clean w-full text-xs text-slate-700 placeholder:text-slate-400 font-normal"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="overflow-hidden border border-slate-200 rounded-lg bg-[#f8fafc] shadow-xs w-full max-w-full">
+                    <div class="tabla-scroll-wrapper overflow-x-auto w-full">
+                      <table class="tabla-estrategia w-full text-left border-collapse bg-[#f8fafc]">
+                        <colgroup>
+                          <col style="width: 28px; min-width: 28px;">
+                          <col style="width: 28px; min-width: 28px;">
+                          <col style="width: 75px; min-width: 70px;">
+                          <col style="width: 24%; min-width: 130px; max-width: 180px;">
+                          <col style="width: 28%; min-width: 150px; max-width: 220px;">
+                          <col style="width: 85px; min-width: 80px;">
+                          <col style="width: 115px; min-width: 105px;">
+                          <col style="width: 100px; min-width: 95px;">
+                        </colgroup>
+                        <thead>
+                          <tr class="bg-slate-100/80 border-b border-slate-200 text-xs font-semibold text-slate-600">
+                            <th class="text-center py-2.5 px-1.5"></th>
+                            <th class="text-left py-2.5 px-2">#</th>
+                            <th class="text-left py-2.5 px-2.5 whitespace-nowrap">Código</th>
+                            <th class="text-left py-2.5 px-2.5 whitespace-nowrap">Postulante</th>
+                            <th class="text-left py-2.5 px-2.5 whitespace-nowrap">Último cargo</th>
+                            <th class="text-left py-2.5 px-2.5 whitespace-nowrap">Regional</th>
+                            <th class="text-left py-2.5 px-2.5 whitespace-nowrap">Match</th>
+                            <th class="text-left py-2.5 px-2.5 whitespace-nowrap">Clasificación</th>
+                          </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200/70 bg-[#f8fafc]">
+                          @for (post of postulantesHistoricosPaginado(); track post.id; let idx = $index) {
+                            <tr class="hover:bg-slate-100/60 transition-colors bg-[#f8fafc]" [class.bg-sky-50/40]="isHistoricoExpanded(post.id)">
+                              <td class="text-center py-2 px-1.5">
+                                <button
+                                  type="button"
+                                  (click)="toggleExpandHistorico(post.id)"
+                                  class="btn-expander-chevron"
+                                  [title]="isHistoricoExpanded(post.id) ? 'Contraer detalle' : 'Expandir detalle'"
+                                >
+                                  <span class="inline-block material-symbols-outlined text-lg leading-none transition-transform duration-300 ease-in-out" [class.rotate-180]="isHistoricoExpanded(post.id)">
+                                    keyboard_arrow_down
+                                  </span>
+                                </button>
+                              </td>
+                              <td class="text-left font-mono text-slate-400 text-xs py-2 px-2 whitespace-nowrap">{{ (pageHistorico() - 1) * pageSizeHistorico() + idx + 1 }}</td>
+                              <td class="text-left font-mono text-xs font-bold text-[#004370] py-2 px-2.5 whitespace-nowrap">{{ post.codigo }}</td>
+                              <td class="text-left py-2 px-2.5">
+                                <span class="font-medium text-slate-800 block text-xs truncate max-w-[180px]" [title]="post.nombre">{{ post.nombre }}</span>
+                              </td>
+                              <td class="text-left py-2 px-2.5">
+                                <span class="text-slate-700 font-medium text-xs block leading-snug truncate max-w-[220px]" [title]="formatCargoText(post.ultimoCargo)">{{ formatCargoText(post.ultimoCargo) }}</span>
+                              </td>
+                              <td class="text-left text-xs text-slate-600 font-normal py-2 px-2.5 whitespace-nowrap">{{ post.regional }}</td>
+                              <td class="text-left py-2 px-2.5">
+                                <div class="flex items-center gap-1.5">
+                                  <div class="progress-bar-bg flex-1 h-2 rounded-full overflow-hidden bg-slate-100 min-w-[45px]">
+                                    <div
+                                      [class]="'progress-bar-fill h-full rounded-full ' + getProgressBarClass(post.clasificacion, post.matchPorcentaje)"
+                                      [style.width.%]="post.matchPorcentaje"
+                                    ></div>
+                                  </div>
+                                  <span class="text-xs font-bold font-mono text-slate-800 shrink-0 w-8 text-right">{{ post.matchPorcentaje }}%</span>
+                                </div>
+                              </td>
+                              <td class="text-left py-2 px-2.5">
+                                <span
+                                  class="chip-clasificacion whitespace-nowrap"
+                                  [class.chip-match-alto]="isMatchAlto(post.clasificacion)"
+                                  [class.chip-match-parcial]="isMatchParcial(post.clasificacion)"
+                                  [class.chip-match-bajo]="isMatchBajo(post.clasificacion, post.matchPorcentaje)"
+                                  [class.chip-descartado]="isDescartado(post.clasificacion)"
+                                >
+                                  {{ getClasificacionLabel(post.clasificacion) }}
+                                </span>
+                              </td>
+                            </tr>
+
+                            @if (isHistoricoExpanded(post.id)) {
+                              <tr class="bg-[#f8fafc] border-b border-slate-300">
+                                <td colspan="8" class="p-0 border-0">
+                                  <div class="subpanel-evaluacion-container">
+                                    <!-- Cabecera del Subpanel -->
+                                    <!-- Cabecera del Subpanel con Línea Divisora -->
+                                    <div class="subpanel-header-flex border-b border-slate-200 pb-2.5 mb-3">
+                                      <div class="flex items-center gap-2.5">
+                                        <span class="badge-codigo-postulante">
+                                          {{ post.codigo }}
+                                        </span>
+                                        <h5 class="font-bold text-sm text-slate-800 tracking-tight">
+                                          Evaluación de criterios — <span class="font-semibold text-slate-700">{{ post.nombre }}</span>
+                                        </h5>
+                                      </div>
+                                      <div [class]="post.matchPorcentaje >= 80 ? 'badge-match-global-alto' : (post.matchPorcentaje >= 60 ? 'badge-match-global-medio' : 'badge-match-global-bajo')">
+                                        <span>Match global:</span>
+                                        <span class="font-bold font-mono text-xs">{{ post.matchPorcentaje }}%</span>
+                                      </div>
+                                    </div>
+
+                                    <!-- 3 Columnas con CSS Nativo (Grid + Gap 24px) -->
+                                    <div class="subpanel-evaluacion-grid">
+                                      <!-- 1. Fortalezas -->
+                                      <div class="column-criterio-box">
+                                        <div>
+                                          <div class="flex justify-start text-left">
+                                            <span class="badge-criterio-cumplido">FORTALEZAS</span>
+                                          </div>
+                                          <div class="criterio-cards-list">
+                                            @for (fort of post.detalleCriterios?.fortalezas; track fort.texto) {
+                                              <div class="card-criterio-item">
+                                                <div class="flex items-center justify-between gap-2">
+                                                  <span class="font-medium text-slate-700 text-xs text-left leading-snug">{{ fort.texto }}</span>
+                                                </div>
+                                                <p class="text-xs text-emerald-600 mt-1 font-normal leading-normal text-left">
+                                                  {{ fort.evidencia }}
+                                                </p>
+                                              </div>
+                                            }
+                                            @if (!post.detalleCriterios?.fortalezas?.length) {
+                                              <div class="card-criterio-item opacity-60">
+                                                <p class="text-xs text-slate-400 italic text-left">No se registran fortalezas clave</p>
+                                              </div>
+                                            }
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      <!-- 2. Brechas -->
+                                      <div class="column-criterio-box">
+                                        <div>
+                                          <div class="flex justify-start text-left">
+                                            <span class="badge-criterio-nocumplido">BRECHAS</span>
+                                          </div>
+                                          <div class="criterio-cards-list">
+                                            @for (brech of post.detalleCriterios?.brechas; track brech.texto) {
+                                              <div class="card-criterio-item">
+                                                <div class="flex items-center justify-between gap-2">
+                                                  <span class="font-medium text-slate-700 text-xs text-left leading-snug">{{ brech.texto }}</span>
+                                                </div>
+                                                <p class="text-xs text-rose-500 mt-1 font-normal leading-normal text-left">
+                                                  {{ brech.evidencia }}
+                                                </p>
+                                              </div>
+                                            }
+                                            @if (!post.detalleCriterios?.brechas?.length) {
+                                              <div class="card-criterio-item border-emerald-100 bg-emerald-50/30">
+                                                <p class="text-xs text-emerald-700 font-medium text-left">Sin brechas críticas identificadas</p>
+                                              </div>
+                                            }
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      <!-- 3. Desglose de Criterios -->
+                                      <div class="column-criterio-box">
+                                        <div>
+                                          <div class="flex justify-start text-left">
+                                            <span class="badge-match-global-alto">DESGLOSE DE CRITERIOS</span>
+                                          </div>
+                                          <div class="criterio-cards-list">
+                                            @for (crit of post.detalleCriterios?.desglose; track crit.criterio) {
+                                              <div class="card-criterio-item">
+                                                <div class="flex items-center justify-between gap-2">
+                                                  <span class="font-bold text-slate-800 text-xs text-left leading-snug shrink min-w-0 max-w-[65%]">{{ crit.criterio }}</span>
+                                                  @if (crit.puntaje) {
+                                                    <span [class]="getCriterioBadgeClass(crit)">
+                                                      {{ crit.puntaje }}
+                                                    </span>
+                                                  }
+                                                </div>
+                                                <p class="text-xs text-slate-500 mt-1 font-normal leading-normal text-left">
+                                                  {{ cleanEncontradoPrefix(crit.resultadoEncontrado) }}
+                                                </p>
+                                              </div>
+                                            }
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            }
+                          } @empty {
+                            <tr>
+                              <td colspan="8" class="text-center py-10 px-4 bg-white">
+                                <div class="flex flex-col items-center justify-center max-w-sm mx-auto text-center gap-1.5">
+                                  <span class="material-symbols-outlined text-3xl text-slate-400">history_toggle_off</span>
+                                  <h5 class="text-xs sm:text-sm font-semibold text-slate-700">Sin postulantes históricos/externos</h5>
+                                  <p class="text-xs text-slate-500 leading-normal">
+                                    No se identificaron postulantes históricos o externos en la evaluación inicial de esta estrategia.
+                                  </p>
+                                </div>
+                              </td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <!-- PAGINACIÓN INFERIOR SEPARADA DE TABLA 2 -->
+                  <div class="flex items-center justify-between gap-3 mt-4 pt-1 px-1 text-xs text-slate-500 flex-wrap">
+                    <span class="font-normal text-slate-500">
+                      Mostrando {{ postulantesHistoricosFiltrados().length === 0 ? 0 : (pageHistorico() - 1) * pageSizeHistorico() + 1 }}
+                      a {{ pageHistorico() * pageSizeHistorico() > postulantesHistoricosFiltrados().length ? postulantesHistoricosFiltrados().length : pageHistorico() * pageSizeHistorico() }}
+                      de {{ postulantesHistoricosFiltrados().length }} respaldos
+                    </span>
+                    <div class="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        (click)="cambiarPaginaHistorico(-1)"
+                        [disabled]="pageHistorico() <= 1"
+                        class="btn-paginacion-texto"
+                      >
+                        Anterior
+                      </button>
+                      <div class="paginacion-numero-indicador">
+                        {{ pageHistorico() }}
+                      </div>
+                      <button
+                        type="button"
+                        (click)="cambiarPaginaHistorico(1)"
+                        [disabled]="pageHistorico() >= totalHistoricoPages()"
+                        class="btn-paginacion-texto"
+                      >
+                        Siguiente
+                      </button>
+                    </div>
+                  </div>
+
+                  <p class="text-xs italic text-slate-500 mt-2">
+                    Estos postulantes no reemplazan la prioridad interna. Se mantienen como contingencia si la movilidad interna no avanza.
+                  </p>
+                </div>
+
+                <!-- 4. PLAN INMEDIATO DE ACCIÓN (ACORDEÓN Y LÍNEA DE PASOS ESTILO IMG2) -->
+                <div class="tabla-seccion-wrapper">
+                  <div class="plan-busqueda-accordion-card">
+                    <button
+                      type="button"
+                      (click)="togglePlanAccion()"
+                      class="plan-busqueda-accordion-header flex items-center justify-between gap-3 w-full"
+                    >
+                      <div class="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-wrap sm:flex-nowrap">
+                        <span class="material-symbols-outlined accordion-header-icon shrink-0">event_repeat</span>
+                        <h4 class="accordion-title-text shrink-0">Plan inmediato de acción</h4>
+                        <span class="badge-accordion-etapas shrink-0">
+                          {{ planAccionOrdenado().length }} etapas
+                        </span>
+                      </div>
+                      <span class="material-symbols-outlined accordion-chevron-icon shrink-0" [class.rotate-180]="isPlanAccionOpen()">
+                        keyboard_arrow_down
+                      </span>
+                    </button>
+
+                    @if (isPlanAccionOpen()) {
+                      <div class="plan-busqueda-accordion-body p-6 sm:p-7">
+                        @if (!planAccionOrdenado().length) {
+                          <div class="card-empty-state-modern">
+                            <div class="empty-state-icon-modern">
+                              <span class="material-symbols-outlined">event_repeat</span>
+                            </div>
+                            <h5 class="empty-state-title-modern">Sin plan registrado</h5>
+                            <p class="empty-state-text-modern">
+                              No existe un plan inmediato de acción registrado en el sistema.
+                            </p>
+                          </div>
+                        } @else {
+                          <!-- LÍNEA DE PASOS (STEPPER VERTICAL ESTILO IMG2) -->
+                          <div class="stepper-vertical-wrapper relative">
+                            @for (paso of planAccionOrdenado(); track paso.orden; let idx = $index; let last = $last) {
+                              <div class="stepper-step-item relative flex items-start">
+                                <!-- Segmento de línea hacia el siguiente nodo (no en el último paso) -->
+                                @if (!last) {
+                                  <div class="stepper-line-segment"></div>
+                                }
+
+                                <!-- Círculo numérico -->
+                                <div class="stepper-circle-node">
+                                  {{ idx + 1 }}
+                                </div>
+
+                                <!-- Contenido del paso -->
+                                <div class="stepper-step-content flex-1 pl-1">
+                                  <!-- Cabecera: Plazo + Responsable -->
+                                  <div class="stepper-step-header">
+                                    <span class="stepper-step-plazo">
+                                      {{ paso.plazo }}
+                                    </span>
+                                    @if (paso.responsable) {
+                                      <span class="stepper-step-responsable">• {{ paso.responsable }}</span>
+                                    }
+                                  </div>
+
+                                  <!-- Título / Acción principal -->
+                                  <h5 class="stepper-step-title">
+                                    {{ paso.accion }}
+                                  </h5>
+
+                                  <!-- Resultado esperado (Badge verde sutil y compacto) -->
+                                  @if (paso.resultadoEsperado) {
+                                    <div class="badge-resultado-esperado">
+                                      {{ paso.resultadoEsperado }}
+                                    </div>
+                                  }
+                                </div>
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+
+                <!-- 5. PLAN DE EVALUACIÓN INTERNA (STEPPER VERTICAL LINEAL CON ACORDEÓN) -->
+                <div class="tabla-seccion-wrapper mt-6">
+                  <div class="plan-busqueda-accordion-card">
+                    <!-- Cabecera del Acordeón -->
+                    <button
+                      type="button"
+                      (click)="togglePlanEvaluacion()"
+                      class="plan-busqueda-accordion-header flex items-center justify-between gap-3 w-full"
+                    >
+                      <div class="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-wrap sm:flex-nowrap">
+                        <span class="material-symbols-outlined accordion-header-icon shrink-0">fact_check</span>
+                        <h4 class="accordion-title-text shrink-0">Plan de evaluación interna</h4>
+                        <span class="badge-accordion-evaluacion shrink-0">
+                          {{ planEvaluacionOrdenado().length }} {{ planEvaluacionOrdenado().length === 1 ? 'etapa' : 'etapas' }}
+                        </span>
+                      </div>
+                      <span class="material-symbols-outlined accordion-chevron-icon shrink-0" [class.rotate-180]="isPlanEvaluacionOpen()">
+                        keyboard_arrow_down
+                      </span>
+                    </button>
+
+                    <!-- Contenido del Acordeón -->
+                    @if (isPlanEvaluacionOpen()) {
+                      <div class="plan-busqueda-accordion-body p-6 sm:p-7">
+                        @if (isLoading()) {
+                          <!-- Skeleton Loader -->
+                          <div class="animate-pulse space-y-4">
+                            <div class="h-16 bg-slate-100 rounded-lg"></div>
+                            <div class="h-16 bg-slate-100 rounded-lg"></div>
+                            <div class="h-16 bg-slate-100 rounded-lg"></div>
+                          </div>
+                        } @else if (planEvaluacionOrdenado().length === 0) {
+                          <!-- Empty State Estilizado Moderno -->
+                          <div class="card-empty-state-modern">
+                            <div class="empty-state-icon-modern">
+                              <span class="material-symbols-outlined">fact_check</span>
+                            </div>
+                            <h5 class="empty-state-title-modern">Sin etapas registradas</h5>
+                            <p class="empty-state-text-modern">
+                              No existe un plan de evaluación interna registrado para esta estrategia en el sistema.
+                            </p>
+                          </div>
+                        } @else {
+                          <!-- LÍNEA DE PASOS LINEAL (STEPPER VERTICAL) -->
+                          <div class="stepper-vertical-wrapper relative">
+                            @for (etapa of planEvaluacionOrdenado(); track etapa.orden; let idx = $index; let last = $last) {
+                              <div class="stepper-step-item relative flex items-start">
+                                <!-- Segmento de línea hacia el siguiente nodo -->
+                                @if (!last) {
+                                  <div class="stepper-line-segment"></div>
+                                }
+
+                                <!-- Círculo numérico -->
+                                <div class="stepper-circle-node">
+                                  {{ idx + 1 }}
+                                </div>
+
+                                <!-- Contenido del paso -->
+                                <div class="stepper-step-content flex-1 pl-1">
+                                  <!-- Cabecera: Etapa N + Responsable -->
+                                  <div class="stepper-step-header">
+                                    <span class="stepper-step-plazo">
+                                      Etapa {{ etapa.orden }}
+                                    </span>
+                                    @if (etapa.responsable) {
+                                      <span class="stepper-step-responsable">• {{ etapa.responsable }}</span>
+                                    }
+                                  </div>
+
+                                  <!-- Título / Nombre de la etapa -->
+                                  <h5 class="stepper-step-title">
+                                    {{ getEtapaNombreTraducido(etapa.etapa) }}
+                                  </h5>
+
+                                  <!-- Objetivo -->
+                                  @if (etapa.objetivo) {
+                                    <p class="stepper-step-desc">
+                                      <span class="font-semibold text-slate-700">Objetivo:</span> {{ etapa.objetivo }}
+                                    </p>
+                                  }
+
+                                  <!-- Criterios de Evaluación (si existen) -->
+                                  @if (etapa.criterios && etapa.criterios.length > 0) {
+                                    <div class="mt-2 mb-1.5">
+                                      <span class="criterios-evaluacion-subtitulo">CRITERIOS DE EVALUACIÓN</span>
+                                      <div class="flex flex-wrap gap-2.5 pt-1 pb-1">
+                                        @for (crit of etapa.criterios; track crit) {
+                                          <span class="chip-criterio-etapa-grey">
+                                            {{ crit }}
+                                          </span>
+                                        }
+                                      </div>
+                                    </div>
+                                  }
+
+                                  <!-- Resultado esperado (Badge azul sutil con Check) -->
+                                  @if (etapa.resultadoEsperado) {
+                                    <div class="badge-resultado-esperado-blue">
+                                      <span class="material-symbols-outlined icono-check-mini">check</span>
+                                      <span>{{ etapa.resultadoEsperado }}</span>
+                                    </div>
+                                  }
+                                </div>
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+
+                <!-- 6. Conclusión / Card de RECOMENDACIÓN ESTRATÉGICA VERDE (AL FINAL DE TAB 1) -->
+                @if (estrategia()?.estrategiaInterna?.conclusion) {
+                  <div class="card-recomendacion-verde shadow-2xs mt-6">
+                    <span class="material-symbols-outlined card-recomendacion-icon">verified</span>
+                    <div class="space-y-1">
+                      <span class="card-recomendacion-title">Recomendación estratégica</span>
+                      <p class="card-recomendacion-text">
+                        {{ estrategia()?.estrategiaInterna?.conclusion }}
+                      </p>
+                    </div>
+                  </div>
+                }
+
+                <!-- 6. MENSAJE DE CONTINGENCIA -->
+                @if (estrategia()?.estrategiaInterna?.mensajeContingencia) {
+                  <div class="card-condicion-amarilla shadow-2xs mt-4 sm:mt-5">
+                    <span class="material-symbols-outlined card-condicion-icon">warning</span>
+                    <div class="space-y-1">
+                      <span class="card-condicion-title">Condición para activar estrategia externa</span>
+                      <p class="card-condicion-text">
+                        {{ estrategia()?.estrategiaInterna?.mensajeContingencia }}
+                      </p>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else if (activeTab() === 'EXTERNA') {
+              <!-- CONTENIDO COMPLETO DE ESTRATEGIA EXTERNA (Estilo Estrategia Interna) -->
+              <div class="estrategia-interna-container space-y-8 sm:space-y-9 p-6 text-left">
+
+                <!-- 1. BLOQUE SUPERIOR: ESTRATEGIA EXTERNA (DISEÑO IMG1 EXACTO) -->
+                <div class="estrategia-externa-header-card mb-4">
+                  <div class="mb-3">
+                    @if ((estrategia()?.estrategiaExterna?.prioridad || '').toUpperCase() === 'PRIORITARIA') {
+                      <span class="badge-externa-prioritaria">Externa prioritaria</span>
+                    } @else {
+                      <span class="badge-externa-contingencia">Externa contingencia</span>
+                    }
+                  </div>
+
+                  <p class="descripcion-externa-header">
+                    {{ estrategia()?.estrategiaExterna?.justificacion || 'Este plan se prepara como respaldo ante la posibilidad de que la contratación interna no se concrete. Aunque contamos con candidatos internos viables, se deja lista una estrategia externa para activarse rápidamente si surgen obstáculos como pretensiones salariales fuera de banda. El objetivo es asegurar la cobertura del puesto sin demoras.' }}
+                  </p>
+
+                  <!-- METRICS INLINE CON DIVISORES VERTICALES (DISEÑO EXACTO IMG1) -->
+                  <div class="metrics-inline-wrapper">
+                    <div class="metrics-inline-row">
+                      <!-- 1. Criterios difíciles -->
+                      <div class="metric-inline-item">
+                        <span class="material-symbols-outlined metric-icon">info</span>
+                        <span class="metric-val">{{ estrategia()?.estrategiaExterna?.criteriosDificiles?.length || 4 }}</span>
+                        <span class="metric-label">items criterios difíciles</span>
+                      </div>
+
+                      <span class="metric-divider">|</span>
+
+                      <!-- 2. Canales -->
+                      <div class="metric-inline-item">
+                        <span class="material-symbols-outlined metric-icon">grid_view</span>
+                        <span class="metric-val">{{ canalesSugeridosOrdenados().length || 3 }}</span>
+                        <span class="metric-label">canales</span>
+                      </div>
+
+                      <span class="metric-divider">|</span>
+
+                      <!-- 3. Cargos similares -->
+                      <div class="metric-inline-item">
+                        <span class="material-symbols-outlined metric-icon">work</span>
+                        <span class="metric-val">{{ estrategia()?.estrategiaExterna?.publicoObjetivo?.cargosSimilares?.length || 5 }}</span>
+                        <span class="metric-label">cargos similares</span>
+                      </div>
+
+                      <span class="metric-divider">|</span>
+
+                      <!-- 4. Sectores -->
+                      <div class="metric-inline-item">
+                        <span class="material-symbols-outlined metric-icon">domain</span>
+                        <span class="metric-val">{{ estrategia()?.estrategiaExterna?.publicoObjetivo?.sectoresSugeridos?.length || 5 }}</span>
+                        <span class="metric-label">sectores</span>
+                      </div>
+
+                      <span class="metric-divider">|</span>
+
+                      <!-- 5. Ubicación -->
+                      <div class="metric-inline-item">
+                        <span class="material-symbols-outlined metric-icon">location_on</span>
+                        <span class="metric-val">{{ estrategia()?.estrategiaExterna?.publicoObjetivo?.ubicacion || 'La Paz' }}</span>
+                        <span class="metric-label">Ubicación</span>
+                      </div>
+
+                      <span class="metric-divider">|</span>
+
+                      <!-- 6. Modalidad -->
+                      <div class="metric-inline-item">
+                        <span class="material-symbols-outlined metric-icon">laptop_mac</span>
+                        <span class="metric-val">{{ estrategia()?.estrategiaExterna?.publicoObjetivo?.modalidad || 'Presencial' }}</span>
+                        <span class="metric-label">Modalidad</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 2. CRITERIOS DIFÍCILES DE CUBRIR (ACORDEÓN ESTILO IMG1) -->
+                <div class="tabla-seccion-wrapper">
+                  <div class="plan-busqueda-accordion-card">
+                    <button
+                      type="button"
+                      (click)="toggleCriteriosDificiles()"
+                      class="plan-busqueda-accordion-header flex items-center justify-between gap-3 w-full"
+                    >
+                      <div class="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-wrap sm:flex-nowrap">
+                        <span class="material-symbols-outlined accordion-header-icon shrink-0">report_problem</span>
+                        <h4 class="accordion-title-text shrink-0">Criterios difíciles de cubrir</h4>
+                        <span class="badge-accordion-criticos shrink-0">
+                          {{ estrategia()?.estrategiaExterna?.criteriosDificiles?.length || 0 }} criterios
+                        </span>
+                      </div>
+                      <span class="material-symbols-outlined accordion-chevron-icon shrink-0" [class.rotate-180]="isCriteriosDificilesOpen()">
+                        keyboard_arrow_down
+                      </span>
+                    </button>
+
+                    @if (isCriteriosDificilesOpen()) {
+                      <div class="plan-busqueda-accordion-body">
+                        @if (!estrategia()?.estrategiaExterna?.criteriosDificiles?.length) {
+                          <div class="card-empty-state-modern">
+                            <div class="empty-state-icon-modern">
+                              <span class="material-symbols-outlined">report_problem</span>
+                            </div>
+                            <h5 class="empty-state-title-modern">Sin criterios difíciles</h5>
+                            <p class="empty-state-text-modern">
+                              No se identificaron criterios críticos para la búsqueda externa.
+                            </p>
+                          </div>
+                        } @else {
+                          <div class="criterios-dificiles-grid flex flex-col gap-2.5">
+                            @for (crit of estrategia()?.estrategiaExterna?.criteriosDificiles; track crit.criterio) {
+                              <div class="card-criterio-dificil">
+                                <div class="flex items-center gap-3.5 mb-0.5 flex-wrap">
+                                  <span class="criterio-titulo-item font-bold text-slate-800 text-[13px]">{{ crit.criterio }}</span>
+                                  <span [class]="getImpactoBadgeClass(crit.impacto)" class="badge-impacto-compact shrink-0">
+                                    Impacto {{ crit.impacto }}
+                                  </span>
+                                </div>
+                                <p class="criterio-evidencia-item text-[12px] text-slate-600 leading-snug m-0">
+                                  {{ crit.evidencia }}
+                                </p>
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+
+                <!-- 3. PÚBLICO OBJETIVO / PERFIL OBJETIVO PARA BÚSQUEDA EXTERNA (ACORDEÓN ESTILO IMG1) -->
+                <div class="tabla-seccion-wrapper">
+                  <div class="plan-busqueda-accordion-card">
+                    <button
+                      type="button"
+                      (click)="togglePerfilObjetivo()"
+                      class="plan-busqueda-accordion-header flex items-center justify-between gap-3 w-full"
+                    >
+                      <div class="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-wrap sm:flex-nowrap">
+                        <span class="material-symbols-outlined accordion-header-icon shrink-0">target</span>
+                        <h4 class="accordion-title-text shrink-0">Perfil objetivo para búsqueda externa</h4>
+                        <span class="badge-accordion-perfil shrink-0">
+                          Perfil estructurado
+                        </span>
+                      </div>
+                      <span class="material-symbols-outlined accordion-chevron-icon shrink-0" [class.rotate-180]="isPerfilObjetivoOpen()">
+                        keyboard_arrow_down
+                      </span>
+                    </button>
+
+                    @if (isPerfilObjetivoOpen()) {
+                      <div class="plan-busqueda-accordion-body">
+                        <div class="perfil-objetivo-grid">
+                          <!-- Subcard 1: Experiencia y Formación -->
+                          <div class="perfil-objetivo-subcard">
+                            <span class="subcard-header-label">EXPERIENCIA Y FORMACIÓN REQUERIDA</span>
+                            
+                            <div class="text-left">
+                              <div>
+                                <span class="subcard-subtitle">Experiencia mínima</span>
+                                <div class="flex items-start gap-2 mt-1">
+                                  <span class="bullet-dot-azul">•</span>
+                                  <span class="text-xs text-slate-800 font-semibold leading-normal inline-block">
+                                    {{ estrategia()?.estrategiaExterna?.publicoObjetivo?.experienciaMinima || '—' }}
+                                  </span>
+                                </div>
+                              </div>
+
+                              <div class="subcard-grupo-segundo">
+                                <span class="subcard-subtitle">Formación requerida</span>
+                                <div class="flex items-start gap-2 mt-1">
+                                  <span class="bullet-dot-azul">•</span>
+                                  <span class="text-xs text-slate-800 font-semibold leading-normal inline-block">
+                                    {{ estrategia()?.estrategiaExterna?.publicoObjetivo?.formacion || '—' }}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Subcard 2: Cargos y Sectores Sugeridos -->
+                          <div class="perfil-objetivo-subcard">
+                            <span class="subcard-header-label">CARGOS Y SECTORES SUGERIDOS</span>
+                            
+                            <div class="text-left">
+                              <div>
+                                <span class="subcard-subtitle">Cargos similares</span>
+                                <div class="space-y-1.5 mt-1">
+                                  @for (cargoItem of estrategia()?.estrategiaExterna?.publicoObjetivo?.cargosSimilares; track cargoItem) {
+                                    <div class="flex items-center gap-2 text-xs text-slate-800 font-semibold">
+                                      <span class="bullet-dot-azul">•</span>
+                                      <span>{{ cargoItem }}</span>
+                                    </div>
+                                  }
+                                </div>
+                              </div>
+
+                              <div class="subcard-grupo-segundo">
+                                <span class="subcard-subtitle">Sectores sugeridos</span>
+                                <div class="space-y-1.5 mt-1">
+                                  @for (sec of estrategia()?.estrategiaExterna?.publicoObjetivo?.sectoresSugeridos; track sec) {
+                                    <div class="flex items-center gap-2 text-xs text-slate-800 font-semibold">
+                                      <span class="bullet-dot-azul">•</span>
+                                      <span>{{ sec }}</span>
+                                    </div>
+                                  }
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Subcard 3: Conocimientos y Herramientas Clave -->
+                          <div class="perfil-objetivo-subcard">
+                            <span class="subcard-header-label">CONOCIMIENTOS Y HERRAMIENTAS CLAVE</span>
+                            
+                            <div class="text-left">
+                              <div>
+                                <span class="subcard-subtitle">Conocimientos clave</span>
+                                <div class="flex flex-wrap gap-2.5 mt-2">
+                                  @for (conoc of estrategia()?.estrategiaExterna?.publicoObjetivo?.conocimientosClave; track conoc) {
+                                    <span class="chip-conocimiento-externo">{{ conoc }}</span>
+                                  }
+                                </div>
+                              </div>
+
+                              <div class="subcard-grupo-segundo">
+                                <span class="subcard-subtitle">Herramientas clave</span>
+                                <div class="flex flex-wrap gap-2.5 mt-2">
+                                  @for (herr of estrategia()?.estrategiaExterna?.publicoObjetivo?.herramientasClave; track herr) {
+                                    <span class="chip-herramienta-externo">{{ herr }}</span>
+                                  }
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+
+                          <!-- Subcard 4: Competencias Clave -->
+                          <div class="perfil-objetivo-subcard">
+                            <span class="subcard-header-label">COMPETENCIAS CLAVE</span>
+                            
+                            <div class="text-left">
+                              <span class="subcard-subtitle">Habilidades clave y de liderazgo</span>
+                              <div class="flex flex-wrap gap-2.5 mt-2">
+                                @for (comp of estrategia()?.estrategiaExterna?.publicoObjetivo?.competenciasClave; track comp) {
+                                  <span class="chip-competencia-externo">{{ comp }}</span>
+                                }
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+
+                <!-- 4. CANALES SUGERIDOS (ACORDEÓN RESPONSIVO) -->
+                <div class="tabla-seccion-wrapper">
+                  <div class="plan-busqueda-accordion-card">
+                    <button
+                      type="button"
+                      (click)="toggleCanalesSugeridos()"
+                      class="plan-busqueda-accordion-header flex items-center justify-between gap-3 w-full"
+                    >
+                      <div class="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-wrap sm:flex-nowrap">
+                        <span class="material-symbols-outlined accordion-header-icon shrink-0">share</span>
+                        <h4 class="accordion-title-text shrink-0">Canales sugeridos para la búsqueda externa</h4>
+                        <span class="badge-accordion-canales shrink-0">
+                          {{ canalesSugeridosOrdenados().length }} canales activos
+                        </span>
+                      </div>
+                      <span class="material-symbols-outlined accordion-chevron-icon shrink-0" [class.rotate-180]="isCanalesSugeridosOpen()">
+                        keyboard_arrow_down
+                      </span>
+                    </button>
+
+                    @if (isCanalesSugeridosOpen()) {
+                      <div class="plan-busqueda-accordion-body">
+                        @if (!canalesSugeridosOrdenados().length) {
+                          <div class="card-empty-state-modern">
+                            <div class="empty-state-icon-modern">
+                              <span class="material-symbols-outlined">share</span>
+                            </div>
+                            <h5 class="empty-state-title-modern">Sin canales sugeridos</h5>
+                            <p class="empty-state-text-modern">
+                              No existen canales de búsqueda sugeridos en el sistema.
+                            </p>
+                          </div>
+                        } @else {
+                          <div class="overflow-hidden border border-slate-200 rounded-lg bg-white shadow-2xs">
+                            <div class="tabla-scroll-wrapper overflow-x-auto w-full">
+                              <table class="tabla-plan-accion w-full text-left border-collapse">
+                                <thead>
+                                  <tr class="bg-slate-50/90 border-b border-slate-200 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                                    <th class="text-left py-3.5 px-4 whitespace-nowrap">PRIORIDAD</th>
+                                    <th class="text-left py-3.5 px-4 whitespace-nowrap">CANAL</th>
+                                    <th class="text-left py-3.5 px-4 whitespace-nowrap">TIPO DE ACCIÓN</th>
+                                    <th class="text-left py-3.5 px-4 whitespace-nowrap">MOTIVO</th>
+                                    <th class="text-left py-3.5 px-4 whitespace-nowrap">CRITERIO DE SELECCIÓN</th>
+                                    <th class="text-left py-3.5 px-4 whitespace-nowrap">ESTADO</th>
+                                  </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-200/80 text-xs">
+                                  @for (canalItem of canalesSugeridosOrdenados(); track canalItem.prioridad) {
+                                    <tr class="hover:bg-slate-50/70 transition-colors">
+                                      <td class="py-3.5 px-4 whitespace-nowrap text-left font-bold font-mono text-[#004370]">
+                                        #{{ canalItem.prioridad }}
+                                      </td>
+                                      <td class="py-3.5 px-4 font-bold text-slate-800 whitespace-nowrap">
+                                        {{ getCanalLabel(canalItem.canal) }}
+                                      </td>
+                                      <td class="py-3.5 px-4 text-slate-700 font-medium whitespace-nowrap">
+                                        {{ getTipoAccionLabel(canalItem.tipoAccion) }}
+                                      </td>
+                                      <td class="py-3.5 px-4 text-slate-600 font-normal leading-relaxed text-left min-w-[220px]">
+                                        {{ canalItem.motivo }}
+                                      </td>
+                                      <td class="py-3.5 px-4 text-slate-700 font-medium whitespace-nowrap">
+                                        {{ getCriterioSeleccionLabel(canalItem.criterioSeleccion) }}
+                                      </td>
+                                      <td class="py-3.5 px-4 whitespace-nowrap">
+                                        @if (canalItem.seleccionado) {
+                                          <span class="badge-criterio-cumplido">
+                                            <span class="w-1.5 h-1.5 rounded-full bg-[#137333]"></span>
+                                            Seleccionado
+                                          </span>
+                                        } @else {
+                                          <span class="badge-codigo-postulante">Secundario</span>
+                                        }
+                                      </td>
+                                    </tr>
+                                  }
+                                </tbody>
+                              </table>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+
+                <!-- 5. PLAN INMEDIATO DE ACCIÓN EXTERNA (ACORDEÓN Y LÍNEA DE PASOS IMG2) -->
+                <div class="tabla-seccion-wrapper">
+                  <div class="plan-busqueda-accordion-card">
+                    <button
+                      type="button"
+                      (click)="togglePlanAccionExterna()"
+                      class="plan-busqueda-accordion-header flex items-center justify-between gap-3 w-full"
+                    >
+                      <div class="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-wrap sm:flex-nowrap">
+                        <span class="material-symbols-outlined accordion-header-icon shrink-0">event_repeat</span>
+                        <h4 class="accordion-title-text shrink-0">Plan inmediato de acción externa</h4>
+                        <span class="badge-accordion-etapas shrink-0">
+                          {{ planAccionExternaOrdenado().length }} etapas
+                        </span>
+                      </div>
+                      <span class="material-symbols-outlined accordion-chevron-icon shrink-0" [class.rotate-180]="isPlanAccionExternaOpen()">
+                        keyboard_arrow_down
+                      </span>
+                    </button>
+
+                    @if (isPlanAccionExternaOpen()) {
+                      <div class="plan-busqueda-accordion-body p-6 sm:p-7">
+                        @if (!planAccionExternaOrdenado().length) {
+                          <div class="card-empty-state-modern">
+                            <div class="empty-state-icon-modern">
+                              <span class="material-symbols-outlined">event_repeat</span>
+                            </div>
+                            <h5 class="empty-state-title-modern">Sin plan externo registrado</h5>
+                            <p class="empty-state-text-modern">
+                              No existe un plan de acción externa registrado en el sistema.
+                            </p>
+                          </div>
+                        } @else {
+                          <!-- LÍNEA DE PASOS (STEPPER VERTICAL ESTILO IMG3) -->
+                          <div class="stepper-vertical-wrapper relative">
+                            @for (paso of planAccionExternaOrdenado(); track paso.orden; let idx = $index; let last = $last) {
+                              <div class="stepper-step-item relative flex items-start">
+                                <!-- Segmento de línea hacia el siguiente nodo (no en el último paso) -->
+                                @if (!last) {
+                                  <div class="stepper-line-segment"></div>
+                                }
+
+                                <!-- Círculo numérico -->
+                                <div class="stepper-circle-node">
+                                  {{ idx + 1 }}
+                                </div>
+
+                                <!-- Contenido del paso -->
+                                <div class="stepper-step-content flex-1 pl-1">
+                                  <!-- Cabecera: Plazo + Responsable -->
+                                  <div class="stepper-step-header">
+                                    <span class="stepper-step-plazo">
+                                      {{ formatPlazoAccionExterna(paso.plazo, idx, planAccionExternaOrdenado()) }}
+                                    </span>
+                                    @if (paso.responsable) {
+                                      <span class="stepper-step-responsable">• {{ paso.responsable }}</span>
+                                    }
+                                  </div>
+
+                                  <!-- Título / Acción principal -->
+                                  <h5 class="stepper-step-title">
+                                    {{ paso.accion }}
+                                  </h5>
+
+                                  <!-- Motivo / Descripción secundario -->
+                                  @if (paso.motivo) {
+                                    <p class="stepper-step-desc">
+                                      {{ paso.motivo }}
+                                    </p>
+                                  }
+
+                                  <!-- Resultado esperado (Badge verde sutil y compacto) -->
+                                  @if (paso.resultadoEsperado) {
+                                    <div class="badge-resultado-esperado">
+                                      {{ paso.resultadoEsperado }}
+                                    </div>
+                                  }
+                                </div>
+                              </div>
+                            }
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                </div>
+
+                <!-- 7. BRIEF DE PUBLICACIÓN EDITABLE -->
+                <div class="tabla-seccion-wrapper">
+                  <div class="brief-section-card">
+                    <!-- Brief Header -->
+                    <div class="brief-header-row">
+                      <div class="brief-header-left">
+                        <span class="material-symbols-outlined text-[#004370] text-xl">description</span>
+                        <h4 class="brief-title-text">Brief de publicación para el siguiente agente</h4>
+                        
+                        <span class="brief-badge-pendiente">
+                          Borrador pendiente de aprobación
+                        </span>
+                        <span class="brief-badge-guardado">
+                          <span class="material-symbols-outlined text-sm">check_circle</span>
+                          {{ briefUltimoGuardado() }}
+                        </span>
+                      </div>
+
+                      <div class="brief-header-actions">
+                        @if (isBriefModoEdicion()) {
+                          <button type="button" (click)="cancelarEdicionBrief()" class="brief-btn-secondary">
+                            <span class="material-symbols-outlined text-sm">close</span>
+                            Cerrar edición
+                          </button>
+                        } @else {
+                          <button type="button" (click)="activarEdicionBrief()" class="brief-btn-secondary">
+                            <span class="material-symbols-outlined text-sm">edit</span>
+                            Editar brief
+                          </button>
+                        }
+                        <button
+                          type="button"
+                          [disabled]="!isBriefModoEdicion() || isGuardandoBrief()"
+                          (click)="guardarBorradorBrief()"
+                          class="brief-btn-secondary flex items-center gap-1.5"
+                          [class.opacity-50]="!isBriefModoEdicion() || isGuardandoBrief()"
+                          [class.cursor-not-allowed]="!isBriefModoEdicion() || isGuardandoBrief()"
+                        >
+                          @if (isGuardandoBrief()) {
+                            <span class="material-symbols-outlined text-sm animate-spin">sync</span>
+                            <span>Guardando...</span>
+                          } @else {
+                            <span class="material-symbols-outlined text-sm">save</span>
+                            <span>Guardar borrador</span>
+                          }
+                        </button>
+                        <button type="button" (click)="abrirVistaPreviaBrief()" class="brief-btn-primary">
+                          <span class="material-symbols-outlined text-sm">visibility</span>
+                          Ver vista previa
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Alert Banner -->
+                    <div class="brief-alert-success">
+                      Borrador guardado correctamente.
+                    </div>
+
+                    @if (!estrategia()?.estrategiaExterna?.briefEditable) {
+                      <div class="p-6 text-center bg-slate-50 border border-slate-200 rounded-lg">
+                        <p class="text-xs font-medium text-slate-500">El brief de publicación todavía no ha sido generado.</p>
+                      </div>
+                    } @else {
+                      <!-- Grid 12 Form Fields -->
+                      <div class="brief-fields-grid">
+                        <!-- Field 1: Título -->
+                        <div class="brief-field-card">
+                          <div class="brief-field-header">
+                            <span class="brief-field-label">TÍTULO DE PUBLICACIÓN *</span>
+                            <span class="brief-field-counter">{{ briefForm().titulo.length }}/120</span>
+                          </div>
+                          <input
+                            type="text"
+                            [disabled]="!isBriefModoEdicion()"
+                            [value]="briefForm().titulo"
+                            (input)="updateBriefField('titulo', $event)"
+                            class="brief-field-input"
+                          />
+                        </div>
+
+                        <!-- Field 2: Modalidad -->
+                        <div class="brief-field-card">
+                          <div class="brief-field-header">
+                            <span class="brief-field-label">MODALIDAD *</span>
+                            <span class="brief-field-counter">{{ briefForm().modalidad.length }}/80</span>
+                          </div>
+                          <input
+                            type="text"
+                            [disabled]="!isBriefModoEdicion()"
+                            [value]="briefForm().modalidad"
+                            (input)="updateBriefField('modalidad', $event)"
+                            class="brief-field-input"
+                          />
+                        </div>
+
+                        <!-- Field 3: Regional -->
+                        <div class="brief-field-card">
+                          <div class="brief-field-header">
+                            <span class="brief-field-label">REGIONAL *</span>
+                            <span class="brief-field-counter">{{ briefForm().ubicacion.length }}/60</span>
+                          </div>
+                          <input
+                            type="text"
+                            [disabled]="!isBriefModoEdicion()"
+                            [value]="briefForm().ubicacion"
+                            (input)="updateBriefField('ubicacion', $event)"
+                            class="brief-field-input"
+                          />
+                        </div>
+
+                        <!-- Field 4: Banda Salarial -->
+                        <div class="brief-field-card">
+                          <div class="brief-field-header">
+                            <span class="brief-field-label">BANDA SALARIAL *</span>
+                            <span class="brief-field-counter">{{ briefForm().bandaSalarial.length }}/60</span>
+                          </div>
+                          <input
+                            type="text"
+                            [disabled]="!isBriefModoEdicion()"
+                            [value]="briefForm().bandaSalarial"
+                            (input)="updateBriefField('bandaSalarial', $event)"
+                            class="brief-field-input"
+                          />
+                        </div>
+
+                        <!-- Field 5: Formación -->
+                        <div class="brief-field-card">
+                          <div class="brief-field-header">
+                            <span class="brief-field-label">FORMACIÓN *</span>
+                            <span class="brief-field-counter">{{ briefForm().formacion.length }}/200</span>
+                          </div>
+                          <textarea
+                            rows="3"
+                            [disabled]="!isBriefModoEdicion()"
+                            [value]="briefForm().formacion"
+                            (input)="updateBriefField('formacion', $event)"
+                            class="brief-field-textarea"
+                          ></textarea>
+                        </div>
+
+                        <!-- Field 6: Experiencia mínima -->
+                        <div class="brief-field-card">
+                          <div class="brief-field-header">
+                            <span class="brief-field-label">EXPERIENCIA MÍNIMA *</span>
+                            <span class="brief-field-counter">{{ briefForm().experiencia.length }}/200</span>
+                          </div>
+                          <textarea
+                            rows="3"
+                            [disabled]="!isBriefModoEdicion()"
+                            [value]="briefForm().experiencia"
+                            (input)="updateBriefField('experiencia', $event)"
+                            class="brief-field-textarea"
+                          ></textarea>
+                        </div>
+
+                        <!-- Field 7: Resumen del cargo -->
+                        <div class="brief-field-card">
+                          <div class="brief-field-header">
+                            <span class="brief-field-label">RESUMEN DEL CARGO *</span>
+                            <span class="brief-field-counter">{{ briefForm().introduccion.length }}/400</span>
+                          </div>
+                          <textarea
+                            rows="4"
+                            [disabled]="!isBriefModoEdicion()"
+                            [value]="briefForm().introduccion"
+                            (input)="updateBriefField('introduccion', $event)"
+                            class="brief-field-textarea"
+                          ></textarea>
+                        </div>
+
+                        <!-- Field 8: Objetivo del cargo -->
+                        <div class="brief-field-card">
+                          <div class="brief-field-header">
+                            <span class="brief-field-label">OBJETIVO DEL CARGO *</span>
+                            <span class="brief-field-counter">{{ briefForm().desafioPrincipal.length }}/300</span>
+                          </div>
+                          <textarea
+                            rows="4"
+                            [disabled]="!isBriefModoEdicion()"
+                            [value]="briefForm().desafioPrincipal"
+                            (input)="updateBriefField('desafioPrincipal', $event)"
+                            class="brief-field-textarea"
+                          ></textarea>
+                        </div>
+
+                        <!-- Field 9: Funciones principales -->
+                        <div class="brief-field-card">
+                          <div class="brief-field-header">
+                            <span class="brief-field-label">FUNCIONES PRINCIPALES *</span>
+                            <span class="brief-field-counter">{{ briefForm().funciones.length }}/500</span>
+                          </div>
+                          <textarea
+                            rows="4"
+                            [disabled]="!isBriefModoEdicion()"
+                            [value]="briefForm().funciones"
+                            (input)="updateBriefField('funciones', $event)"
+                            class="brief-field-textarea"
+                          ></textarea>
+                        </div>
+
+                        <!-- Field 10: Requisitos obligatorios -->
+                        <div class="brief-field-card">
+                          <div class="brief-field-header">
+                            <span class="brief-field-label">REQUISITOS OBLIGATORIOS *</span>
+                            <span class="brief-field-counter">{{ briefForm().requisitosObligatorios.length }}/400</span>
+                          </div>
+                          <textarea
+                            rows="4"
+                            [disabled]="!isBriefModoEdicion()"
+                            [value]="briefForm().requisitosObligatorios"
+                            (input)="updateBriefField('requisitosObligatorios', $event)"
+                            class="brief-field-textarea"
+                          ></textarea>
+                        </div>
+
+                        <!-- Field 11: Requisitos deseables -->
+                        <div class="brief-field-card">
+                          <div class="brief-field-header">
+                            <span class="brief-field-label">REQUISITOS DESEABLES</span>
+                            <span class="brief-field-counter">{{ briefForm().requisitosDeseables.length }}/400</span>
+                          </div>
+                          <textarea
+                            rows="4"
+                            [disabled]="!isBriefModoEdicion()"
+                            [value]="briefForm().requisitosDeseables"
+                            (input)="updateBriefField('requisitosDeseables', $event)"
+                            class="brief-field-textarea"
+                          ></textarea>
+                        </div>
+
+                        <!-- Field 12: Hard Skills -->
+                        <div class="brief-field-card">
+                          <div class="brief-field-header">
+                            <span class="brief-field-label">HARD SKILLS *</span>
+                            <span class="brief-field-counter">{{ briefForm().hardSkills.length }}/300</span>
+                          </div>
+                          <textarea
+                            rows="4"
+                            [disabled]="!isBriefModoEdicion()"
+                            [value]="briefForm().hardSkills"
+                            (input)="updateBriefField('hardSkills', $event)"
+                            class="brief-field-textarea"
+                          ></textarea>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </div>
+
+                <!-- CONCLUSIÓN DE ESTRATEGIA EXTERNA (AL FINAL DE LA PESTAÑA) -->
+                @if (estrategia()?.estrategiaExterna?.conclusion) {
+                  <div class="tabla-seccion-wrapper mt-4">
+                    <div class="card-recomendacion-verde shadow-2xs">
+                      <span class="material-symbols-outlined card-recomendacion-icon">verified</span>
+                      <div class="space-y-1">
+                        <span class="card-recomendacion-title">Conclusión de estrategia externa</span>
+                        <p class="card-recomendacion-text">
+                          {{ estrategia()?.estrategiaExterna?.conclusion }}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else if (activeTab() === 'EVALUACION') {
+              <div class="estrategia-interna-container space-y-6 p-6 text-left">
+                <!-- 1. BLOQUE SUPERIOR: RESUMEN DE EVALUACIÓN DE POOL POSTULANTES -->
+                <div class="estrategia-recomendada-card mb-4 bg-gradient-to-r from-slate-50 via-sky-50/30 to-blue-50/20 border border-slate-200">
+                  <div class="mb-4">
+                    <div class="mb-2.5">
+                      <span class="badge-interna-recomendada bg-[#005b96] text-white">
+                        Pool Seleccionado Manualmente
+                      </span>
+                    </div>
+                    <p class="descripcion-recomendada">
+                      Evaluación directa realizada por el agente IA para los postulantes seleccionados del pool (incluyendo postulaciones vía WhatsApp) contra el Perfil de Cargo Habilitado. Se identificaron <strong>{{ totalEvaluadosCount() }} candidatos evaluados</strong>, de los cuales <strong>{{ matchAltoEvaluadosCount() }} presentan match alto</strong>.
+                    </p>
+                  </div>
+
+                  <!-- METRICS GRID (4 CARDS DE KPI) -->
+                  <div class="metrics-horizontal-grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div class="card-metric-img2">
+                      <span class="material-symbols-outlined metric-icon-img2 icon-color-blue">groups</span>
+                      <span class="metric-val-img2 text-slate-800">{{ totalEvaluadosCount() }}</span>
+                      <span class="metric-label-img2">Total Evaluados</span>
+                    </div>
+
+                    <div class="card-metric-img2">
+                      <span class="material-symbols-outlined metric-icon-img2 icon-color-green">verified</span>
+                      <span class="metric-val-img2 text-emerald-600">{{ matchAltoEvaluadosCount() }}</span>
+                      <span class="metric-label-img2">Match alto (≥80%)</span>
+                    </div>
+
+                    <div class="card-metric-img2">
+                      <span class="material-symbols-outlined metric-icon-img2 icon-color-orange">trending_up</span>
+                      <span class="metric-val-img2 text-amber-600">{{ matchParcialEvaluadosCount() }}</span>
+                      <span class="metric-label-img2">Match parcial (60%-79%)</span>
+                    </div>
+
+                    <div class="card-metric-img2">
+                      <span class="material-symbols-outlined metric-icon-img2 icon-color-blue">analytics</span>
+                      <span class="metric-val-img2 text-[#004370] font-mono text-base">{{ promedioMatchEvaluados() }}%</span>
+                      <span class="metric-label-img2">Promedio Idoneidad</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- BANNER INFORMATIVO -->
+                <div class="info-callout-box flex items-center gap-3 mt-4 mb-6 bg-slate-50 border border-slate-200">
+                  <span class="material-symbols-outlined text-[#005b96] shrink-0 text-xl">smart_toy</span>
+                  <span class="text-xs sm:text-sm text-slate-700 font-medium leading-normal">
+                    Los resultados en esta tabla corresponden a la evaluación automatizada del Agente IA al vincular el pool de candidatos con la Estrategia Habilitada.
+                  </span>
+                </div>
+
+                <!-- 2. TABLA: POSTULANTES EVALUADOS -->
+                <div class="tabla-seccion-wrapper">
+                  <div class="tabla-header-bar flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 w-full">
+                    <div class="tabla-title-ranking-group flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 shrink-0">
+                      <h4 class="seccion-titulo-azul" style="margin-bottom: 0 !important;">
+                        <span class="material-symbols-outlined seccion-icono-azul">fact_check</span>
+                        <span>Postulantes evaluados vs. Perfil</span>
+                      </h4>
+                      <div class="inline-flex items-center gap-1.5 text-xs text-slate-500 font-medium shrink-0">
+                        <span>Ranking:</span>
+                        <select
+                          [value]="pageSizeEvaluados()"
+                          (change)="pageSizeEvaluados.set(+$any($event.target).value); pageEvaluados.set(1)"
+                          class="select-ranking-modern"
+                        >
+                          <option [value]="5">Top 5</option>
+                          <option [value]="10">Top 10</option>
+                          <option [value]="25">Top 25</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div class="flex items-center gap-2 w-full sm:w-auto shrink-0 mt-1 sm:mt-0 sm:ml-auto">
+                      <button
+                        type="button"
+                        (click)="refreshEvaluadosSilencioso()"
+                        [disabled]="isRefreshingEvaluados()"
+                        class="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#004370] bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer shrink-0"
+                        title="Actualizar resultados en tiempo real"
+                      >
+                        <span class="material-symbols-outlined text-base select-none" [class.animate-spin]="isRefreshingEvaluados()">sync</span>
+                        <span>{{ isRefreshingEvaluados() ? 'Actualizando...' : 'Actualizar' }}</span>
+                      </button>
+
+                      <div class="tabla-search-input relative flex items-center bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-2xs focus-within:border-[#004370] focus-within:ring-1 focus-within:ring-[#004370]/20 transition-all w-full sm:w-56 shrink-0">
+                        <span class="material-symbols-outlined text-slate-400 text-base shrink-0 mr-2 select-none">search</span>
+                        <input
+                          type="text"
+                          [value]="searchEvaluados()"
+                          (input)="searchEvaluados.set($any($event.target).value); pageEvaluados.set(1)"
+                          placeholder="Buscar postulante..."
+                          class="input-search-clean w-full text-xs text-slate-700 placeholder:text-slate-400 font-normal"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="overflow-hidden border border-slate-200 rounded-lg bg-[#f8fafc] shadow-xs w-full max-w-full">
+                    <div class="tabla-scroll-wrapper overflow-x-auto w-full">
+                      <table class="tabla-estrategia w-full text-left border-collapse bg-[#f8fafc]">
+                        <colgroup>
+                          <col style="width: 28px; min-width: 28px;">
+                          <col style="width: 28px; min-width: 28px;">
+                          <col style="width: 75px; min-width: 70px;">
+                          <col style="width: 24%; min-width: 130px; max-width: 180px;">
+                          <col style="width: 28%; min-width: 150px; max-width: 220px;">
+                          <col style="width: 85px; min-width: 80px;">
+                          <col style="width: 115px; min-width: 105px;">
+                          <col style="width: 100px; min-width: 95px;">
+                        </colgroup>
+                        <thead>
+                          <tr class="bg-slate-100/80 border-b border-slate-200 text-xs font-semibold text-slate-600">
+                            <th class="text-center py-2.5 px-1.5"></th>
+                            <th class="text-left py-2.5 px-2">#</th>
+                            <th class="text-left py-2.5 px-2.5 whitespace-nowrap">Código</th>
+                            <th class="text-left py-2.5 px-2.5 whitespace-nowrap">Postulante</th>
+                            <th class="text-left py-2.5 px-2.5 whitespace-nowrap">Cargo / área</th>
+                            <th class="text-left py-2.5 px-2.5 whitespace-nowrap">Regional</th>
+                            <th class="text-left py-2.5 px-2.5 whitespace-nowrap">Match</th>
+                            <th class="text-left py-2.5 px-2.5 whitespace-nowrap">Clasificación</th>
+                          </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200/70 bg-[#f8fafc]">
+                          @for (item of postulantesEvaluadosPaginado(); track item.id; let idx = $index) {
+                            <tr class="hover:bg-slate-100/60 transition-colors bg-[#f8fafc]" [class.bg-sky-50\/40]="isEvaluadoExpanded(item.id)">
+                              <td class="text-center py-2 px-1.5">
+                                <button
+                                  type="button"
+                                  (click)="toggleExpandEvaluado(item.id)"
+                                  class="btn-expander-chevron"
+                                  [title]="isEvaluadoExpanded(item.id) ? 'Contraer detalle' : 'Expandir detalle'"
+                                >
+                                  <span class="inline-block material-symbols-outlined text-lg leading-none transition-transform duration-300 ease-in-out" [class.rotate-180]="isEvaluadoExpanded(item.id)">
+                                    keyboard_arrow_down
+                                  </span>
+                                </button>
+                              </td>
+                              <td class="text-left font-mono text-slate-400 text-xs py-2 px-2 whitespace-nowrap">{{ (pageEvaluados() - 1) * pageSizeEvaluados() + idx + 1 }}</td>
+                              <td class="text-left font-mono text-xs font-bold text-[#004370] py-2 px-2.5 whitespace-nowrap">{{ item.codigo }}</td>
+                              <td class="text-left py-2 px-2.5">
+                                <span class="font-medium text-slate-800 block text-xs truncate max-w-[180px]" [title]="item.nombre">{{ item.nombre }}</span>
+                              </td>
+                              <td class="text-left py-2 px-2.5">
+                                <span class="text-slate-700 font-medium text-xs block leading-snug truncate max-w-[220px]" [title]="formatCargoText(item.cargo, item.area)">{{ formatCargoText(item.cargo, item.area) }}</span>
+                              </td>
+                              <td class="text-left text-xs text-slate-600 font-normal py-2 px-2.5 whitespace-nowrap">{{ item.regional }}</td>
+                              <td class="text-left py-2 px-2.5">
+                                <div class="flex items-center gap-1.5">
+                                  <div class="progress-bar-bg flex-1 h-2 rounded-full overflow-hidden bg-slate-100 min-w-[45px]">
+                                    <div
+                                      [class]="'progress-bar-fill h-full rounded-full ' + getProgressBarClass(item.clasificacion, item.matchPorcentaje)"
+                                      [style.width.%]="item.matchPorcentaje"
+                                    ></div>
+                                  </div>
+                                  <span class="text-xs font-bold font-mono text-slate-800 shrink-0 w-8 text-right">{{ item.matchPorcentaje }}%</span>
+                                </div>
+                              </td>
+                              <td class="text-left py-2 px-2.5">
+                                <span
+                                  class="chip-clasificacion whitespace-nowrap"
+                                  [class.chip-match-alto]="isMatchAlto(item.clasificacion)"
+                                  [class.chip-match-parcial]="isMatchParcial(item.clasificacion)"
+                                  [class.chip-match-bajo]="isMatchBajo(item.clasificacion, item.matchPorcentaje)"
+                                  [class.chip-descartado]="isDescartado(item.clasificacion)"
+                                >
+                                  {{ getClasificacionLabel(item.clasificacion) }}
+                                </span>
+                              </td>
+                            </tr>
+
+                            <!-- FILA DESPLEGABLE CON DETALLE DE EVALUACIÓN EVALUADOS -->
+                            @if (isEvaluadoExpanded(item.id)) {
+                              <tr class="bg-[#f8fafc] border-b border-slate-300">
+                                <td colspan="8" class="p-0 border-0">
+                                  <div class="subpanel-evaluacion-container">
+                                    <!-- Cabecera del Subpanel -->
+                                    <div class="subpanel-header-flex border-b border-slate-200 pb-2.5 mb-3">
+                                      <div class="flex items-center gap-2.5">
+                                        <span class="badge-codigo-postulante bg-[#005b96] text-white">
+                                          {{ item.codigo }}
+                                        </span>
+                                        <h5 class="font-bold text-sm text-slate-800 tracking-tight">
+                                          Evaluación de criterios — <span class="font-semibold text-slate-700">{{ item.nombre }}</span>
+                                        </h5>
+                                      </div>
+                                      <div [class]="item.matchPorcentaje >= 80 ? 'badge-match-global-alto' : (item.matchPorcentaje >= 60 ? 'badge-match-global-medio' : 'badge-match-global-bajo')">
+                                        <span>Match global:</span>
+                                        <span class="font-bold font-mono text-xs">{{ item.matchPorcentaje }}%</span>
+                                      </div>
+                                    </div>
+
+                                    <!-- 3 Columnas con CSS Nativo (Grid + Gap 24px) -->
+                                    <div class="subpanel-evaluacion-grid">
+                                      <!-- 1. Fortalezas -->
+                                      <div class="column-criterio-box">
+                                        <div>
+                                          <div class="flex justify-start text-left">
+                                            <span class="badge-criterio-cumplido">FORTALEZAS</span>
+                                          </div>
+                                          <div class="criterio-cards-list">
+                                            @for (fort of item.detalleCriterios?.fortalezas; track fort.texto) {
+                                              <div class="card-criterio-item">
+                                                <div class="flex items-center justify-between gap-2">
+                                                  <span class="font-medium text-slate-700 text-xs text-left leading-snug">{{ fort.texto }}</span>
+                                                </div>
+                                              </div>
+                                            }
+                                            @if (!item.detalleCriterios?.fortalezas?.length) {
+                                              <div class="card-criterio-item opacity-60">
+                                                <p class="text-xs text-slate-400 italic text-left">No se registran fortalezas clave</p>
+                                              </div>
+                                            }
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      <!-- 2. Brechas -->
+                                      <div class="column-criterio-box">
+                                        <div>
+                                          <div class="flex justify-start text-left">
+                                            <span class="badge-criterio-nocumplido">BRECHAS</span>
+                                          </div>
+                                          <div class="criterio-cards-list">
+                                            @for (brech of item.detalleCriterios?.brechas; track brech.texto) {
+                                              <div class="card-criterio-item">
+                                                <div class="flex items-center justify-between gap-2">
+                                                  <span class="font-medium text-slate-700 text-xs text-left leading-snug">{{ brech.texto }}</span>
+                                                </div>
+                                              </div>
+                                            }
+                                            @if (!item.detalleCriterios?.brechas?.length) {
+                                              <div class="card-criterio-item border-emerald-100 bg-emerald-50/30">
+                                                <p class="text-xs text-emerald-700 font-medium text-left">Sin brechas críticas identificadas</p>
+                                              </div>
+                                            }
+                                          </div>
+                                        </div>
+                                      </div>
+
+                                      <!-- 3. Desglose de Criterios -->
+                                      <div class="column-criterio-box">
+                                        <div>
+                                          <div class="flex justify-start text-left">
+                                            <span class="badge-match-global-alto">DESGLOSE DE CRITERIOS</span>
+                                          </div>
+                                          <div class="criterio-cards-list">
+                                            @for (crit of item.detalleCriterios?.desglose; track crit.criterio) {
+                                              <div class="card-criterio-item">
+                                                <div class="flex items-center justify-between gap-2">
+                                                  <span class="font-bold text-slate-800 text-xs text-left leading-snug shrink min-w-0 max-w-[65%]">{{ crit.criterio }}</span>
+                                                  @if (crit.puntaje) {
+                                                    <span [class]="getCriterioBadgeClass(crit)">
+                                                      {{ crit.puntaje }}
+                                                    </span>
+                                                  }
+                                                </div>
+                                                <p class="text-xs text-slate-500 mt-1 font-normal leading-normal text-left">
+                                                  {{ cleanEncontradoPrefix(crit.resultadoEncontrado) }}
+                                                </p>
+                                              </div>
+                                            }
+                                          </div>
+                                        </div>
+                                      </div>
+                                     </div>
+                                  </div>
+                                </td>
+                              </tr>
+                            }
+                          } @empty {
+                            <tr>
+                              <td colspan="8" class="text-center py-12 px-4 bg-white">
+                                <div class="flex flex-col items-center justify-center max-w-md mx-auto text-center gap-2">
+                                  <div class="w-14 h-14 rounded-full bg-sky-50 flex items-center justify-center mb-1 border border-sky-100">
+                                    <span class="material-symbols-outlined text-2xl text-[#005b96]">person_search</span>
+                                  </div>
+                                  <h5 class="text-xs sm:text-sm font-semibold text-slate-800">No hay postulantes evaluados aún en este pool</h5>
+                                  <p class="text-xs text-slate-500 leading-normal">
+                                    Selecciona candidatos en el módulo de postulantes para iniciar su evaluación contra esta estrategia. Los resultados aparecerán aquí automáticamente en tiempo real.
+                                  </p>
+                                </div>
+                              </td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+
+                  <!-- PAGINACIÓN INFERIOR TABLA EVALUADOS -->
+                  <div class="flex items-center justify-between mt-4 px-1 text-xs text-slate-500">
+                    <div>
+                      Mostrando {{ (pageEvaluados() - 1) * pageSizeEvaluados() + 1 }} a {{ pageEvaluados() * pageSizeEvaluados() > postulantesEvaluadosFiltrados().length ? postulantesEvaluadosFiltrados().length : pageEvaluados() * pageSizeEvaluados() }} de {{ postulantesEvaluadosFiltrados().length }} postulantes evaluados
+                    </div>
+                    <div class="flex items-center gap-2">
+                      <button
+                        type="button"
+                        (click)="cambiarPaginaEvaluados(-1)"
+                        [disabled]="pageEvaluados() === 1"
+                        class="px-3 py-1 rounded border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white text-slate-700 font-medium cursor-pointer transition-colors"
+                      >
+                        Anterior
+                      </button>
+                      <span class="font-semibold text-slate-700">{{ pageEvaluados() }} / {{ totalEvaluadosPages() }}</span>
+                      <button
+                        type="button"
+                        (click)="cambiarPaginaEvaluados(1)"
+                        [disabled]="pageEvaluados() === totalEvaluadosPages()"
+                        class="px-3 py-1 rounded border border-slate-200 bg-white hover:bg-slate-50 disabled:opacity-40 disabled:hover:bg-white text-slate-700 font-medium cursor-pointer transition-colors"
+                      >
+                        Siguiente
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+
+              <!-- MODAL VISTA PREVIA DEL BRIEF (IMG2) -->
+              @if (isBriefModalOpen()) {
+                <div class="modal-brief-backdrop" (click)="cerrarVistaPreviaBrief()">
+                  <div class="modal-brief-container" (click)="$event.stopPropagation()">
+                    <!-- Header Modal -->
+                    <div class="modal-brief-header">
+                      <div class="modal-brief-title-group">
+                        <span class="material-symbols-outlined modal-eye-icon">visibility</span>
+                        <h4 class="modal-brief-title">Vista previa del brief</h4>
+                        <span class="modal-brief-badge-ok">
+                          <span class="material-symbols-outlined text-xs">check_circle</span>
+                          Sin errores
+                        </span>
+                      </div>
+
+                      <div class="modal-brief-header-actions">
+                        <button
+                          type="button"
+                          (click)="copiarTextoBrief()"
+                          class="brief-btn-secondary"
+                        >
+                          <span class="material-symbols-outlined text-sm">content_copy</span>
+                          Copiar texto
+                        </button>
+
+                        <button
+                          type="button"
+                          (click)="cerrarVistaPreviaBrief()"
+                          class="modal-brief-close-btn"
+                          title="Cerrar modal"
+                        >
+                          <span class="material-symbols-outlined text-lg">close</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Cuerpo del Modal (Formato Estructurado Limpio) -->
+                    <div class="modal-brief-body">
+                      <div class="modal-brief-item">
+                        <span class="modal-brief-item-label">Título de publicación:</span>
+                        <p class="modal-brief-item-value">{{ estrategia()?.estrategiaExterna?.briefEditable?.titulo || 'Suscriptor Senior de Ramos Generales — La Paz' }}</p>
+                      </div>
+
+                      <div class="modal-brief-item">
+                        <span class="modal-brief-item-label">Modalidad:</span>
+                        <p class="modal-brief-item-value">{{ estrategia()?.estrategiaExterna?.briefEditable?.modalidad || 'Presencial · Tiempo completo' }}</p>
+                      </div>
+
+                      <div class="modal-brief-item">
+                        <span class="modal-brief-item-label">Regional:</span>
+                        <p class="modal-brief-item-value">{{ estrategia()?.estrategiaExterna?.briefEditable?.ubicacion || 'La Paz' }}</p>
+                      </div>
+
+                      <div class="modal-brief-item">
+                        <span class="modal-brief-item-label">Banda salarial:</span>
+                        <p class="modal-brief-item-value">Bs 12.500 – 15.800</p>
+                      </div>
+
+                      <div class="modal-brief-item">
+                        <span class="modal-brief-item-label">Formación:</span>
+                        <p class="modal-brief-item-value">{{ estrategia()?.estrategiaExterna?.briefEditable?.formacion || 'Ing. Comercial, Economía, Administración o afín' }}</p>
+                      </div>
+
+                      <div class="modal-brief-item">
+                        <span class="modal-brief-item-label">Experiencia mínima:</span>
+                        <p class="modal-brief-item-value">{{ estrategia()?.estrategiaExterna?.briefEditable?.experiencia || '4 años en suscripción de ramos generales' }}</p>
+                      </div>
+
+                      <div class="modal-brief-item">
+                        <span class="modal-brief-item-label">Resumen del cargo:</span>
+                        <p class="modal-brief-item-value">{{ estrategia()?.estrategiaExterna?.briefEditable?.introduccion || 'Responsable de evaluar, suscribir y mantener carteras de riesgos de ramos generales cumpliendo la normativa interna y de la ASFI.' }}</p>
+                      </div>
+
+                      <div class="modal-brief-item">
+                        <span class="modal-brief-item-label">Objetivo del cargo:</span>
+                        <p class="modal-brief-item-value">{{ estrategia()?.estrategiaExterna?.briefEditable?.desafioPrincipal || 'Garantizar la calidad técnica de la suscripción y contribuir al crecimiento rentable de la cartera regional.' }}</p>
+                      </div>
+
+                      <div class="modal-brief-item">
+                        <span class="modal-brief-item-label">Funciones principales:</span>
+                        <p class="modal-brief-item-value">{{ (estrategia()?.estrategiaExterna?.briefEditable?.funciones || []).join(' · ') || 'Evaluación de riesgos · Suscripción de pólizas · Análisis de siniestralidad · Coordinación con comercial · Reportes técnicos' }}</p>
+                      </div>
+
+                      <div class="modal-brief-item">
+                        <span class="modal-brief-item-label">Requisitos obligatorios:</span>
+                        <p class="modal-brief-item-value">Experiencia en suscripción · Manejo de tarifarios · Conocimiento normativo</p>
+                      </div>
+
+                      <div class="modal-brief-item">
+                        <span class="modal-brief-item-label">Requisitos deseables:</span>
+                        <p class="modal-brief-item-value">Experiencia en reaseguros · Inglés intermedio</p>
+                      </div>
+                    </div>
+
+                    <!-- Footer Modal -->
+                    <div class="modal-brief-footer">
+                      <p class="modal-brief-footer-text">Este texto se enviará al agente de publicación una vez aprobado por RRHH.</p>
+
+                      <div class="flex items-center gap-2">
+                        @if (briefCopiedToast()) {
+                          <span class="badge-copiado-resaltado">
+                            <span class="material-symbols-outlined text-sm">check</span>
+                            ¡Copiado!
+                          </span>
+                        }
+
+                        <button
+                          type="button"
+                          (click)="cerrarVistaPreviaBrief()"
+                          class="brief-btn-primary"
+                        >
+                          Cerrar
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+
+      </div>
+
+      <!-- COLUMNA LATERAL (DERECHA): FUENTES CONSULTADAS + ESTADO DEL PROCESO -->
+      <div class="columna-lateral">
+
+        <!-- 1. FUENTES CONSULTADAS -->
+        <div class="detail-card-section fuentes-consultadas-card mb-5">
+          <h3 class="section-card-title mb-4 flex items-center gap-2">
+            <span class="material-symbols-outlined text-[#004370]">dataset</span>
+            Fuentes consultadas
+          </h3>
+
+          <div class="fuentes-sidebar-list">
+            @for (fuente of est.fuentesConsultadas; track fuente.nombre; let isLast = $last) {
+              <div class="fuente-sidebar-item" [class.fuente-divider]="!isLast">
+                <div class="flex items-start gap-3">
+                  <!-- Cuadrado suave con bordes redondeados sutiles (Estilo IMG2) -->
+                  <div class="fuente-icon-wrap shrink-0">
+                    <span class="material-symbols-outlined fuente-icon">
+                      {{ getSourceIcon(fuente.nombre) }}
+                    </span>
+                  </div>
+
+                  <!-- Título, Subtexto y Badge Semi-fluorescente pegado muy de cerca al subtexto -->
+                  <div class="min-w-0 flex-1">
+                    <p class="fuente-titulo">{{ fuente.nombre }}</p>
+                    <p class="fuente-subtexto">
+                      {{ fuente.detalle }}
+                      @if (fuente.resultado && fuente.resultado.trim() !== fuente.detalle.trim()) {
+                        <span class="fuente-resultado"> · {{ fuente.resultado }}</span>
+                      }
+                    </p>
+
+                    <!-- Badge pegado muy de cerca al subtexto -->
+                    <div class="mt-0.5">
+                      <span [class]="'source-status-badge ' + getSourceBadgeClass(fuente.estado)">
+                        {{ fuente.estado }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- 2. ESTADO DEL PROCESO (ESTILO IDÉNTICO A PERFILES) -->
+        <div class="proceso-lateral-card">
+          <h4 class="titulo-proceso flex items-center gap-2">
+            <span class="material-symbols-outlined text-[#004370] text-lg">fact_check</span>
+            Estado del proceso
+          </h4>
+
+          <div class="linea-proceso-pasos">
+            @for (paso of getPasosProceso(est.estado); track paso.numero) {
+              <div class="paso-item" [class.completado]="paso.estado === 'completado'" [class.actual]="paso.estado === 'actual'" [class.pendiente]="paso.estado === 'pendiente'">
+                <div class="paso-marcador">
+                  @if (paso.estado === 'completado') {
+                    <span class="material-symbols-outlined icono-completado">check</span>
+                  } @else {
+                    <span class="numero-paso">{{ paso.numero }}</span>
+                  }
+                </div>
+                <div class="paso-detalles">
+                  <span class="paso-nombre">{{ paso.nombre }}</span>
+                  <span class="paso-estado-label">
+                    @if (paso.estado === 'completado') { Completado }
+                    @else if (paso.estado === 'actual') { En progreso }
+                    @else { Pendiente }
+                  </span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  }
+</div>
+
+<!-- MODAL: REGISTRAR OBSERVACIÓN -->
+@if (showObservacionModal()) {
+  <div class="modal-backdrop">
+    <div class="dialogo-confirmacion-wrapper animate-in fade-in zoom-in-95 duration-200">
+      <!-- Cabecera -->
+      <div class="dialogo-confirmacion-cabecera">
+        <div class="dialogo-titulo-bloque">
+          <div class="dialogo-icono-contenedor advertencia">
+            <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">edit_note</span>
+          </div>
+          <div class="dialogo-titulo-meta">
+            <h2>Registrar observación</h2>
+            <p>Devolución de la estrategia con observaciones</p>
+          </div>
+        </div>
+        <button class="boton-cerrar-dialogo" (click)="cerrarModalObservacion()" [disabled]="isSubmitting()" aria-label="Cerrar diálogo">
+          <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">close</span>
+        </button>
+      </div>
+
+      <!-- Cuerpo -->
+      <div class="dialogo-confirmacion-cuerpo">
+        <p class="text-xs text-slate-600 leading-relaxed m-0">
+          Ingresa el detalle de la observación para la estrategia <strong class="text-[#004370] font-bold">{{ estrategia()?.codigoEstrategia }}</strong>. Al guardar, el estado cambiará a <strong class="text-amber-700">Observada</strong>.
+        </p>
+
+        <div>
+          <label for="comentarioObs" class="block text-xs font-bold uppercase text-slate-600 mb-1">
+            Comentario / Observación <span class="text-rose-600">*</span>
+          </label>
+          <textarea
+            id="comentarioObs"
+            [ngModel]="comentarioText()"
+            (ngModelChange)="comentarioText.set($event); comentarioError.set(false)"
+            rows="4"
+            placeholder="Escribe la observación detallada..."
+            class="w-full p-3 text-sm border rounded-lg focus:outline-none focus:border-[#004370] text-slate-800"
+            [class.border-rose-500]="comentarioError()"
+            [class.border-slate-300]="!comentarioError()"
+          ></textarea>
+          @if (comentarioError()) {
+            <p class="text-xs text-rose-600 mt-1 font-medium">El comentario de observación es obligatorio.</p>
+          }
+        </div>
+      </div>
+
+      <!-- Pie de Acciones -->
+      <div class="dialogo-confirmacion-pie">
+        <button class="boton-cerrar-final" (click)="cerrarModalObservacion()" [disabled]="isSubmitting()">
+          Cancelar
+        </button>
+        <button class="boton-confirmar-final advertencia" (click)="guardarObservacion()" [disabled]="isSubmitting()">
+          @if (isSubmitting()) {
+            <span class="material-symbols-outlined spinner-icon notranslate" translate="no" aria-hidden="true">sync</span>
+            <span>Guardando...</span>
+          } @else {
+            <span>Guardar observación</span>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- MODAL: APROBAR ESTRATEGIA -->
+@if (showAprobacionModal()) {
+  <div class="modal-backdrop">
+    <div class="dialogo-confirmacion-wrapper animate-in fade-in zoom-in-95 duration-200">
+      <!-- Cabecera -->
+      <div class="dialogo-confirmacion-cabecera">
+        <div class="dialogo-titulo-bloque">
+          <div class="dialogo-icono-contenedor exito">
+            <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">check_circle</span>
+          </div>
+          <div class="dialogo-titulo-meta">
+            <h2>Confirmar aprobación</h2>
+            <p>Aprobación oficial de la estrategia de talento</p>
+          </div>
+        </div>
+        <button class="boton-cerrar-dialogo" (click)="cerrarModalAprobacion()" [disabled]="isSubmitting()" aria-label="Cerrar diálogo">
+          <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">close</span>
+        </button>
+      </div>
+
+      <!-- Cuerpo / Resumen -->
+      <div class="dialogo-confirmacion-cuerpo">
+        <p class="text-xs text-slate-600 leading-relaxed m-0">
+          ¿Está seguro de aprobar la estrategia <strong class="text-[#004370] font-bold">{{ estrategia()?.codigoEstrategia }}</strong>?
+        </p>
+
+        <div class="resumen-compacto-tarjeta">
+          <div class="resumen-item">
+            <span class="resumen-label">Estrategia</span>
+            <span class="resumen-valor font-mono font-bold text-primary">{{ estrategia()?.codigoEstrategia }}</span>
+          </div>
+          <div class="resumen-item">
+            <span class="resumen-label">Nuevo estado</span>
+            <span class="resumen-valor font-semibold text-emerald-700">Aprobada</span>
+          </div>
+          <div class="resumen-item">
+            <span class="resumen-label">Etapa actual</span>
+            <span class="resumen-valor text-slate-700">Finaliza revisión de RRHH</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pie de Acciones -->
+      <div class="dialogo-confirmacion-pie">
+        <button class="boton-cerrar-final" (click)="cerrarModalAprobacion()" [disabled]="isSubmitting()">
+          Cancelar
+        </button>
+        <button class="boton-confirmar-final exito" [disabled]="isSubmitting()" (click)="confirmarAprobacion()">
+          @if (isSubmitting()) {
+            <span class="material-symbols-outlined spinner-icon notranslate" translate="no" aria-hidden="true">sync</span>
+            <span>Aprobando...</span>
+          } @else {
+            <span>Sí, aprobar estrategia</span>
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- MODAL: DETALLE DE POSTULANTE (CRITERIOS CUMPLIDOS, PARCIALES Y NO CUMPLIDOS) -->
+@if (showPostulanteModal() && selectedPostulante()) {
+  @let cand = selectedPostulante()!;
+  <div class="modal-backdrop">
+    <div class="modal-card modal-lg">
+      <div class="modal-header border-b border-slate-100 pb-3">
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-mono text-xs font-semibold text-[#004370] bg-sky-50 px-2 py-0.5 rounded border border-sky-200">
+              {{ cand.codigo }}
+            </span>
+            <span
+              class="chip-clasificacion whitespace-nowrap"
+              [class.chip-match-alto]="isMatchAlto(cand.clasificacion)"
+              [class.chip-match-parcial]="isMatchParcial(cand.clasificacion)"
+              [class.chip-match-bajo]="isMatchBajo(cand.clasificacion, cand.matchPorcentaje)"
+              [class.chip-descartado]="isDescartado(cand.clasificacion)"
+            >
+              {{ getClasificacionLabel(cand.clasificacion) }}
+            </span>
+          </div>
+          <h3 class="font-bold text-lg text-slate-900 mt-1 flex items-center gap-2">
+            <span class="material-symbols-outlined text-[#004370]">person</span>
+            {{ cand.nombre }}
+          </h3>
+          <p class="text-xs text-slate-500 mt-0.5">
+            {{ cand.cargo || cand.ultimoCargo }} · {{ cand.regional }} · Match: <strong class="text-slate-800">{{ cand.matchPorcentaje }}%</strong>
+          </p>
+        </div>
+        <button (click)="cerrarModalPostulante()" type="button" class="text-slate-400 hover:text-slate-600">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="modal-body space-y-4 max-h-[65vh] overflow-y-auto pr-1 py-4">
+
+        <!-- BLOQUE 1: CRITERIOS CUMPLIDOS (VERDE) -->
+        <div class="criterios-block block-cumplidos">
+          <div class="block-header flex items-center gap-2 text-emerald-800 bg-emerald-50 border border-emerald-200 p-2.5 rounded-t-lg">
+            <span class="material-symbols-outlined text-emerald-600 text-lg">check_circle</span>
+            <h4 class="font-bold text-xs uppercase tracking-wide">
+              Criterios cumplidos ({{ cand.detalleCriterios?.cumplidos?.length || 0 }})
+            </h4>
+          </div>
+
+          <div class="block-content p-3 space-y-2 bg-white border border-t-0 border-emerald-200 rounded-b-lg">
+            @for (crit of cand.detalleCriterios?.cumplidos; track crit.criterio) {
+              <div class="criterio-item flex items-center justify-between gap-3 text-xs p-2.5 rounded bg-emerald-50/40 border border-emerald-100">
+                <div>
+                  <span class="font-bold text-slate-900 block text-xs">{{ crit.criterio }}</span>
+                  <span class="text-slate-600 text-[11px] block mt-0.5">{{ crit.resultadoEncontrado }}</span>
+                </div>
+                @if (crit.puntaje) {
+                  <span class="font-mono text-xs font-bold text-emerald-700 bg-emerald-100/70 px-2 py-0.5 rounded border border-emerald-200 shrink-0">
+                    {{ crit.puntaje }}
+                  </span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- BLOQUE 2: CRITERIOS PARCIALES (NARANJA) -->
+        <div class="criterios-block block-parciales">
+          <div class="block-header flex items-center gap-2 text-amber-800 bg-amber-50 border border-amber-200 p-2.5 rounded-t-lg">
+            <span class="material-symbols-outlined text-amber-600 text-lg">published_with_changes</span>
+            <h4 class="font-bold text-xs uppercase tracking-wide">
+              Criterios parciales ({{ cand.detalleCriterios?.parciales?.length || 0 }})
+            </h4>
+          </div>
+
+          <div class="block-content p-3 space-y-2 bg-white border border-t-0 border-amber-200 rounded-b-lg">
+            @for (crit of cand.detalleCriterios?.parciales; track crit.criterio) {
+              <div class="criterio-item flex items-center justify-between gap-3 text-xs p-2.5 rounded bg-amber-50/40 border border-amber-100">
+                <div>
+                  <span class="font-bold text-slate-900 block text-xs">{{ crit.criterio }}</span>
+                  <span class="text-slate-600 text-[11px] block mt-0.5">{{ crit.resultadoEncontrado }}</span>
+                </div>
+                @if (crit.puntaje) {
+                  <span class="font-mono text-xs font-bold text-amber-700 bg-amber-100/70 px-2 py-0.5 rounded border border-amber-200 shrink-0">
+                    {{ crit.puntaje }}
+                  </span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- BLOQUE 3: CRITERIOS NO CUMPLIDOS (ROJO) -->
+        <div class="criterios-block block-nocumplidos">
+          <div class="block-header flex items-center gap-2 text-rose-800 bg-rose-50 border border-rose-200 p-2.5 rounded-t-lg">
+            <span class="material-symbols-outlined text-rose-600 text-lg">cancel</span>
+            <h4 class="font-bold text-xs uppercase tracking-wide">
+              Criterios no cumplidos ({{ cand.detalleCriterios?.noCumplidos?.length || 0 }})
+            </h4>
+          </div>
+
+          <div class="block-content p-3 space-y-2 bg-white border border-t-0 border-rose-200 rounded-b-lg">
+            @for (crit of cand.detalleCriterios?.noCumplidos; track crit.criterio) {
+              <div class="criterio-item flex items-center justify-between gap-3 text-xs p-2.5 rounded bg-rose-50/40 border border-rose-100">
+                <div>
+                  <span class="font-bold text-slate-900 block text-xs">{{ crit.criterio }}</span>
+                  <span class="text-slate-600 text-[11px] block mt-0.5">{{ crit.resultadoEncontrado }}</span>
+                </div>
+                @if (crit.puntaje) {
+                  <span class="font-mono text-xs font-bold text-rose-700 bg-rose-100/70 px-2 py-0.5 rounded border border-rose-200 shrink-0">
+                    {{ crit.puntaje }}
+                  </span>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer border-t border-slate-100 pt-3">
+        <button type="button" (click)="cerrarModalPostulante()" class="btn-cancel">
+          Cerrar
+        </button>
+      </div>
+    </div>
+  </div>
+}

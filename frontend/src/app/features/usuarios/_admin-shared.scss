@@ -1,0 +1,431 @@
+// ============================================================
+// SHARED MODULE STYLES - Admin Module (Usuarios / Áreas / Roles)
+// Nacional Seguros SIR - Design System
+// ============================================================
+
+// ─── Admin page shell ────────────────────────────────────────
+.admin-page {
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+// ─── Page header ─────────────────────────────────────────────
+.admin-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+
+  .admin-title {
+    margin: 0 0 4px;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--primary-color);
+    letter-spacing: -0.01em;
+  }
+
+  .admin-subtitle {
+    margin: 0;
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+}
+
+// ─── Action buttons ──────────────────────────────────────────
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  background: var(--primary-color);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.18s;
+
+  .material-symbols-outlined { font-size: 18px; }
+  &:hover { background: var(--primary-container); }
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.18s;
+  &:hover { background: #f0f4f8; }
+}
+
+// ─── Filters card & Search box ───────────────────────────────
+.filters-card {
+  background: #fff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 20px 24px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+
+  .filters-header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+
+    .search-box {
+      position: relative;
+      flex: 1;
+      min-width: 220px;
+      max-width: 320px;
+
+      .material-symbols-outlined {
+        position: absolute;
+        left: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 18px;
+        color: var(--text-secondary);
+        pointer-events: none;
+      }
+
+      input {
+        padding: 8px 12px 8px 36px;
+        border: 1px solid var(--border-subtle);
+        border-radius: 8px;
+        font-size: 13px;
+        color: var(--text-main);
+        background: #f7f9fc;
+        outline: none;
+        width: 100%;
+        box-sizing: border-box;
+        transition: border-color 0.18s, box-shadow 0.18s, background 0.18s;
+
+        &:focus {
+          border-color: var(--primary-color);
+          box-shadow: 0 0 0 3px rgba(0,67,112,.1);
+          background: #fff;
+        }
+      }
+    }
+  }
+}
+
+// ─── Form card ───────────────────────────────────────────────
+.form-card {
+  background: #fff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 24px 28px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+
+  .form-card-title {
+    margin: 0 0 20px;
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--primary-color);
+    padding-bottom: 14px;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 16px;
+
+  @media (min-width: 640px) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+
+  &.full-width {
+    grid-column: 1 / -1;
+  }
+
+  label {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+
+    .required { color: #dc2626; }
+  }
+
+  input, select, textarea {
+    padding: 9px 12px;
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    font-size: 13px;
+    color: var(--text-main);
+    background: #f7f9fc;
+    outline: none;
+    transition: border-color 0.18s, box-shadow 0.18s;
+    font-family: inherit;
+    box-sizing: border-box;
+    width: 100%;
+
+    &:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(0,67,112,.1);
+      background: #fff;
+    }
+
+    &.ng-invalid.ng-touched {
+      border-color: #dc2626;
+    }
+  }
+
+  textarea {
+    resize: vertical;
+    min-height: 80px;
+  }
+
+  .field-error {
+    font-size: 11px;
+    color: #dc2626;
+    margin-top: 2px;
+  }
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding-top: 18px;
+  border-top: 1px solid var(--border-subtle);
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+// ─── Permissions matrix ──────────────────────────────────────
+.permisos-section {
+  .permisos-title {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary);
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--border-subtle);
+    margin-bottom: 14px;
+  }
+
+  .permisos-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 14px;
+
+    @media (min-width: 640px) { grid-template-columns: 1fr 1fr; }
+    @media (min-width: 1024px) { grid-template-columns: 1fr 1fr 1fr; }
+  }
+
+  .permiso-grupo {
+    border: 1px solid var(--border-subtle);
+    border-radius: 10px;
+    padding: 14px;
+    background: #f7f9fc;
+
+    .grupo-titulo {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--primary-color);
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 10px;
+
+      .material-symbols-outlined { font-size: 16px; }
+    }
+
+    .permiso-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 4px 0;
+      cursor: pointer;
+
+      input[type="checkbox"] {
+        width: 14px;
+        height: 14px;
+        margin-top: 2px;
+        accent-color: var(--primary-color);
+        cursor: pointer;
+        flex-shrink: 0;
+        padding: 0;
+        border: none;
+        background: none;
+        box-shadow: none;
+      }
+
+      .permiso-label {
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-main);
+        display: block;
+      }
+
+      .permiso-codigo {
+        font-size: 10px;
+        font-family: monospace;
+        color: var(--text-secondary);
+        display: block;
+      }
+    }
+  }
+}
+
+// ─── Loading ─────────────────────────────────────────────────
+.loading-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 56px 0;
+  background: #fff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+}
+
+// ─── Table card ──────────────────────────────────────────────
+.table-card {
+  position: relative;
+  background: #fff;
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,.06);
+
+  .table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+
+    &::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    &::-webkit-scrollbar-track {
+      background: #f1f5f9;
+    }
+
+    &::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+  }
+
+  table {
+    width: 100%;
+    min-width: 980px;
+    border-collapse: collapse;
+
+    th.mat-header-cell {
+      background: #f7f9fc;
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      padding: 13px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      white-space: nowrap;
+    }
+
+    td.mat-cell {
+      padding: 13px 16px;
+      font-size: 13px;
+      color: var(--text-main);
+      border-bottom: 1px solid var(--border-subtle);
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    tr.mat-row:last-child td.mat-cell { border-bottom: none; }
+    tr.mat-row:hover td.mat-cell { background: #f7f9fc; }
+  }
+
+  .cell-primary { font-weight: 700; color: var(--primary-color); }
+  .cell-bold    { font-weight: 600; }
+  .cell-secondary { color: var(--text-secondary); }
+  .cell-mono    { font-family: monospace; font-size: 11px; color: var(--text-secondary); }
+  .cell-center  { text-align: center; }
+  .cell-number  { text-align: center; font-weight: 700; }
+
+  .actions-cell {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+
+    .action-btn {
+      width: 30px;
+      height: 30px;
+      border: 1px solid var(--border-subtle);
+      border-radius: 50%;
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+
+      .material-symbols-outlined { font-size: 16px; }
+
+      &:hover { background: var(--primary-color); color: #fff; border-color: var(--primary-color); }
+      &.danger:hover { background: #dc2626; color: #fff; border-color: #dc2626; }
+      &:disabled { opacity: 0.3; cursor: not-allowed; }
+      &:disabled:hover { background: transparent; color: var(--text-secondary); border-color: var(--border-subtle); }
+    }
+  }
+
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 56px 24px;
+    gap: 8px;
+    color: var(--text-secondary);
+
+    .material-symbols-outlined { font-size: 44px; color: #cbd5e1; }
+    p { margin: 0; font-size: 13px; }
+  }
+}
+
+// ─── Status chips ────────────────────────────────────────────
+.chip {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+
+  &.chip-activo   { background: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+  &.chip-inactivo { background: #ffedd5; color: #c2410c; border: 1px solid #fed7aa; }
+  &.chip-bloqueado{ background: #fee2e2; color: #b91c1c; border: 1px solid #fecaca; }
+  &.chip-rol      { background: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+}

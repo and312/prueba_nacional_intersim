@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="es" translate="no">
+<head>
+  <meta charset="utf-8">
+  <meta name="google" content="notranslate">
+  <title>JARVIS - Nacional Seguros</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/png" href="/nacional-seguros.png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <script>
+    function sendErrorToBackend(msg, source, lineno, colno, error) {
+      var errText = '';
+      if (error) {
+        if (error.stack) errText = error.stack;
+        else if (error.message) errText = error.message;
+        else errText = String(error);
+      }
+      var message = 'Browser URL: ' + window.location.href + '\nMessage: ' + msg + '\nSource: ' + source + '\nLine: ' + lineno + ':' + colno + '\nStack: ' + errText;
+      fetch('/api/v1/auth/log-error', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: message })
+      }).catch(function() {});
+    }
+
+    window.onerror = function(msg, source, lineno, colno, error) {
+      sendErrorToBackend(msg, source, lineno, colno, error);
+      return false;
+    };
+
+    window.onunhandledrejection = function(event) {
+      sendErrorToBackend('Unhandled Promise Rejection: ' + (event.reason ? (event.reason.message || event.reason) : 'unknown'), '', '', '', event.reason);
+    };
+  </script>
+</head>
+<body>
+  <app-root></app-root>
+</body>
+</html>
+

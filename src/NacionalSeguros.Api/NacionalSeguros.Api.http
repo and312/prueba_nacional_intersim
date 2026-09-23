@@ -1,0 +1,6 @@
+@NacionalSeguros.Api_HostAddress = http://localhost:5196
+
+GET {{NacionalSeguros.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

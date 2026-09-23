@@ -1,0 +1,21 @@
+<!-- Main Content (unmounted when locked to secure memory/DOM data) -->
+<router-outlet *ngIf="!authService.isSessionLocked()"></router-outlet>
+
+<!-- Blocking Session Expiration Overlay -->
+<div *ngIf="authService.isSessionLocked()" class="lock-screen-overlay">
+  <div class="lock-card">
+    <div class="lock-icon-container">
+      <span class="material-symbols-outlined">lock</span>
+    </div>
+    <h2 class="lock-title">Sesión Cerrada por Inactividad</h2>
+    <p class="lock-message">
+      Por tu seguridad y cumplimiento de la política de protección de datos, la sesión se ha cerrado automáticamente al detectar 10 minutos de inactividad. Los datos en pantalla han sido destruidos.
+    </p>
+    <button class="lock-btn" (click)="irAlLogin()">
+      <span class="material-symbols-outlined">login</span>
+      Volver a Iniciar Sesión
+    </button>
+  </div>
+</div>
+
+<app-splash-screen></app-splash-screen>

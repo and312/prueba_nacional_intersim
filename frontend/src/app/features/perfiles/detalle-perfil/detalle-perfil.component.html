@@ -1,0 +1,179 @@
+<div class="detalle-perfil-pagina">
+  <!-- Simulación de error interactivo en cabecera -->
+  <div class="barra-debug">
+    <label class="debug-checkbox-label">
+      <input type="checkbox" (change)="toggleErrorMode($event)">
+      <span>Simular error de conexión para esta vista</span>
+    </label>
+  </div>
+
+  @if (isLoading()) {
+    <app-loader [isLoading]="true" message="Cargando detalles del profesiograma..."></app-loader>
+  } @else if (isError()) {
+    <div class="detalle-error-contenedor">
+      <span class="material-symbols-outlined icono-error">error_outline</span>
+      <h3>No se pudo cargar el perfil</h3>
+      <p>{{ errorMessage() }}</p>
+      <button (click)="retry()" class="boton-reintentar" type="button">
+        <span class="material-symbols-outlined">refresh</span>
+        <span>Reintentar</span>
+      </button>
+    </div>
+  } @else if (!perfil()) {
+    <div class="detalle-vacio-contenedor">
+      <span class="material-symbols-outlined icono-vacio">search_off</span>
+      <h3>No se encontró información del perfil</h3>
+      <p>Verifique que el identificador sea correcto o regrese al listado principal.</p>
+      <button (click)="volverAlListado()" class="boton-reintentar" type="button">
+        <span>Volver a la lista</span>
+      </button>
+    </div>
+  } @else {
+    <!-- Encabezado superior -->
+    <div class="detalle-cabecera-grid">
+      <app-encabezado-perfil
+        [perfil]="perfil()!"
+        [rol]="userRole()"
+        (volverClick)="volverAlListado()"
+      ></app-encabezado-perfil>
+
+      <!-- Panel de Botones de Acción -->
+      <div class="acciones-cabecera-derecha">
+        @for (accion of accionesCabecera(); track accion.id) {
+          <button 
+            class="boton-accion {{ accion.claseCss }}"
+            [disabled]="accion.deshabilitado"
+            [title]="accion.tooltip || ''"
+            (click)="ejecutarAccion(accion.id)"
+            type="button"
+          >
+            <span class="material-symbols-outlined">{{ accion.icono }}</span>
+            <span>{{ accion.etiqueta }}</span>
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Banner de Éxito Temporal -->
+    @if (successMessage()) {
+      <div class="banner-exito-detalle">
+        <span class="material-symbols-outlined">check_circle</span>
+        <p>{{ successMessage() }}</p>
+        <button class="boton-cerrar-banner" (click)="successMessage.set(null)">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+    }
+
+    <!-- Banner de Error Temporal -->
+    @if (errorMessageDetalle()) {
+      <div class="banner-error-detalle">
+        <span class="material-symbols-outlined">error</span>
+        <p class="error-texto">{{ errorMessageDetalle() }}</p>
+        @if (mostrarBotonReintentarResumen()) {
+          <button class="boton-reintentar-resumen" (click)="reintentarGeneracionResumen()" type="button">
+            <span class="material-symbols-outlined">refresh</span>
+            <span>Reintentar generación</span>
+          </button>
+        }
+        <button class="boton-cerrar-banner" (click)="cerrarBannerError()">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+    }
+
+    <!-- Banner de Procesamiento Temporal -->
+    @if (processingMessage()) {
+      <div class="banner-procesamiento-detalle">
+        <span class="material-symbols-outlined animation-spin">sync</span>
+        <p>{{ processingMessage() }}</p>
+      </div>
+    }
+
+    <!-- Layout en dos columnas -->
+    <div class="grid grid-cols-12 gap-6 mt-4 max-w-full">
+      <!-- Columna Principal (75%) -->
+      <div class="col-span-12 lg:col-span-8 min-w-0 max-w-full flex flex-col gap-6">
+        
+        <!-- Pestañas (Tabs) -->
+        <app-pestanas-perfil
+          [userRole]="userRole()"
+          [pestanaActiva]="pestanaActiva()"
+          (pestanaCambio)="cambiarPestana($event)"
+        ></app-pestanas-perfil>
+
+        <!-- Pestaña 1: Resumen ejecutivo (Visualización estructurada y flexible) -->
+        @if (pestanaActiva() === 'resumen') {
+          <app-resumen-ejecutivo-perfil
+            [perfilId]="perfilId"
+            (insumosCargados)="alCargarInsumos($event)"
+          ></app-resumen-ejecutivo-perfil>
+
+          <!-- Documento PDF Final: Resumen Ejecutivo -->
+          @if (permisos().puedeVerPdf) {
+            <app-documento-perfil
+              [perfil]="perfil()!"
+              tipoDocumento="RESUMEN_EJECUTIVO_PDF"
+              titulo="Documentación del Resumen Ejecutivo"
+              descripcion="Consulte y descargue el resumen ejecutivo en formato oficial PDF."
+              (abrirDocumento)="abrirPdfResumen($event)"
+            ></app-documento-perfil>
+          }
+        }
+
+        <!-- Pestaña 2: Perfil estructurado -->
+        @if (pestanaActiva() === 'estructurado') {
+          <app-perfil-estructurado
+            [perfil]="perfil()!"
+            [modoEdicion]="modoEdicion()"
+            [parentForm]="perfilForm"
+          ></app-perfil-estructurado>
+
+          <!-- Formulario de Registro de Observaciones (Sólo para Área Solicitante en EnRevisionAreaSol) -->
+          @if (userRole() === 'AreaSol' && permisos().puedeRegistrarObservaciones) {
+            <app-observaciones-perfil
+              [perfilId]="perfilId"
+              (observacionesCambio)="cargarObservaciones()"
+            ></app-observaciones-perfil>
+          }
+
+          <!-- Documento PDF Final: Perfil Estructurado -->
+          @if (permisos().puedeVerPdf) {
+            <app-documento-perfil
+              [perfil]="perfil()!"
+              tipoDocumento="PERFIL_ESTRUCTURADO_PDF"
+              titulo="Documentación del perfil estructurado"
+              descripcion="Consulte y descargue el profesiograma completo del cargo en formato oficial PDF."
+              (abrirDocumento)="abrirPdfEstructurado($event)"
+            ></app-documento-perfil>
+          }
+        }
+      </div>
+
+      <!-- Columna Lateral (25%) -->
+      <div class="col-span-12 lg:col-span-4 min-w-0 max-w-full flex flex-col gap-6">
+        
+        <!-- Vista Resumen: Insumos y Estado de Proceso -->
+        @if (pestanaActiva() === 'resumen') {
+          <app-insumos-resumen-perfil [insumos]="insumos()"></app-insumos-resumen-perfil>
+          <app-estado-proceso-perfil [estadoPerfil]="perfil()!.estado" [aprobadoPorArea]="perfil()!.aprobadoPorArea || false"></app-estado-proceso-perfil>
+        }
+
+        <!-- Vista Perfil Estructurado: Observaciones Recibidas (Todos los Roles) -->
+        @if (pestanaActiva() === 'estructurado') {
+          @if (observaciones().length > 0) {
+            <app-observaciones-recibidas-perfil
+              [observaciones]="observaciones()"
+              [userRole]="userRole()"
+              [estadoPerfil]="perfil()!.estado"
+              (resolucionCambio)="onResolucionCambio($event)"
+            ></app-observaciones-recibidas-perfil>
+          }
+        }
+
+        <!-- Panel Lateral de Trazabilidad (Siempre visible en ambos tabs) -->
+        <app-trazabilidad-perfil [perfilId]="perfilId" [estado]="perfil()?.estadoCodigo"></app-trazabilidad-perfil>
+      </div>
+    </div>
+  }
+</div>

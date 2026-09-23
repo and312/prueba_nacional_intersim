@@ -1,0 +1,147 @@
+.perfil-estructurado-acordeones {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.acordeon-item {
+  border: 1px solid var(--border-subtle, #d9e2ec);
+  border-radius: 8px;
+  background: #ffffff;
+  overflow: hidden;
+  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.02);
+
+  &:hover {
+    border-color: #cbd5e1;
+  }
+
+  &.acordeon-abierto {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+  }
+
+  &.seccion-con-observacion {
+    border-color: rgba(249, 115, 22, 0.3);
+    &.acordeon-abierto {
+      box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.1), 0 4px 6px -1px rgba(249, 115, 22, 0.05);
+    }
+  }
+}
+
+.acordeon-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  cursor: pointer;
+  user-select: none;
+  background: #ffffff;
+  transition: background-color 0.12s ease;
+
+  &:hover {
+    background: #f8fafc;
+  }
+}
+
+.acordeon-titulo-grupo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.icono-seccion {
+  font-size: 20px;
+  color: var(--primary-color, #004370);
+  flex-shrink: 0;
+}
+
+.acordeon-nombre {
+  font-size: 14.5px;
+  font-weight: 750;
+  color: var(--text-main, #1f2933);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.acordeon-badges-grupo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.badge-acordeon {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+
+  .material-symbols-outlined {
+    font-size: 12px;
+  }
+
+  &.badge-error {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.15);
+  }
+
+  &.badge-bloqueado {
+    background: rgba(53, 97, 139, 0.1);
+    color: var(--secondary-color, #35618b);
+    border: 1px solid rgba(53, 97, 139, 0.15);
+  }
+
+  &.badge-modificado {
+    background: rgba(245, 158, 11, 0.1);
+    color: #b45309;
+    border: 1px solid rgba(245, 158, 11, 0.15);
+  }
+}
+
+.boton-colapso {
+  background: transparent;
+  border: 0;
+  color: var(--text-secondary, #5c6b73);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px;
+  border-radius: 4px;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.05);
+  }
+
+  .material-symbols-outlined {
+    font-size: 20px;
+  }
+}
+
+.acordeon-contenido {
+  padding: 20px;
+  border-top: 1px solid var(--border-subtle, #d9e2ec);
+  background: #ffffff;
+}
+
+@media (max-width: 640px) {
+  .acordeon-cabecera {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 14px 16px;
+  }
+
+  .acordeon-badges-grupo {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}

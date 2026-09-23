@@ -1,0 +1,31 @@
+<div class="aprobar-modal-container">
+  <h2 mat-dialog-title class="modal-title">
+    <span class="material-symbols-outlined header-icon">verified</span>
+    Aprobar Perfil para Estrategia
+  </h2>
+  
+  <mat-dialog-content class="modal-content">
+    <p class="confirmation-text">
+      ¿Está seguro de que desea aprobar el profesiograma para <strong>{{ cargoNombre }}</strong> y enviarlo a revisión del Área Solicitante?
+    </p>
+    <p class="description-text">
+      Esta acción cambiará el estado del perfil a <strong>En Revisión Área Solicitante</strong> y notificará a los responsables.
+    </p>
+    
+    <form [formGroup]="confirmForm" class="modal-form">
+      <div class="form-field">
+        <label for="comentario">Comentario u Observaciones (Opcional)</label>
+        <textarea id="comentario" formControlName="comentario" rows="3" placeholder="Ej. El profesiograma cumple con los requerimientos acordados. Listo para validación final."></textarea>
+      </div>
+    </form>
+  </mat-dialog-content>
+  
+  <mat-dialog-actions class="modal-actions" align="end">
+    <button (click)="onCancel()" class="btn-cancel">
+      Cancelar
+    </button>
+    <button (click)="onConfirm()" class="btn-approve">
+      Aprobar y Enviar
+    </button>
+  </mat-dialog-actions>
+</div>

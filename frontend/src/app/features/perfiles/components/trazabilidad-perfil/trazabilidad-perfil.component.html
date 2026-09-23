@@ -1,0 +1,54 @@
+<div class="trazabilidad-contenedor-tarjeta">
+  <h4 class="titulo-trazabilidad">TRAZABILIDAD DEL PERFIL</h4>
+
+  @if (eventosProcesados().length > 0) {
+    <div class="trazabilidad-timeline">
+      <div class="trazabilidad-linea-vertical"></div>
+
+      @for (evt of eventosProcesados(); track evt.id) {
+        <div class="trazabilidad-item" [ngClass]="evt.categoria">
+          <!-- Icono del Timeline -->
+          <div class="trazabilidad-marcador">
+            <span class="material-symbols-outlined">{{ evt.icono }}</span>
+          </div>
+
+          <!-- Contenido en el orden obligatorio exacto -->
+          <div class="trazabilidad-contenido">
+            <!-- 1. Título del estado actual + Badge de Iteración -->
+            <div class="trazabilidad-item-header">
+              <h5 class="trazabilidad-titulo">
+                {{ evt.titulo }}
+              </h5>
+              <span class="trazabilidad-iteracion">
+                Iteración {{ evt.iteracion }}
+              </span>
+            </div>
+
+            <!-- 2. Fecha y hora -->
+            <div class="trazabilidad-fecha">
+              <span class="material-symbols-outlined icono-reloj">schedule</span>
+              <span>{{ evt.fechaHora | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+
+            <!-- 3. Acción: Mensaje claro de la acción realizada -->
+            <div class="trazabilidad-descripcion">
+              <p class="comentario-texto">
+                <span class="etiqueta-accion">Acción:</span> {{ evt.accionTexto }}
+              </p>
+            </div>
+
+            <!-- 4. Por: Nombre del usuario (Rol) -->
+            <div class="trazabilidad-actor">
+              Por: <strong>{{ evt.actorNombre }}</strong> ({{ evt.actorRol }})
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="trazabilidad-vacia">
+      <span class="material-symbols-outlined icono-vacia">history</span>
+      <p>Aún no existen eventos de trazabilidad para este perfil.</p>
+    </div>
+  }
+</div>

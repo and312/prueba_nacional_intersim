@@ -1,0 +1,141 @@
+<div class="login-container">
+  <mat-card class="login-card">
+    
+    <!-- 1. VISTA: INICIAR SESIÓN NORMAL -->
+    <ng-container *ngIf="!showForgotPassword()">
+      <div class="login-header">
+        <div class="login-brand">
+          <img src="/nacional-seguros-negativo.png" alt="Nacional Seguros" class="login-logo">
+        </div>
+        <h1 class="login-title">Iniciar sesión</h1>
+        <p class="login-subtitle">Sistema Inteligente de Reclutamiento</p>
+      </div>
+
+      <mat-card-content class="login-content">
+        <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="login-form">
+          <div class="login-field">
+            <label class="login-field-label" for="login-correo">Correo electrónico</label>
+            <mat-form-field appearance="outline" class="full-width">
+              <input id="login-correo" matInput type="email" formControlName="correo" placeholder="Ingrese su correo electrónico" required>
+              @if (loginForm.get('correo')?.hasError('email')) {
+                <mat-error>Ingrese un correo válido</mat-error>
+              }
+              @if (loginForm.get('correo')?.hasError('required')) {
+                <mat-error>El correo es obligatorio</mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+          <div class="login-field">
+            <label class="login-field-label" for="login-contrasena">Contraseña</label>
+            <mat-form-field appearance="outline" class="full-width">
+              <input id="login-contrasena" matInput [type]="hidePassword() ? 'password' : 'text'" formControlName="contrasena" placeholder="Ingrese su contraseña" required>
+              <button type="button" mat-icon-button matSuffix (click)="hidePassword.set(!hidePassword())" [attr.aria-label]="'Hide password'" [attr.aria-pressed]="hidePassword()" class="password-toggle">
+                <span class="material-symbols-outlined">{{hidePassword() ? 'visibility_off' : 'visibility'}}</span>
+              </button>
+              @if (loginForm.get('contrasena')?.hasError('minlength')) {
+                <mat-error>Mínimo 6 caracteres</mat-error>
+              }
+              @if (loginForm.get('contrasena')?.hasError('required')) {
+                <mat-error>La contraseña es obligatoria</mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+          <!-- Enlace ¿Olvidó su contraseña? -->
+          <div class="forgot-link-container">
+            <a href="javascript:void(0)" (click)="toggleForgotPassword(true)" class="forgot-link">
+              ¿Olvidó su contraseña?
+            </a>
+          </div>
+
+          @if (errorMessage()) {
+            <div class="error-container">
+              <mat-icon>error_outline</mat-icon>
+              <span>{{ errorMessage() }}</span>
+            </div>
+          }
+
+          <button mat-raised-button color="primary" type="submit" class="submit-button" [disabled]="loginForm.invalid || isLoading()">
+            @if (isLoading()) {
+              <mat-spinner diameter="20" class="button-spinner"></mat-spinner>
+            } @else {
+              <span>Ingresar sesión</span>
+            }
+          </button>
+        </form>
+      </mat-card-content>
+    </ng-container>
+
+    <!-- 2. VISTA: RECUPERAR CONTRASEÑA -->
+    <ng-container *ngIf="showForgotPassword()">
+      <div class="login-header">
+        <div class="login-brand">
+          <img src="/nacional-seguros-negativo.png" alt="Nacional Seguros" class="login-logo">
+        </div>
+        <h1 class="login-title">Recuperar Contraseña</h1>
+        <p class="login-subtitle">Enlace de recuperación seguro para localhost</p>
+      </div>
+
+      <mat-card-content class="login-content">
+        
+        <!-- Pantalla de Éxito -->
+        <div *ngIf="forgotSuccess()" class="success-forgot-flow" style="text-align: center; padding: 10px 0;">
+          <div style="width: 56px; height: 56px; border-radius: 50%; background: #e6f4ea; color: #137333; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px;">
+            <mat-icon style="font-size: 32px; width: 32px; height: 32px;">check_circle</mat-icon>
+          </div>
+          <h3 style="color: #137333; font-weight: bold; margin-bottom: 10px; font-size: 16px;">¡Correo Enviado!</h3>
+          <p style="font-size: 13px; line-height: 1.6; color: var(--text-secondary, #5f6368); margin-bottom: 25px;">
+            Se ha enviado el enlace de restauración a tu bandeja de correo corporativo. Revisa la salida de la terminal o el log del Backend para ver el enlace generado en localhost.
+          </p>
+          <button mat-raised-button color="primary" type="button" class="submit-button" (click)="toggleForgotPassword(false)">
+            Volver al Iniciar Sesión
+          </button>
+        </div>
+
+        <!-- Formulario de Petición -->
+        <form *ngIf="!forgotSuccess()" [formGroup]="forgotPasswordForm" (ngSubmit)="onForgotPasswordSubmit()" class="login-form">
+          <p class="recovery-description">
+            Introduce tu dirección de correo electrónico corporativo registrado para recibir el enlace seguro de restablecimiento de contraseña.
+          </p>
+
+          <div class="login-field">
+            <label class="login-field-label" for="forgot-correo">Correo corporativo</label>
+            <mat-form-field appearance="outline" class="full-width">
+              <input id="forgot-correo" matInput type="email" formControlName="correo" placeholder="ejemplo@nacionalseguros.com.bo" required>
+              @if (forgotPasswordForm.get('correo')?.hasError('email')) {
+                <mat-error>Ingrese un correo válido</mat-error>
+              }
+              @if (forgotPasswordForm.get('correo')?.hasError('required')) {
+                <mat-error>El correo es obligatorio</mat-error>
+              }
+            </mat-form-field>
+          </div>
+
+          @if (forgotError()) {
+            <div class="error-container" style="margin-bottom: 15px;">
+              <mat-icon>error_outline</mat-icon>
+              <span>{{ forgotError() }}</span>
+            </div>
+          }
+
+          <div class="recovery-actions">
+            <button mat-raised-button color="primary" type="submit" class="submit-button" [disabled]="forgotPasswordForm.invalid || forgotLoading()">
+              @if (forgotLoading()) {
+                <mat-spinner diameter="20" class="button-spinner"></mat-spinner>
+              } @else {
+                <span>Enviar enlace de recuperación</span>
+              }
+            </button>
+            <button mat-button type="button" class="secondary-button" (click)="toggleForgotPassword(false)" [disabled]="forgotLoading()">
+              Cancelar y volver
+            </button>
+          </div>
+        </form>
+
+      </mat-card-content>
+    </ng-container>
+
+  </mat-card>
+</div>
+

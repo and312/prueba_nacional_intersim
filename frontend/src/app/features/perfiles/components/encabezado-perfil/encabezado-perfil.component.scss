@@ -1,0 +1,128 @@
+.encabezado-contenedor {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  padding-bottom: 8px;
+}
+
+.boton-volver {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: 0;
+  color: var(--text-secondary, #5c6b73);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+  align-self: flex-start;
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: var(--primary-color, #004370);
+  }
+
+  .material-symbols-outlined {
+    font-size: 18px;
+  }
+}
+
+.encabezado-contenido {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+  width: 100%;
+}
+
+.encabezado-principal {
+  flex: 1;
+  min-width: 0;
+}
+
+.meta-identificador {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.codigo-perfil {
+  color: var(--primary-color, #004370);
+  font-size: 22px;
+  font-weight: 850;
+  line-height: 1.1;
+}
+
+.separador {
+  color: var(--text-secondary, #5c6b73);
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.cargo-nombre {
+  color: var(--text-main, #1f2933);
+  font-size: 22px;
+  font-weight: 850;
+  line-height: 1.1;
+}
+
+.detalles-secundarios {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-top: 10px;
+}
+
+.detalle-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13.5px;
+}
+
+.etiqueta-meta {
+  color: var(--text-secondary, #5c6b73);
+  font-weight: 500;
+}
+
+.valor-meta {
+  color: var(--text-main, #1f2933);
+  font-weight: 600;
+
+  &.fuerte {
+    color: var(--secondary-color, #35618b);
+  }
+}
+
+.version-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 4px;
+  background: #e2e8f0;
+  color: #334155;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.encabezado-estado {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 768px) {
+  .encabezado-contenido {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .codigo-perfil, .cargo-nombre {
+    font-size: 18px;
+  }
+}

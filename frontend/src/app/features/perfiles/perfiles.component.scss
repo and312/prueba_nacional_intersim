@@ -1,0 +1,118 @@
+.perfiles-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--container-gap, 24px);
+}
+
+.page-header {
+  h1 {
+    font-size: 24px; // headline-lg
+    font-weight: 600;
+    color: var(--text-main);
+    margin: 0 0 4px 0;
+    letter-spacing: -0.02em;
+  }
+
+  p {
+    font-size: 14px; // body-md
+    color: var(--text-secondary);
+    margin: 0;
+  }
+}
+
+.list-card, .detail-card {
+  background-color: var(--surface-white);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px; // Cards use 8px
+  box-shadow: none;
+  padding: var(--padding-card, 20px);
+}
+
+.full-width-table {
+  width: 100%;
+  background-color: var(--surface-white);
+  border-collapse: collapse;
+
+  tr.mat-mdc-header-row {
+    background-color: var(--background-color);
+  }
+
+  th.mat-mdc-header-cell {
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 12px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 12px 16px;
+  }
+
+  td.mat-mdc-cell {
+    color: var(--text-main);
+    font-size: 14px;
+    border-bottom: 1px solid var(--border-subtle);
+    padding: 16px;
+  }
+}
+
+.status-badge {
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-weight: 600;
+  background-color: var(--background-color);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-subtle);
+
+  &.approved {
+    background-color: #e6fffa;
+    color: #008767;
+    border-color: #c7f7eb;
+  }
+}
+
+.detail-card {
+  position: relative;
+
+  mat-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+  }
+
+  .close-button {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    color: var(--text-secondary);
+  }
+}
+
+.profile-details {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+
+  .detail-section {
+    h3 {
+      font-size: 14px; // headline-sm
+      font-weight: 600;
+      color: var(--text-main);
+      margin: 0 0 8px 0;
+    }
+
+    p {
+      font-size: 14px; // body-md
+      color: var(--text-main);
+      background-color: var(--background-color);
+      padding: 12px;
+      border-radius: 4px; // Soft shape (0.25rem)
+      border: 1px solid var(--border-subtle);
+      margin: 0;
+      white-space: pre-line;
+    }
+  }
+}

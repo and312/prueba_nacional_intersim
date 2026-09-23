@@ -1,0 +1,145 @@
+# Plan de Implementación: Estructura del Módulo Perfiles
+
+Este plan detalla el diseño técnico y de base de datos para la reestructuración del módulo **Perfiles** en el SIR. Se pasará de almacenar la descripción completa como un JSON monolítico sin normalizar, a un modelo basado en cabecera de perfil, versión y persistencia normalizada de **12 secciones individuales**, con registro detallado de auditoría por cambio e historial de versiones inmutables.
+
+---
+
+## 1. Diseño del Modelo de Datos (SQL Server)
+
+Para garantizar la inmutabilidad de las versiones históricas de cada perfil, cada cambio importante por parte de RRHH creará una nueva fila en la cabecera `PerfilesCargo` (con `Version` incrementada) y copiará/actualizará las secciones correspondientes en la nueva tabla `PerfilSecciones`.
+
+### Modificación de la Tabla Principal (`PerfilesCargo`)
+Se agregarán las siguientes columnas a la tabla `PerfilesCargo` (se usa la tabla existente para evitar redundancias):
+*   `PdfUrl` `NVARCHAR(500) NULL`: URL del documento PDF oficial del perfil.
+*   `JsonOriginalIA` `NVARCHAR(MAX) NULL`: Copia del JSON original entregado por el Agente IA de n8n.
+*   `JsonActual` `NVARCHAR(MAX) NULL`: Estado consolidado del JSON actual del perfil.
+*   `Activo` `BIT NOT NULL DEFAULT 1`: Bandera para identificar si es la versión activa del perfil.
+
+### Nueva Tabla: Secciones del Perfil (`PerfilSecciones`)
+Esta tabla guardará cada una de las 12 secciones estructuradas por separado para cada versión del perfil:
+*   `PerfilSeccionId` `INT IDENTITY(1,1) PRIMARY KEY`
+*   `PerfilCargoId` `INT NOT NULL` (FK a `PerfilesCargo(PerfilCargoId)`)
+*   `NumeroSeccion` `INT NOT NULL` (1 al 12)
+*   `NombreSeccion` `NVARCHAR(200) NOT NULL`
+*   `Contenido` `NVARCHAR(MAX) NOT NULL` (Texto o JSON específico de la sección)
+*   `Orden` `INT NOT NULL`
+*   `UltimaActualizacion` `DATETIME2(7) NOT NULL DEFAULT GETUTCDATE()`
+*   `UsuarioActualizacion` `NVARCHAR(100) NOT NULL`
+*   *Index:* `UQ_PerfilSecciones_PerfilCargo_Numero` UNIQUE sobre `(PerfilCargoId, NumeroSeccion)`
+
+### Nueva Tabla: Auditoría del Perfil (`PerfilAuditoria`)
+Registra cada cambio en secciones y estados de forma granular:
+*   `PerfilAuditoriaId` `INT IDENTITY(1,1) PRIMARY KEY`
+*   `PerfilCargoId` `INT NOT NULL` (FK a `PerfilesCargo(PerfilCargoId)`)
+*   `PerfilSeccionId` `INT NULL` (FK a `PerfilSecciones(PerfilSeccionId)`)
+*   `Version` `INT NOT NULL` (Versión en la que se aplicó el cambio)
+*   `SeccionModificada` `NVARCHAR(200) NULL`
+*   `ValorAnterior` `NVARCHAR(MAX) NULL`
+*   `ValorNuevo` `NVARCHAR(MAX) NULL`
+*   `Usuario` `NVARCHAR(100) NOT NULL`
+*   `FechaHora` `DATETIME2(7) NOT NULL DEFAULT GETUTCDATE()`
+*   `MotivoCambio` `NVARCHAR(1000) NULL`
+*   `EstadoPerfil` `NVARCHAR(50) NULL`
+
+---
+
+## 2. Cambios Propuestos en el Backend (.NET 8)
+
+### Capa de Dominio (`NacionalSeguros.Domain`)
+
+#### [NEW] [PerfilSeccion.cs](file:///c:/Intersim/nacional/nacional-intersim/src/NacionalSeguros.Domain/Entities/PerfilSeccion.cs)
+*   Representa la entidad de base de datos para `PerfilSecciones`.
+
+#### [NEW] [PerfilAuditoria.cs](file:///c:/Intersim/nacional/nacional-intersim/src/NacionalSeguros.Domain/Entities/PerfilAuditoria.cs)
+*   Representa la entidad de auditoría detallada de cambios de perfiles.
+
+#### [MODIFY] [PerfilCargo.cs](file:///c:/Intersim/nacional/nacional-intersim/src/NacionalSeguros.Domain/Entities/PerfilCargo.cs)
+*   Agregar propiedades: `PdfUrl`, `JsonOriginalIA`, `JsonActual`, `Activo`.
+*   Agregar propiedades de navegación para `ICollection<PerfilSeccion> Secciones`.
+*   Implementar métodos de dominio:
+    *   `ActualizarSeccion(int numeroSeccion, string nuevoContenido, string usuario, string motivo)`: Modifica el contenido de una sección e incrementa la versión de forma lógica creando una nueva cabecera y copiando las demás secciones.
+    *   `SetPdfUrl(string pdfUrl)`: Asigna la dirección del PDF generado.
+
+---
+
+### Capa de Persistencia (`NacionalSeguros.Persistence`)
+
+#### [NEW] [PerfilSeccionConfiguration.cs](file:///c:/Intersim/nacional/nacional-intersim/src/NacionalSeguros.Persistence/Configurations/PerfilSeccionConfiguration.cs)
+*   Mapea la entidad `PerfilSeccion` a la tabla `PerfilSecciones` con relaciones e índices.
+
+#### [NEW] [PerfilAuditoriaConfiguration.cs](file:///c:/Intersim/nacional/nacional-intersim/src/NacionalSeguros.Persistence/Configurations/PerfilAuditoriaConfiguration.cs)
+*   Mapea `PerfilAuditoria` a `PerfilAuditoria`.
+
+#### [MODIFY] [PerfilCargoConfiguration.cs](file:///c:/Intersim/nacional/nacional-intersim/src/NacionalSeguros.Persistence/Configurations/PerfilCargoConfiguration.cs)
+*   Configurar los campos nuevos (`PdfUrl`, `JsonOriginalIA`, `JsonActual`, `Activo`).
+*   Configurar relación `HasMany(p => p.Secciones)`.
+
+#### [MODIFY] [ApplicationDbContext.cs](file:///c:/Intersim/nacional/nacional-intersim/src/NacionalSeguros.Persistence/Context/ApplicationDbContext.cs)
+*   Agregar `DbSet<PerfilSeccion>` y `DbSet<PerfilAuditoria>`.
+
+---
+
+### Capa de Aplicación (`NacionalSeguros.Application`)
+
+#### [NEW] [ActualizarPerfilSeccionCommand.cs](file:///c:/Intersim/nacional/nacional-intersim/src/NacionalSeguros.Application/Perfiles/Commands/ActualizarPerfilSeccion/ActualizarPerfilSeccionCommand.cs)
+*   Define el comando para editar una única sección: `int PerfilId`, `int NumeroSeccion`, `string Contenido`, `string Usuario`, `string Motivo`.
+
+#### [NEW] [ActualizarPerfilSeccionCommandHandler.cs](file:///c:/Intersim/nacional/nacional-intersim/src/NacionalSeguros.Application/Perfiles/Commands/ActualizarPerfilSeccion/ActualizarPerfilSeccionCommandHandler.cs)
+*   Implementa la lógica del comando:
+    1.  Obtiene el perfil actual con sus secciones.
+    2.  Crea un nuevo `PerfilCargo` con `Version = currentVersion + 1` y `Activo = true`.
+    3.  Actualiza el `Activo = false` en la versión anterior.
+    4.  Copia todas las secciones no modificadas del perfil anterior al nuevo.
+    5.  Crea/actualiza la sección modificada con el nuevo contenido.
+    6.  Inserta el registro de auditoría en `PerfilAuditoria`.
+    7.  Persiste todo en base de datos bajo una misma transacción de `UnitOfWork`.
+
+#### [NEW] [RegenerarPdfCommand.cs](file:///c:/Intersim/nacional/nacional-intersim/src/NacionalSeguros.Application/Perfiles/Commands/RegenerarPdf/RegenerarPdfCommand.cs)
+*   Comando para solicitar la regeneración del PDF. Dispara asíncronamente el webhook de n8n `https://nacional-seguros-dev.isia.cloud/webhook/ares-generador-pdf` enviando los datos estructurados del perfil desde las secciones de la base de datos.
+
+#### [NEW] [GetPerfilAuditoriaQuery.cs](file:///c:/Intersim/nacional/nacional-intersim/src/NacionalSeguros.Application/Perfiles/Queries/GetPerfilAuditoria/GetPerfilAuditoriaQuery.cs)
+*   Retorna la lista de auditorías de cambios para un perfil determinado.
+
+---
+
+### Capa API (`NacionalSeguros.Api`)
+
+#### [MODIFY] [PerfilController.cs](file:///c:/Intersim/nacional/nacional-intersim/src/NacionalSeguros.Api/Controllers/PerfilController.cs)
+*   Agregar endpoints:
+    *   `GET /api/v1/perfiles/{id}/secciones/{numeroSeccion}`: Retorna una sección.
+    *   `PUT /api/v1/perfiles/{id}/secciones/{numeroSeccion}`: Edita una sección (dispara `ActualizarPerfilSeccionCommand`).
+    *   `GET /api/v1/perfiles/{id}/auditoria`: Obtiene bitácora de cambios.
+    *   `POST /api/v1/perfiles/{id}/pdf/regenerar`: Solicita la regeneración del PDF.
+
+---
+
+## 3. Cambios Propuestos en el Frontend (Angular 22)
+
+### Componente de Visualización y Edición por Secciones
+*   **[perfil-revisar.component.html](file:///c:/Intersim/nacional/nacional-intersim/frontend/src/app/features/perfiles/perfil-revisar/perfil-revisar.component.html)** y **[perfil-revisar.component.ts](file:///c:/Intersim/nacional/nacional-intersim/frontend/src/app/features/perfiles/perfil-revisar/perfil-revisar.component.ts)**:
+    *   Reemplazar el formulario de edición única que envía el JSON completo.
+    *   Mostrar cada una de las 12 secciones en tarjetas/cards independientes (`bento-card`).
+    *   Cada sección tendrá su propio botón "Editar sección" que habilita un formulario local (inline) o abre un modal enfocado.
+    *   Al guardar los cambios de una sección, se llamará a `PUT /api/v1/perfiles/{id}/secciones/{numeroSeccion}`.
+    *   Agregar un botón "Regenerar PDF Oficial" que llame a `POST /api/v1/perfiles/{id}/pdf/regenerar` con un indicador de carga animado.
+    *   En las pestañas inferiores, poblar la tabla "Historial de cambios" llamando al endpoint `/auditoria`.
+
+---
+
+## Verification Plan
+
+### Database & Seed Verification
+*   Ejecutar el script SQL de mantenimiento para aplicar las migraciones a nivel físico en la base de datos SQL Server.
+*   Verificar mediante consultas directas que la estructura de llaves foráneas y el constraint único de versión funcionan correctamente.
+
+### Automated Tests
+*   Escribir un script de prueba en `test_perfil_secciones_e2e.js` que realice:
+    1.  Creación de perfil vía callback de n8n.
+    2.  Modificación individual de la Sección 3 (Funciones).
+    3.  Verificación de que se ha creado la versión 2.
+    4.  Verificación de la persistencia inmutable de la versión 1.
+    5.  Verificación del registro de auditoría.
+
+### Manual Verification
+*   Utilizar Swagger para validar los esquemas JSON de los nuevos endpoints.
+*   Navegar al Backoffice de RRHH, editar una sección y constatar que el historial y versión del perfil se actualizan en pantalla en tiempo real sin recargar todo el documento.

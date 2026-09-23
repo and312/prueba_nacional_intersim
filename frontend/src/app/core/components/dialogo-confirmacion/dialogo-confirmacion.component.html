@@ -1,0 +1,91 @@
+<div class="dialogo-confirmacion-wrapper">
+  <!-- Cabecera -->
+  <div class="dialogo-confirmacion-cabecera">
+    <div class="dialogo-titulo-bloque">
+      @if (data.icono) {
+        <div class="dialogo-icono-contenedor" [ngClass]="data.variante">
+          <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">{{ data.icono }}</span>
+        </div>
+      }
+      <div class="dialogo-titulo-meta">
+        <h2>{{ data.titulo }}</h2>
+        <p>{{ data.descripcion }}</p>
+      </div>
+    </div>
+    <button class="boton-cerrar-dialogo" (click)="onCancelar()" [disabled]="isLoading()" aria-label="Cerrar diálogo">
+      <span class="material-symbols-outlined notranslate" translate="no" aria-hidden="true">close</span>
+    </button>
+  </div>
+
+  <!-- Contenido -->
+  @if (data.resumen || data.requiereCheckbox) {
+    <div class="dialogo-confirmacion-cuerpo">
+      <!-- Resumen Compacto -->
+      @if (data.resumen) {
+        <div class="resumen-compacto-tarjeta">
+          <div class="resumen-item">
+            <span class="resumen-label">Código</span>
+            <span class="resumen-valor font-mono">{{ data.resumen.codigo }}</span>
+          </div>
+          <div class="resumen-item">
+            <span class="resumen-label">Cargo</span>
+            <span class="resumen-valor font-semibold text-primary">{{ data.resumen.cargo }}</span>
+          </div>
+          <div class="resumen-item">
+            <span class="resumen-label">Solicitud Origen</span>
+            <span class="resumen-valor">{{ data.resumen.solicitudOrigen }}</span>
+          </div>
+          <div class="resumen-item">
+            <span class="resumen-label">Área</span>
+            <span class="resumen-valor">{{ data.resumen.area }}</span>
+          </div>
+          <div class="resumen-item">
+            <span class="resumen-label">Versión</span>
+            <span class="resumen-valor">v{{ data.resumen.version }}</span>
+          </div>
+        </div>
+      }
+
+      <!-- Checkbox de Confirmación -->
+      @if (data.requiereCheckbox) {
+        <div class="checkbox-confirmacion-control">
+          <label class="checkbox-container">
+            <input 
+              type="checkbox" 
+              [checked]="confirmado()"
+              (change)="onToggleCheckbox($event)"
+              class="checkbox-input"
+              [disabled]="isLoading()"
+            />
+            <span class="checkbox-checkmark"></span>
+            <span class="checkbox-label-text">{{ data.textoCheckbox || 'Confirmo la revisión' }}</span>
+          </label>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Pie de Acciones -->
+  <div class="dialogo-confirmacion-pie">
+    <button 
+      class="boton-cerrar-final" 
+      (click)="onCancelar()"
+      [disabled]="isLoading()"
+    >
+      {{ data.textoBotonCancelar || 'Cancelar' }}
+    </button>
+    <button 
+      class="boton-confirmar-final" 
+      [ngClass]="data.variante"
+      [disabled]="!esValido() || isLoading()"
+      (click)="onConfirmar()"
+    >
+      @if (isLoading()) {
+        <span class="material-symbols-outlined spinner-icon notranslate" translate="no" aria-hidden="true">sync</span>
+        <span>Procesando...</span>
+      } @else {
+        <span>{{ data.textoBotonPrincipal || 'Confirmar' }}</span>
+      }
+    </button>
+  </div>
+</div>

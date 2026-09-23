@@ -1,0 +1,182 @@
+<div class="corregir-page">
+  <app-loader [isLoading]="componentLoading.isLoading('perfil-corregir')()" message="Guardando ajustes de perfil..."></app-loader>
+
+  @if (perfil()) {
+    <!-- Cabecera de Ajuste -->
+    <div class="corregir-header">
+      <div class="corregir-header-left">
+        <a [routerLink]="['/perfiles', perfilId, 'revisar']" class="back-link">
+          <span class="material-symbols-outlined">arrow_back</span>
+          Volver a revisión
+        </a>
+        <h2 class="corregir-title">Ajuste Final del Perfil por Observación</h2>
+        <div class="corregir-meta">
+          <span class="solicitud-code">{{ perfil().solicitudCodigo }}</span>
+          <span class="version-chip">Versión {{ perfil().versionActiva }}</span>
+        </div>
+      </div>
+
+      <div class="corregir-actions">
+        <button [routerLink]="['/perfiles', perfilId, 'revisar']" class="btn-outline">
+          Cancelar
+        </button>
+        
+        <button (click)="onSave()" class="btn-primary" [disabled]="isSaved()">
+          <span class="material-symbols-outlined">save</span>
+          Guardar Ajustes
+        </button>
+
+        @if (isSaved()) {
+          <button (click)="enviarArea()" class="btn-success">
+            <span class="material-symbols-outlined">send</span>
+            Enviar al Área Solicitante
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Mensaje de éxito tras guardar -->
+    @if (isSaved()) {
+      <div class="success-banner">
+        <span class="material-symbols-outlined banner-icon">check_circle</span>
+        <div class="banner-content">
+          <h4>¡Cambios guardados con éxito como una nueva versión (v{{ perfil().versionActiva }})!</h4>
+          <p>Para completar el flujo de revisión, por favor presione el botón <strong>"Enviar al Área Solicitante"</strong> en la cabecera.</p>
+        </div>
+      </div>
+    }
+
+    <!-- Formulario Reactivo de Edición -->
+    <form [formGroup]="editForm" class="edit-form-grid">
+      <!-- Sección 1: Datos Generales -->
+      <div class="form-card span-2">
+        <div class="card-header">
+          <span class="material-symbols-outlined">badge</span>
+          <h3>1. Datos Generales del Cargo</h3>
+        </div>
+        <div class="card-body">
+          <div class="form-field">
+            <label for="cargo">Nombre del Cargo*</label>
+            <input id="cargo" type="text" formControlName="cargo" placeholder="Ej. Desarrollador Senior .NET">
+            @if (editForm.get('cargo')?.touched && editForm.get('cargo')?.invalid) {
+              <span class="error-msg">El nombre del cargo es obligatorio.</span>
+            }
+          </div>
+
+          <div class="form-field">
+            <label for="objetivo">Objetivo del Cargo*</label>
+            <textarea id="objetivo" formControlName="objetivo" rows="4" placeholder="Describa el propósito principal del cargo en la organización..."></textarea>
+            @if (editForm.get('objetivo')?.touched && editForm.get('objetivo')?.invalid) {
+              <span class="error-msg">El objetivo del cargo es obligatorio.</span>
+            }
+          </div>
+
+          <div class="grid-fields-2">
+            <div class="form-field">
+              <label for="seniority">Seniority Requerido</label>
+              <input id="seniority" type="text" formControlName="seniority" placeholder="Ej. Senior, Semi-Senior">
+            </div>
+            <div class="form-field">
+              <label for="condiciones">Condiciones Contractuales</label>
+              <input id="condiciones" type="text" formControlName="condiciones" placeholder="Ej. Sueldo fijo, comisiones, seguro de salud">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección 2: Formación y Experiencia -->
+      <div class="form-card">
+        <div class="card-header">
+          <span class="material-symbols-outlined">school</span>
+          <h3>2. Requisitos Académicos</h3>
+        </div>
+        <div class="card-body">
+          <div class="form-field">
+            <label for="formacion">Formación Académica Mínima</label>
+            <textarea id="formacion" formControlName="formacion" rows="3" placeholder="Ej. Licenciatura en Ingeniería de Sistemas o Ciencias de la Computación."></textarea>
+          </div>
+          <div class="form-field">
+            <label for="experiencia">Experiencia Profesional Requerida</label>
+            <textarea id="experiencia" formControlName="experiencia" rows="3" placeholder="Ej. Mínimo 5 años en desarrollo de software .NET C#."></textarea>
+          </div>
+          <div class="form-field">
+            <label for="idiomas">Idiomas (Uno por línea)</label>
+            <textarea id="idiomas" formControlName="idiomas" rows="3" placeholder="Ej. Inglés Técnico&#10;Portugués Básico"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección 3: Funciones y Responsabilidades -->
+      <div class="form-card span-2">
+        <div class="card-header">
+          <span class="material-symbols-outlined">assignment</span>
+          <h3>3. Funciones y Responsabilidades (Escriba un elemento por línea)</h3>
+        </div>
+        <div class="card-body grid-fields-2">
+          <div class="form-field">
+            <label for="funciones">Funciones Principales</label>
+            <textarea id="funciones" formControlName="funciones" rows="8" placeholder="Diseñar arquitectura de software backend&#10;Implementar pruebas unitarias y de integración&#10;Dar mentoría a ingenieros junior"></textarea>
+          </div>
+          <div class="form-field">
+            <label for="responsabilidades">Responsabilidades Clave</label>
+            <textarea id="responsabilidades" formControlName="responsabilidades" rows="8" placeholder="Asegurar la calidad técnica de las entregas&#10;Garantizar la disponibilidad del sistema en producción&#10;Reportar avances al Líder Técnico"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección 4: Competencias y Certificaciones -->
+      <div class="form-card">
+        <div class="card-header">
+          <span class="material-symbols-outlined">workspace_premium</span>
+          <h3>4. Habilidades y Certificaciones (Escriba un elemento por línea)</h3>
+        </div>
+        <div class="card-body">
+          <div class="form-field">
+            <label for="competenciasTecnicas">Competencias Técnicas</label>
+            <textarea id="competenciasTecnicas" formControlName="competenciasTecnicas" rows="4" placeholder="C# .NET Core&#10;SQL Server&#10;Arquitectura de Microservicios"></textarea>
+          </div>
+          <div class="form-field">
+            <label for="competenciasBlandas">Competencias Blandas</label>
+            <textarea id="competenciasBlandas" formControlName="competenciasBlandas" rows="4" placeholder="Liderazgo técnico&#10;Comunicación asertiva&#10;Resolución de problemas"></textarea>
+          </div>
+          <div class="form-field">
+            <label for="certificaciones">Certificaciones Recomendadas</label>
+            <textarea id="certificaciones" formControlName="certificaciones" rows="3" placeholder="Microsoft Certified: Azure Developer Associate&#10;SCRUM Developer"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección 5: Herramientas y KPIs -->
+      <div class="form-card span-2">
+        <div class="card-header">
+          <span class="material-symbols-outlined">analytics</span>
+          <h3>5. Herramientas y Gestión (Escriba un elemento por línea)</h3>
+        </div>
+        <div class="card-body grid-fields-2">
+          <div class="form-field">
+            <label for="kpis">Indicadores Clave (KPI)</label>
+            <textarea id="kpis" formControlName="kpis" rows="5" placeholder="Cobertura de código > 80%&#10;Cero bugs críticos en producción&#10;Entregas a tiempo según cronograma de sprint"></textarea>
+          </div>
+          <div class="form-field">
+            <label for="herramientas">Herramientas Obligatorias</label>
+            <textarea id="herramientas" formControlName="herramientas" rows="5" placeholder="Visual Studio 2022&#10;Git y GitHub Enterprise&#10;Docker Desktop"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección 6: Riesgos -->
+      <div class="form-card">
+        <div class="card-header">
+          <span class="material-symbols-outlined">warning</span>
+          <h3>6. Riesgos Laborales (Escriba un elemento por línea)</h3>
+        </div>
+        <div class="card-body">
+          <div class="form-field">
+            <label for="riesgos">Riesgos Asociados al Cargo</label>
+            <textarea id="riesgos" formControlName="riesgos" rows="5" placeholder="Fatiga visual por tiempo prolongado frente a pantallas&#10;Estrés laboral por plazos de entrega ajustados&#10;Problemas ergonómicos por postura sentada continua"></textarea>
+          </div>
+        </div>
+      </div>
+    </form>
+  }
+</div>

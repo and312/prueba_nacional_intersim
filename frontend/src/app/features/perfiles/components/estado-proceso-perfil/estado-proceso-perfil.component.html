@@ -1,0 +1,25 @@
+<div class="proceso-lateral-card">
+  <h4 class="titulo-proceso">Estado del proceso</h4>
+  
+  <div class="linea-proceso-pasos">
+    @for (paso of pasos; track paso.numero) {
+      <div class="paso-item" [ngClass]="paso.estado">
+        <div class="paso-marcador">
+          @if (paso.estado === 'completado') {
+            <span class="material-symbols-outlined icono-completado">check</span>
+          } @else {
+            <span class="numero-paso">{{ paso.numero }}</span>
+          }
+        </div>
+        <div class="paso-detalles">
+          <span class="paso-nombre">{{ paso.nombre }}</span>
+          <span class="paso-estado-label">
+            @if (paso.estado === 'completado') { Completado }
+            @else if (paso.estado === 'actual') { En progreso }
+            @else { Pendiente }
+          </span>
+        </div>
+      </div>
+    }
+  </div>
+</div>

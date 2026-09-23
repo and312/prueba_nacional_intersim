@@ -1,0 +1,99 @@
+.formulario-catalogo-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+}
+
+.campo-control-grupo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+
+  label {
+    color: var(--text-secondary, #5c6b73);
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  .input-control {
+    height: 40px;
+    padding: 0 12px;
+    border: 1px solid var(--border-subtle, #d9e2ec);
+    border-radius: 6px;
+    background: #ffffff;
+    color: var(--text-main, #1f2933);
+    font-size: 14px;
+    outline: none;
+    transition: all 0.15s ease;
+    width: 100%;
+
+    &:focus {
+      border-color: var(--primary-color, #004370);
+      box-shadow: 0 0 0 3px rgba(0, 67, 112, 0.1);
+    }
+
+    // For select elements
+    &[type] {
+      appearance: auto;
+    }
+  }
+
+  select.input-control {
+    cursor: pointer;
+    appearance: auto;
+  }
+
+  .error-validacion {
+    color: #ef4444;
+    font-size: 11px;
+    margin-top: 2px;
+  }
+}
+
+.acciones-formulario {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 8px;
+
+  button {
+    height: 36px;
+    padding: 0 16px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .btn-cancelar {
+    background: transparent;
+    border: 1px solid var(--border-subtle, #d9e2ec);
+    color: var(--text-main, #1f2933);
+
+    &:hover {
+      background: var(--bg-neutral-low, #f8fafc);
+      border-color: #cbd5e1;
+    }
+  }
+
+  .btn-guardar {
+    background: var(--primary-color, #004370);
+    border: 0;
+    color: #ffffff;
+
+    &:hover:not(:disabled) {
+      background: var(--primary-container, #005b96);
+    }
+
+    &:disabled {
+      background: #cbd5e1;
+      color: #94a3b8;
+      cursor: not-allowed;
+    }
+  }
+}

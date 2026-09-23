@@ -1,0 +1,185 @@
+<div class="seccion-campos-contenedor" [formGroup]="parentForm">
+  <div class="campos-grid">
+    @for (campo of seccion.campos; track campo.id) {
+      <div 
+        class="campo-item"
+        [class.col-completa]="campo.tipo === 'textoLargo' || campo.tipo === 'lista' || campo.tipo === 'tabla'"
+      >
+        @if (campo.tipo === 'tabla') {
+          <!-- Caso Tabla Ponderación (Matriz) -->
+          <div class="campo-control-group">
+            <label class="etiqueta-campo">{{ campo.etiqueta }}</label>
+            
+            <div class="contenedor-tabla-ponderacion">
+              <table class="tabla-ponderacion">
+                <thead>
+                  <tr>
+                    <th class="col-criterio">CRITERIO</th>
+                    <th class="col-ponderacion">PONDERACIÓN</th>
+                    @if (esCampoEditable(campo)) {
+                      <th class="col-acciones">ACCIÓN</th>
+                    }
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (row of obtenerFilasCriterio(parentForm.get(campo.id)?.value); track $index) {
+                    <tr>
+                      <td class="col-criterio">
+                        @if (esCampoEditable(campo)) {
+                          <input
+                            type="text"
+                            [value]="row.criterio"
+                            (input)="actualizarValorCriterio(campo.id, $index, $any($event.target).value)"
+                            class="input-tabla"
+                            placeholder="Ingrese nombre del criterio"
+                          />
+                        } @else {
+                          <span class="valor-lectura-criterio">{{ row.criterio || '—' }}</span>
+                        }
+                      </td>
+                      <td class="col-ponderacion">
+                        @if (esCampoEditable(campo)) {
+                          <div class="contenedor-porcentaje">
+                            <input
+                              type="number"
+                              [value]="row.ponderacion"
+                              (input)="actualizarValorPonderacion(campo.id, $index, +$any($event.target).value)"
+                              class="input-tabla input-num"
+                              placeholder="0"
+                              min="0"
+                              max="100"
+                            />
+                            <span class="simbolo-porcentaje">%</span>
+                          </div>
+                        } @else {
+                          <span class="valor-lectura-ponderacion">{{ row.ponderacion }}%</span>
+                        }
+                      </td>
+                      @if (esCampoEditable(campo)) {
+                        <td class="col-acciones text-center">
+                          <button
+                            type="button"
+                            class="btn-eliminar-fila"
+                            (click)="eliminarFilaCriterio(campo.id, $index)"
+                            title="Eliminar criterio"
+                          >
+                            <span class="material-symbols-outlined">delete</span>
+                          </button>
+                        </td>
+                      }
+                    </tr>
+                  }
+                  <tr class="fila-total">
+                    <td class="col-criterio">Total</td>
+                    <td class="col-ponderacion" [attr.colspan]="esCampoEditable(campo) ? 2 : 1">
+                      <span 
+                        class="badge-total-ponderacion"
+                        [class.total-correcto]="obtenerTotalPonderacion(parentForm.get(campo.id)?.value) === 100"
+                        [class.total-incorrecto]="obtenerTotalPonderacion(parentForm.get(campo.id)?.value) !== 100"
+                      >
+                        {{ obtenerTotalPonderacion(parentForm.get(campo.id)?.value) }}%
+                      </span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+
+              @if (esCampoEditable(campo)) {
+                <div class="acciones-tabla-ponderacion">
+                  <button
+                    type="button"
+                    class="btn-agregar-criterio"
+                    (click)="agregarFilaCriterio(campo.id)"
+                  >
+                    <span class="material-symbols-outlined">add_circle</span>
+                    Agregar criterio
+                  </button>
+
+                  @if (obtenerTotalPonderacion(parentForm.get(campo.id)?.value) !== 100) {
+                    <span class="mensaje-alerta-matriz alerta-roja">
+                      <span class="material-symbols-outlined icono-warning">error</span>
+                      La sumatoria debe ser 100% (Actual: {{ obtenerTotalPonderacion(parentForm.get(campo.id)?.value) }}%)
+                    </span>
+                  } @else {
+                    <span class="mensaje-alerta-matriz alerta-verde">
+                      <span class="material-symbols-outlined icono-check">check_circle</span>
+                      Sumatoria correcta (100%)
+                    </span>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        } @else if (esCampoEditable(campo)) {
+          <!-- Modo Edición y Campo Editable -->
+          <div class="campo-control-group">
+            <label [for]="campo.id" class="etiqueta-campo">
+              {{ campo.etiqueta }}
+              @if (campo.obligatorio) { <span class="obligatorio">*</span> }
+            </label>
+
+            @if (campo.tipo === 'textoLargo') {
+              <textarea
+                [id]="campo.id"
+                [formControlName]="campo.id"
+                class="input-control area-texto"
+                [placeholder]="'Ingrese ' + campo.etiqueta.toLowerCase()"
+              ></textarea>
+            } @else if (campo.tipo === 'lista') {
+              <textarea
+                [id]="campo.id"
+                [formControlName]="campo.id"
+                class="input-control area-texto"
+                [placeholder]="'Ingrese un elemento por línea para ' + campo.etiqueta.toLowerCase()"
+              ></textarea>
+              <span class="ayuda-texto">Ingrese un elemento por línea.</span>
+            } @else {
+              <input
+                [id]="campo.id"
+                [formControlName]="campo.id"
+                [type]="campo.tipo === 'porcentaje' ? 'number' : 'text'"
+                class="input-control"
+                [placeholder]="'Ingrese ' + campo.etiqueta.toLowerCase()"
+              />
+            }
+          </div>
+        } @else {
+          <!-- Modo Lectura o Campo NO Editable (ej. SOLICITUD_VACANTE) -->
+          <div class="campo-vista" [class.bloqueado-solicitud]="campo.origen === 'SOLICITUD_VACANTE'">
+            <div class="campo-vista-cabecera">
+              <span class="etiqueta-campo">{{ campo.etiqueta }}</span>
+              
+              @if (campo.origen === 'SOLICITUD_VACANTE') {
+                <div class="badge-bloqueo">
+                  <span class="material-symbols-outlined icono-candado">lock</span>
+                  <span>Solicitud aprobada</span>
+                </div>
+              }
+            </div>
+
+            <div class="campo-vista-contenido">
+              @if (esLista(campo.valor)) {
+                <ul class="lista-valores">
+                  @for (item of comoLista(campo.valor); track item) {
+                    <li>
+                      <span class="material-symbols-outlined check-bullet">arrow_right</span>
+                      <span>{{ item }}</span>
+                    </li>
+                  }
+                </ul>
+              } @else {
+                <p class="valor-texto">{{ campo.valor || '—' }}</p>
+              }
+            </div>
+
+            @if (campo.origen === 'SOLICITUD_VACANTE') {
+              <span class="texto-auxiliar">
+                Este dato proviene de la solicitud y no puede modificarse desde el perfil.
+              </span>
+            }
+          </div>
+        }
+      </div>
+    }
+  </div>
+</div>

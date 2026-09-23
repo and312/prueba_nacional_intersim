@@ -1,0 +1,120 @@
+<div class="vacantes-container">
+  <header class="page-header">
+    <h1>Gestión de Vacantes</h1>
+    <p>Administración de vacantes asociadas a perfiles de cargo aprobados</p>
+  </header>
+
+  @if (isCreating() || isEditing()) {
+    <mat-card class="form-card">
+      <mat-card-header>
+        <mat-card-title>{{ isEditing() ? 'Editar Vacante' : 'Nueva Vacante' }}</mat-card-title>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <form [formGroup]="vacanteForm" (ngSubmit)="onSubmit()" class="vacante-form">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Perfil de Cargo</mat-label>
+            <mat-select formControlName="perfilCargoId" required>
+              @for (perfil of perfiles(); track perfil.id) {
+                <mat-option [value]="perfil.id">Perfil #{{ perfil.id }} (Solicitud #{{ perfil.solicitudId }})</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Cantidad de Plazas</mat-label>
+            <input matInput type="number" formControlName="cantidadPlazas" required min="1">
+          </mat-form-field>
+
+          <div class="row">
+            <mat-form-field appearance="outline" class="half-width">
+              <mat-label>Banda Salarial Mínima</mat-label>
+              <input matInput type="number" formControlName="bandaSalarialMin" required min="0">
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="half-width">
+              <mat-label>Banda Salarial Máxima</mat-label>
+              <input matInput type="number" formControlName="bandaSalarialMax" required min="0">
+            </mat-form-field>
+          </div>
+
+          <div class="form-actions">
+            <button mat-button type="button" (click)="cancel()">Cancelar</button>
+            <button mat-raised-button color="primary" type="submit" [disabled]="vacanteForm.invalid">Guardar</button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  } @else {
+    <mat-card class="list-card">
+      <app-loader [isLoading]="componentLoading.isLoading('vacantes')()" message="Cargando vacantes..."></app-loader>
+      <mat-card-content>
+        <div class="list-actions">
+          <button mat-raised-button color="primary" (click)="startCreate()">
+            <mat-icon>add</mat-icon> Crear Vacante
+          </button>
+        </div>
+
+        <table mat-table [dataSource]="vacantes()" class="mat-elevation-z1 full-width-table">
+          <ng-container matColumnDef="id">
+            <th mat-header-cell *matHeaderCellDef> ID </th>
+            <td mat-cell *matCellDef="let element"> {{element.id}} </td>
+          </ng-container>
+
+          <ng-container matColumnDef="perfilCargoId">
+            <th mat-header-cell *matHeaderCellDef> ID Perfil </th>
+            <td mat-cell *matCellDef="let element"> Perfil #{{element.perfilCargoId}} </td>
+          </ng-container>
+
+          <ng-container matColumnDef="cantidadPlazas">
+            <th mat-header-cell *matHeaderCellDef> Plazas </th>
+            <td mat-cell *matCellDef="let element"> {{element.cantidadPlazas}} </td>
+          </ng-container>
+
+          <ng-container matColumnDef="estado">
+            <th mat-header-cell *matHeaderCellDef> Estado </th>
+            <td mat-cell *matCellDef="let element">
+              <span class="status-badge" [class.published]="element.estadoNombre === 'Publicada'" [class.closed]="element.estadoNombre === 'Cerrada'">
+                {{element.estadoNombre}}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="acciones">
+            <th mat-header-cell *matHeaderCellDef> Acciones </th>
+            <td mat-cell *matCellDef="let element">
+              <button mat-icon-button color="primary" (click)="edit(element)" title="Editar">
+                <mat-icon>edit</mat-icon>
+              </button>
+
+              @if (element.estadoNombre === 'Creada') {
+                <button mat-icon-button color="accent" (click)="publicar(element)" title="Publicar Vacante">
+                  <mat-icon>publish</mat-icon>
+                </button>
+              }
+
+              @if (element.estadoNombre === 'Publicada') {
+                <button mat-icon-button color="warn" (click)="pausar(element)" title="Pausar Vacante">
+                  <mat-icon>pause_circle_outline</mat-icon>
+                </button>
+                <button mat-icon-button color="warn" (click)="cerrar(element)" title="Cerrar Vacante">
+                  <mat-icon>cancel</mat-icon>
+                </button>
+              }
+
+              @if (element.estadoNombre === 'Pausada' || element.estadoNombre === 'Cerrada') {
+                <button mat-icon-button color="accent" (click)="reanudar(element)" title="Reanudar Vacante">
+                  <mat-icon>play_circle_outline</mat-icon>
+                </button>
+              }
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+        </table>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>
+

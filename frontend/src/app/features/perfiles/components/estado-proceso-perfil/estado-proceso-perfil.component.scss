@@ -1,0 +1,128 @@
+.proceso-lateral-card {
+  background: #ffffff;
+  border: 1px solid var(--border-subtle, #d9e2ec);
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+}
+
+.titulo-proceso {
+  margin: 0 0 16px;
+  color: var(--primary-color, #004370);
+  font-size: 15px;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.linea-proceso-pasos {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    bottom: 12px;
+    width: 2px;
+    background: rgba(0, 67, 112, 0.08);
+    z-index: 0;
+  }
+}
+
+.paso-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  z-index: 1;
+
+  &.completado {
+    .paso-marcador {
+      background: #10b981;
+      border-color: #10b981;
+      color: #ffffff;
+    }
+    .paso-nombre {
+      color: var(--text-main, #1f2933);
+      font-weight: 600;
+    }
+    .paso-estado-label {
+      color: #059669;
+      font-weight: 600;
+    }
+  }
+
+  &.actual {
+    .paso-marcador {
+      background: var(--primary-color, #004370);
+      border-color: var(--primary-color, #004370);
+      color: #ffffff;
+      box-shadow: 0 0 0 3px rgba(0, 67, 112, 0.15);
+    }
+    .paso-nombre {
+      color: var(--primary-color, #004370);
+      font-weight: 750;
+    }
+    .paso-estado-label {
+      color: var(--primary-color, #004370);
+      font-weight: 700;
+    }
+  }
+
+  &.pendiente {
+    .paso-marcador {
+      background: #ffffff;
+      border-color: var(--border-subtle, #cbd5e1);
+      color: #64748b;
+    }
+    .paso-nombre {
+      color: var(--text-secondary, #64748b);
+      font-weight: 500;
+    }
+    .paso-estado-label {
+      color: #94a3b8;
+    }
+  }
+}
+
+.paso-marcador {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid;
+  font-size: 11px;
+  font-weight: 700;
+  background: #ffffff;
+  flex-shrink: 0;
+
+  .icono-completado {
+    font-size: 14px;
+    font-weight: 900;
+  }
+}
+
+.paso-detalles {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.paso-nombre {
+  font-size: 12.5px;
+  line-height: 1.3;
+}
+
+.paso-estado-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  margin-top: 1px;
+}

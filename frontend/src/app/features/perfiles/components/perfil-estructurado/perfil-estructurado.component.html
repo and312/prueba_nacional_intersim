@@ -1,0 +1,48 @@
+<div class="perfil-estructurado-acordeones">
+  @for (sec of perfil.secciones; track sec.id) {
+    <div 
+      class="acordeon-item"
+      [class.acordeon-abierto]="estaAbierta(sec.id)"
+    >
+      <!-- Cabecera del Acordeón -->
+      <div class="acordeon-cabecera" (click)="toggleSeccion(sec.id)">
+        <div class="acordeon-titulo-grupo">
+          <span class="material-symbols-outlined icono-seccion">{{ sec.icono || 'folder' }}</span>
+          <span class="acordeon-nombre">{{ sec.nombre }}</span>
+        </div>
+
+        <div class="acordeon-badges-grupo" (click)="$event.stopPropagation()">
+          @if (tieneCamposSolicitud(sec.id)) {
+            <span class="badge-acordeon badge-bloqueado" title="Contiene campos fijos de la solicitud de vacante aprobada">
+              <span class="material-symbols-outlined">lock</span>
+              <span>Solicitud</span>
+            </span>
+          }
+          @if (tieneCamposModificados(sec.id)) {
+            <span class="badge-acordeon badge-modificado" title="Sección adaptada por Recursos Humanos">
+              <span class="material-symbols-outlined">edit</span>
+              <span>Ajustado RRHH</span>
+            </span>
+          }
+
+          <button class="boton-colapso" (click)="toggleSeccion(sec.id); $event.stopPropagation()" type="button">
+            <span class="material-symbols-outlined">
+              {{ estaAbierta(sec.id) ? 'expand_less' : 'expand_more' }}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Contenido del Acordeón -->
+      @if (estaAbierta(sec.id)) {
+        <div class="acordeon-contenido">
+          <app-seccion-perfil
+            [seccion]="sec"
+            [modoEdicion]="modoEdicion"
+            [parentForm]="parentForm"
+          ></app-seccion-perfil>
+        </div>
+      }
+    </div>
+  }
+</div>

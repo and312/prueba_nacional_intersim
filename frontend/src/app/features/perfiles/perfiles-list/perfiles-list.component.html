@@ -1,0 +1,112 @@
+<div class="perfiles-page">
+  <div class="perfiles-page-header">
+    <div>
+      <h2 class="perfiles-title">{{ roleConfig().title }}</h2>
+      <p class="perfiles-subtitle">{{ roleConfig().description }}</p>
+    </div>
+    <div style="display: flex; align-items: center; gap: 16px;">
+      @if (userRole() === 'RRHH') {
+        <div class="solicitudes-tabs-container">
+          <button (click)="setSoloMisPerfiles(true)" [class.active]="soloMisPerfiles()" class="solicitudes-tab-btn">
+            <span class="material-symbols-outlined">person</span>
+            Modo Solicitante
+          </button>
+          <button (click)="setSoloMisPerfiles(false)" [class.active]="!soloMisPerfiles()" class="solicitudes-tab-btn">
+            <span class="material-symbols-outlined">groups</span>
+            Modo RRHH
+          </button>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Banners de Notificación -->
+  @if (successMessage()) {
+    <div class="success-banner">
+      <span class="material-symbols-outlined">check_circle</span>
+      <p>{{ successMessage() }}</p>
+      <button class="close-banner" (click)="successMessage.set(null)">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+  }
+
+  <!-- Cards de Métricas -->
+  <app-profile-summary-cards
+    [summary]="summary()"
+    [metrics]="roleConfig().metrics"
+    [activeKey]="activeCardKey()"
+    (cardSelect)="onCardSelect($event)"
+  ></app-profile-summary-cards>
+
+  <!-- Contenedor de la Tabla -->
+  <div class="perfiles-table-card">
+    <app-loader [isLoading]="isLoading()" message="Cargando perfiles..."></app-loader>
+
+    <!-- Filtros de Perfil -->
+    <app-profile-filters
+      [userRole]="userRole()"
+      [showAreaFilter]="roleConfig().showAreaFilter"
+      (filterChange)="onFilterChange($event)"
+    ></app-profile-filters>
+
+    @if (isError()) {
+      <div class="error-container">
+        <span class="material-symbols-outlined error-icon">error_outline</span>
+        <h3>Error al cargar los perfiles</h3>
+        <p>{{ errorMessage() }}</p>
+        <button (click)="retry()" class="retry-btn" type="button">
+          <span class="material-symbols-outlined">refresh</span>
+          Reintentar
+        </button>
+      </div>
+    } @else {
+      <!-- Tabla de Datos -->
+      <app-profile-table
+        [items]="paginatedProfiles()"
+        [showAreaColumn]="roleConfig().showAreaColumn"
+        [userRole]="soloMisPerfiles() ? 'AreaSol' : userRole()"
+        (actionClick)="handleActionClick($event)"
+      ></app-profile-table>
+
+      <!-- Paginación -->
+      <div class="perfiles-table-footer">
+        <div class="pagination-summary">
+          <label for="perfilesPageSize">Items por página:</label>
+          <div class="pagination-page-size" id="perfilesPageSize">
+            <button type="button" class="pagination-page-size-trigger" (click)="togglePageSizeMenu()" [attr.aria-expanded]="isPageSizeMenuOpen()">
+              <span>{{ pageSize() }}</span>
+              <span class="material-symbols-outlined">expand_less</span>
+            </button>
+
+            @if (isPageSizeMenuOpen()) {
+              <div class="pagination-page-size-menu">
+                @for (option of pageSizeOptions; track option) {
+                  <button type="button" (click)="updatePageSizeValue(option)" [class.is-selected]="pageSize() === option">
+                    {{ option }}
+                  </button>
+                }
+              </div>
+            }
+          </div>
+          <span>{{ rangeStart() }} - {{ rangeEnd() }} de {{ totalItems() }}</span>
+        </div>
+
+        <div class="pagination-actions">
+          <button (click)="goToFirstPage()" [disabled]="currentPage() === 1 || totalItems() === 0" aria-label="Primera página">
+            <span class="material-symbols-outlined">first_page</span>
+          </button>
+          <button (click)="goToPreviousPage()" [disabled]="currentPage() === 1 || totalItems() === 0" aria-label="Página anterior">
+            <span class="material-symbols-outlined">chevron_left</span>
+          </button>
+          <button (click)="goToNextPage()" [disabled]="currentPage() === totalPages() || totalItems() === 0" aria-label="Página siguiente">
+            <span class="material-symbols-outlined">chevron_right</span>
+          </button>
+          <button (click)="goToLastPage()" [disabled]="currentPage() === totalPages() || totalItems() === 0" aria-label="Última página">
+            <span class="material-symbols-outlined">last_page</span>
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,471 @@
+<div class="revisar-page">
+  <app-loader [isLoading]="componentLoading.isLoading('perfil-revisar')()" message="Cargando detalles de perfil..."></app-loader>
+
+  @if (perfil()) {
+    <!-- Cabecera de Revisión -->
+    <div class="revisar-header">
+      <div class="revisar-header-left">
+        <a routerLink="/perfiles" class="back-link">
+          <span class="material-symbols-outlined">arrow_back</span>
+          Volver a perfiles
+        </a>
+        <h2 class="revisar-title">Revisar Perfil de Cargo</h2>
+        <div class="revisar-meta">
+          <span class="solicitud-code">{{ perfil().solicitudCodigo }}</span>
+          <span class="version-chip">Versión {{ perfil().versionActiva }}</span>
+          <span class="status-badge" [ngClass]="{
+            'badge-review': perfil().estadoCodigo === 'EnRevisionRRHH',
+            'badge-corrected': perfil().estadoCodigo === 'PerfilCorregidoRRHH',
+            'badge-approved': perfil().estadoCodigo === 'PerfilAprobadoFinal' || perfil().estadoCodigo === 'EnRevisionAreaSolicitante'
+          }">
+            {{ perfil().estadoNombre }}
+          </span>
+        </div>
+      </div>
+
+      <div class="revisar-actions">
+        <!-- Ver PDF si existe -->
+        @if (perfil().pdfUrl) {
+          <a [href]="perfil().pdfUrl" target="_blank" class="btn-pdf-view">
+            <span class="material-symbols-outlined">open_in_new</span>
+            Ver PDF Oficial
+          </a>
+        }
+        
+        <!-- Regenerar PDF -->
+        <button (click)="regenerarPdf()" class="btn-outline" [disabled]="isRegeneratingPdf()">
+          <span class="material-symbols-outlined" [ngClass]="{'loading-spin': isRegeneratingPdf()}">
+            {{ isRegeneratingPdf() ? 'sync' : 'picture_as_pdf' }}
+          </span>
+          {{ isRegeneratingPdf() ? 'Regenerando PDF...' : 'Regenerar PDF Oficial' }}
+        </button>
+
+        <!-- Aprobación por RRHH -->
+        @if (perfil().estadoCodigo === 'EnRevisionRRHH' || perfil().estadoCodigo === 'PerfilCorregidoRRHH') {
+          <button (click)="aprobarPerfil()" class="btn-primary">
+            <span class="material-symbols-outlined">verified</span>
+            Aprobar Perfil para Estrategia
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Profesiograma Estructurado: Bento Grid -->
+    <div class="bento-grid">
+      
+      <!-- Sección 1: Objetivo del Cargo (col-span-2) -->
+      <div class="bento-card col-span-2">
+        <div class="card-header">
+          <div class="header-title">
+            <span class="material-symbols-outlined">ads_click</span>
+            <h3>Objetivo del Cargo</h3>
+          </div>
+          @if (perfil().estadoCodigo === 'EnRevisionRRHH' || perfil().estadoCodigo === 'PerfilCorregidoRRHH') {
+            <button class="btn-edit-sec" (click)="editarSeccion(1, 'Objetivo del Cargo')">
+              <span class="material-symbols-outlined">edit</span> Editar
+            </button>
+          }
+        </div>
+        <div class="card-body">
+          <div class="field-group">
+            <label>Cargo Propuesto</label>
+            <p class="highlight-text">{{ parsedProfile().Cargo || perfil().cargoNombre }}</p>
+          </div>
+          <div class="field-group">
+            <label>Objetivo del Cargo</label>
+            <p class="description-text">{{ parsedProfile().Objetivo || 'No especificado' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección 2: Seniority -->
+      <div class="bento-card">
+        <div class="card-header">
+          <div class="header-title">
+            <span class="material-symbols-outlined">military_tech</span>
+            <h3>Seniority</h3>
+          </div>
+          @if (perfil().estadoCodigo === 'EnRevisionRRHH' || perfil().estadoCodigo === 'PerfilCorregidoRRHH') {
+            <button class="btn-edit-sec" (click)="editarSeccion(2, 'Seniority')">
+              <span class="material-symbols-outlined">edit</span> Editar
+            </button>
+          }
+        </div>
+        <div class="card-body">
+          <div class="field-group">
+            <label>Seniority Requerido</label>
+            <p class="highlight-text-small">{{ parsedProfile().Seniority || 'No especificado' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección 3: Condiciones Contractuales -->
+      <div class="bento-card">
+        <div class="card-header">
+          <div class="header-title">
+            <span class="material-symbols-outlined">description</span>
+            <h3>Condiciones Contractuales</h3>
+          </div>
+          @if (perfil().estadoCodigo === 'EnRevisionRRHH' || perfil().estadoCodigo === 'PerfilCorregidoRRHH') {
+            <button class="btn-edit-sec" (click)="editarSeccion(3, 'Condiciones Contractuales')">
+              <span class="material-symbols-outlined">edit</span> Editar
+            </button>
+          }
+        </div>
+        <div class="card-body">
+          <div class="field-group">
+            <label>Jornada / Horario / Ubicación</label>
+            <p>{{ parsedProfile().Condiciones || 'No especificado' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección 4: Formación Académica -->
+      <div class="bento-card">
+        <div class="card-header">
+          <div class="header-title">
+            <span class="material-symbols-outlined">school</span>
+            <h3>Formación Académica</h3>
+          </div>
+          @if (perfil().estadoCodigo === 'EnRevisionRRHH' || perfil().estadoCodigo === 'PerfilCorregidoRRHH') {
+            <button class="btn-edit-sec" (click)="editarSeccion(4, 'Formación Académica')">
+              <span class="material-symbols-outlined">edit</span> Editar
+            </button>
+          }
+        </div>
+        <div class="card-body">
+          <div class="field-group">
+            <label>Requisitos de Educación</label>
+            <p>{{ parsedProfile().Formacion || 'No especificada' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección 5: Experiencia Requerida -->
+      <div class="bento-card">
+        <div class="card-header">
+          <div class="header-title">
+            <span class="material-symbols-outlined">work_history</span>
+            <h3>Experiencia Requerida</h3>
+          </div>
+          @if (perfil().estadoCodigo === 'EnRevisionRRHH' || perfil().estadoCodigo === 'PerfilCorregidoRRHH') {
+            <button class="btn-edit-sec" (click)="editarSeccion(5, 'Experiencia Requerida')">
+              <span class="material-symbols-outlined">edit</span> Editar
+            </button>
+          }
+        </div>
+        <div class="card-body">
+          <div class="field-group">
+            <label>Años y Áreas de Experiencia</label>
+            <p>{{ parsedProfile().Experiencia || 'No especificada' }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección 6: Idiomas -->
+      <div class="bento-card">
+        <div class="card-header">
+          <div class="header-title">
+            <span class="material-symbols-outlined">translate</span>
+            <h3>Idiomas</h3>
+          </div>
+          @if (perfil().estadoCodigo === 'EnRevisionRRHH' || perfil().estadoCodigo === 'PerfilCorregidoRRHH') {
+            <button class="btn-edit-sec" (click)="editarSeccion(6, 'Idiomas')">
+              <span class="material-symbols-outlined">edit</span> Editar
+            </button>
+          }
+        </div>
+        <div class="card-body">
+          <div class="field-group">
+            <label>Idiomas Requeridos</label>
+            <ul class="badge-list">
+              @for (idioma of parsedProfile().Idiomas; track $index) {
+                <li class="badge-item">{{ idioma }}</li>
+              } @empty {
+                <li class="empty-text">No especificado</li>
+              }
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sección 7: Funciones Principales (col-span-2) -->
+      <div class="bento-card col-span-2">
+        <div class="card-header">
+          <div class="header-title">
+            <span class="material-symbols-outlined">assignment</span>
+            <h3>Funciones Principales</h3>
+          </div>
+          @if (perfil().estadoCodigo === 'EnRevisionRRHH' || perfil().estadoCodigo === 'PerfilCorregidoRRHH') {
+            <button class="btn-edit-sec" (click)="editarSeccion(7, 'Funciones Principales')">
+              <span class="material-symbols-outlined">edit</span> Editar
+            </button>
+          }
+        </div>
+        <div class="card-body">
+          <ul class="list-bullet">
+            @for (func of parsedProfile().Funciones; track $index) {
+              <li>{{ func }}</li>
+            } @empty {
+              <li class="empty-text">Ninguna declarada</li>
+            }
+          </ul>
+        </div>
+      </div>
+
+      <!-- Sección 8: Responsabilidades Clave (col-span-2) -->
+      <div class="bento-card col-span-2">
+        <div class="card-header">
+          <div class="header-title">
+            <span class="material-symbols-outlined">task</span>
+            <h3>Responsabilidades Clave</h3>
+          </div>
+          @if (perfil().estadoCodigo === 'EnRevisionRRHH' || perfil().estadoCodigo === 'PerfilCorregidoRRHH') {
+            <button class="btn-edit-sec" (click)="editarSeccion(8, 'Responsabilidades Clave')">
+              <span class="material-symbols-outlined">edit</span> Editar
+            </button>
+          }
+        </div>
+        <div class="card-body">
+          <ul class="list-bullet">
+            @for (resp of parsedProfile().Responsabilidades; track $index) {
+              <li>{{ resp }}</li>
+            } @empty {
+              <li class="empty-text">Ninguna declarada</li>
+            }
+          </ul>
+        </div>
+      </div>
+
+      <!-- Sección 9: Competencias Técnicas -->
+      <div class="bento-card">
+        <div class="card-header">
+          <div class="header-title">
+            <span class="material-symbols-outlined">handyman</span>
+            <h3>Competencias Técnicas</h3>
+          </div>
+          @if (perfil().estadoCodigo === 'EnRevisionRRHH' || perfil().estadoCodigo === 'PerfilCorregidoRRHH') {
+            <button class="btn-edit-sec" (click)="editarSeccion(9, 'Competencias Técnicas')">
+              <span class="material-symbols-outlined">edit</span> Editar
+            </button>
+          }
+        </div>
+        <div class="card-body">
+          <ul class="badge-list">
+            @for (comp of parsedProfile().CompetenciasTecnicas; track $index) {
+              <li class="badge-item blue-badge">{{ comp }}</li>
+            } @empty {
+              <li class="empty-text">Ninguna declarada</li>
+            }
+          </ul>
+        </div>
+      </div>
+
+      <!-- Sección 10: Competencias Blandas -->
+      <div class="bento-card">
+        <div class="card-header">
+          <div class="header-title">
+            <span class="material-symbols-outlined">psychology</span>
+            <h3>Competencias Blandas</h3>
+          </div>
+          @if (perfil().estadoCodigo === 'EnRevisionRRHH' || perfil().estadoCodigo === 'PerfilCorregidoRRHH') {
+            <button class="btn-edit-sec" (click)="editarSeccion(10, 'Competencias Blandas')">
+              <span class="material-symbols-outlined">edit</span> Editar
+            </button>
+          }
+        </div>
+        <div class="card-body">
+          <ul class="badge-list">
+            @for (comp of parsedProfile().CompetenciasBlandas; track $index) {
+              <li class="badge-item teal-badge">{{ comp }}</li>
+            } @empty {
+              <li class="empty-text">Ninguna declarada</li>
+            }
+          </ul>
+        </div>
+      </div>
+
+      <!-- Sección 11: Certificaciones Requeridas -->
+      <div class="bento-card">
+        <div class="card-header">
+          <div class="header-title">
+            <span class="material-symbols-outlined">workspace_premium</span>
+            <h3>Certificaciones Requeridas</h3>
+          </div>
+          @if (perfil().estadoCodigo === 'EnRevisionRRHH' || perfil().estadoCodigo === 'PerfilCorregidoRRHH') {
+            <button class="btn-edit-sec" (click)="editarSeccion(11, 'Certificaciones Requeridas')">
+              <span class="material-symbols-outlined">edit</span> Editar
+            </button>
+          }
+        </div>
+        <div class="card-body">
+          <ul class="badge-list">
+            @for (cert of parsedProfile().Certificaciones; track $index) {
+              <li class="badge-item gold-badge">{{ cert }}</li>
+            } @empty {
+              <li class="empty-text">Ninguna declarada</li>
+            }
+          </ul>
+        </div>
+      </div>
+
+      <!-- Sección 12: Herramientas, KPIs y Riesgos (col-span-2) -->
+      <div class="bento-card col-span-2">
+        <div class="card-header">
+          <div class="header-title">
+            <span class="material-symbols-outlined">analytics</span>
+            <h3>Herramientas, KPIs y Riesgos</h3>
+          </div>
+          @if (perfil().estadoCodigo === 'EnRevisionRRHH' || perfil().estadoCodigo === 'PerfilCorregidoRRHH') {
+            <button class="btn-edit-sec" (click)="editarSeccion(12, 'Herramientas, KPIs y Riesgos')">
+              <span class="material-symbols-outlined">edit</span> Editar
+            </button>
+          }
+        </div>
+        <div class="card-body grid-3">
+          <!-- Bloque Herramientas -->
+          <div class="sub-field">
+            <label>Herramientas y Sistemas</label>
+            <ul class="badge-list">
+              @for (herr of parsedProfile().Herramientas; track $index) {
+                <li class="badge-item slate-badge">{{ herr }}</li>
+              } @empty {
+                <li class="empty-text">Ninguna</li>
+              }
+            </ul>
+          </div>
+
+          <!-- Bloque KPIs -->
+          <div class="sub-field">
+            <label>Indicadores Clave (KPI)</label>
+            <ul class="list-bullet">
+              @for (kpi of parsedProfile().Kpis; track $index) {
+                <li>{{ kpi }}</li>
+              } @empty {
+                <li class="empty-text">Ninguno</li>
+              }
+            </ul>
+          </div>
+
+          <!-- Bloque Riesgos -->
+          <div class="sub-field">
+            <label>Riesgos del Cargo</label>
+            <ul class="list-bullet text-danger">
+              @for (riesgo of parsedProfile().Riesgos; track $index) {
+                <li>{{ riesgo }}</li>
+              } @empty {
+                <li class="empty-text">Ninguno</li>
+              }
+            </ul>
+          </div>
+
+          <!-- Bloque Observaciones IA (Full width in body) -->
+          <div class="col-span-full bg-callout">
+            <label>Observaciones de la Generación / Feedback IA</label>
+            <p class="description-text italic-text">{{ parsedProfile().ObservacionesIA || 'Sin comentarios de generación.' }}</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Trazabilidad / Historial de Revisiones -->
+    <div class="history-section">
+      <div class="tabs-header">
+        <button (click)="setTab('trazabilidad')" [ngClass]="{'active-tab': activeTab() === 'trazabilidad'}">
+          <span class="material-symbols-outlined">route</span>
+          Transiciones de Estado
+        </button>
+        <button (click)="setTab('auditoria')" [ngClass]="{'active-tab': activeTab() === 'auditoria'}">
+          <span class="material-symbols-outlined">history</span>
+          Historial de Edición
+        </button>
+      </div>
+
+      <div class="tab-content">
+        @if (activeTab() === 'trazabilidad') {
+          <div class="timeline">
+            @for (step of trazabilidad(); track step.id) {
+              <div class="timeline-item">
+                <div class="timeline-dot"></div>
+                <div class="timeline-panel">
+                  <div class="timeline-meta">
+                    <span class="timeline-user">{{ step.usuarioNombre || 'Sistema' }}</span>
+                    <span class="timeline-role badge-role">{{ step.rol || 'Automático' }}</span>
+                    <span class="timeline-date">{{ step.fecha | date:'dd/MM/yyyy HH:mm' }}</span>
+                  </div>
+                  <div class="timeline-transition">
+                    Transición:
+                    <span class="state-label state-old">{{ step.estadoAnteriorNombre || 'Pendiente' }}</span>
+                    <span class="material-symbols-outlined arrow">arrow_forward</span>
+                    <span class="state-label state-new">{{ step.estadoNuevoNombre }}</span>
+                    @if (step.iteracion) {
+                      <span class="timeline-version">v{{ step.iteracion }}</span>
+                    }
+                  </div>
+                  @if (step.comentario) {
+                    <p class="timeline-comment">"{{ step.comentario }}"</p>
+                  }
+                </div>
+              </div>
+            @} @empty {
+              <div class="empty-timeline">
+                <span class="material-symbols-outlined">history_toggle_off</span>
+                <p>No se encontraron transiciones de estado registradas para este perfil.</p>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="audit-history-table-container">
+            <table class="audit-table">
+              <thead>
+                <tr>
+                  <th>Versión</th>
+                  <th>Sección Modificada</th>
+                  <th>Usuario</th>
+                  <th>Fecha/Hora</th>
+                  <th>Motivo del Cambio</th>
+                  <th>Detalle de Modificación</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (audit of auditoria(); track audit.perfilAuditoriaId) {
+                  <tr>
+                    <td class="version-col">v{{ audit.version }}</td>
+                    <td class="section-col"><span class="badge-section">{{ audit.seccionModificada }}</span></td>
+                    <td class="user-col">{{ audit.usuario }}</td>
+                    <td class="date-col">{{ audit.fechaHora | date:'dd/MM/yyyy HH:mm' }}</td>
+                    <td class="comment-col">"{{ audit.motivoCambio || 'Sin motivo especificado' }}"</td>
+                    <td class="changes-col">
+                      <div class="changes-bubble">
+                        @if (audit.valorAnterior) {
+                          <div class="old-val">
+                            <span class="change-label">Antes:</span>
+                            <span class="value-text" [title]="audit.valorAnterior">{{ audit.valorAnterior }}</span>
+                          </div>
+                        }
+                        <div class="new-val">
+                          <span class="change-label">Después:</span>
+                          <span class="value-text" [title]="audit.valorNuevo">{{ audit.valorNuevo }}</span>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr class="empty-row">
+                    <td colspan="6">
+                      <div class="empty-state">
+                        <span class="material-symbols-outlined">history_toggle_off</span>
+                        <p>No hay registro de modificaciones por secciones para este perfil.</p>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,133 @@
+<!-- ======================================================== -->
+<!-- ROLES Y PERMISOS                                          -->
+<!-- ======================================================== -->
+<div class="admin-page">
+
+  <!-- Header -->
+  <div class="admin-header">
+    <div>
+      <h1 class="admin-title">Roles y Permisos</h1>
+      <p class="admin-subtitle">Configuración de seguridad basada en roles (RBAC) de Nacional Seguros.</p>
+    </div>
+    <button *ngIf="!isEditing()" class="btn-primary" (click)="iniciarCrear()">
+      <span class="material-symbols-outlined">add</span>
+      Nuevo Rol
+    </button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading() && !isEditing()" class="loading-box">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <!-- Formulario -->
+  <div *ngIf="isEditing()" class="form-card">
+    <h2 class="form-card-title">
+      {{ selectedRolId() ? 'Editar Rol y Permisos' : 'Nuevo Rol y Permisos' }}
+    </h2>
+
+    <form [formGroup]="rolForm" (ngSubmit)="guardar()">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Nombre del Rol <span class="required">*</span></label>
+          <input formControlName="nombre" type="text" placeholder="Ej: Gestor de Reclutamiento" />
+          <span class="field-error"
+            *ngIf="rolForm.get('nombre')?.touched && rolForm.get('nombre')?.invalid">
+            El nombre es obligatorio (máx. 50 caracteres).
+          </span>
+        </div>
+        <div class="form-group">
+          <label>Descripción del Rol</label>
+          <textarea formControlName="descripcion" rows="3"
+            placeholder="Describa el alcance y privilegios del rol..."></textarea>
+        </div>
+      </div>
+
+      <!-- Permisos -->
+      <div class="permisos-section" style="margin-top:16px;">
+        <p class="permisos-title">Asignación de Permisos por Módulo</p>
+        <div class="permisos-grid">
+          <div *ngFor="let grupo of getGruposPermisos()" class="permiso-grupo">
+            <div class="grupo-titulo">
+              <span class="material-symbols-outlined">folder</span>
+              {{ grupo }}
+            </div>
+            <div *ngFor="let permiso of getPermisosPorGrupo(grupo)">
+              <label class="permiso-item">
+                <input type="checkbox"
+                  [checked]="isPermisoSeleccionado(permiso)"
+                  (change)="togglePermiso(permiso, $any($event.target).checked)" />
+                <span>
+                  <span class="permiso-label">{{ getNombrePermiso(permiso) }}</span>
+                  <span class="permiso-codigo">{{ permiso }}</span>
+                </span>
+              </label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn-secondary" (click)="cancelarEdicion()">Cancelar</button>
+        <button type="submit" class="btn-primary" [disabled]="rolForm.invalid || isLoading()">
+          {{ selectedRolId() ? 'Guardar Cambios' : 'Crear Rol' }}
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Tabla -->
+  <div *ngIf="!isEditing() && !isLoading()" class="table-card">
+    <div class="table-wrap">
+      <table class="w-full border-collapse">
+        <thead>
+          <tr>
+            <th class="mat-header-cell">Rol</th>
+            <th class="mat-header-cell">Descripción</th>
+            <th class="mat-header-cell" style="text-align: center;">Usuarios</th>
+            <th class="mat-header-cell">Estado</th>
+            <th class="mat-header-cell" style="text-align: center;">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="mat-row" *ngFor="let r of roles()">
+            <td class="mat-cell cell-primary">{{ r.nombre }}</td>
+            <td class="mat-cell cell-secondary" [title]="r.descripcion || ''">
+              {{ r.descripcion || '—' }}
+            </td>
+            <td class="mat-cell cell-number">{{ r.cantidadUsuarios }}</td>
+            <td class="mat-cell">
+              <span class="chip"
+                [class.chip-activo]="r.activo"
+                [class.chip-inactivo]="!r.activo">
+                {{ r.activo ? 'Activo' : 'Inactivo' }}
+              </span>
+            </td>
+            <td class="mat-cell">
+              <div class="actions-cell">
+                <button class="action-btn" title="Editar rol" (click)="iniciarEditar(r)">
+                  <span class="material-symbols-outlined">edit</span>
+                </button>
+                <button class="action-btn" title="Duplicar rol" (click)="duplicar(r)">
+                  <span class="material-symbols-outlined">content_copy</span>
+                </button>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Empty State -->
+          <tr class="mat-row" *ngIf="roles().length === 0">
+            <td class="mat-cell" colspan="5">
+              <div class="empty-state">
+                <span class="material-symbols-outlined">security</span>
+                <p>No hay roles configurados.</p>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+

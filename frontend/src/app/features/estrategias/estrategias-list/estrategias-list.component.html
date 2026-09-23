@@ -1,0 +1,260 @@
+<div class="perfiles-page">
+  <!-- Page Header -->
+  <div class="perfiles-page-header">
+    <div>
+      <h2 class="perfiles-title">Gestión de estrategias de búsqueda</h2>
+      <p class="perfiles-subtitle">Revisa las estrategias generadas a partir de perfiles aprobados y consulta su estado dentro del proceso de reclutamiento.</p>
+    </div>
+  </div>
+
+  <!-- Tarjetas Resumen (Mismo estilo que Perfiles: Total, En revisión RRHH, Observadas, Aprobadas) -->
+  <div class="perfiles-metrics">
+    <!-- Card 1: Total de estrategias -->
+    <div class="perfiles-metric-card">
+      <div class="perfiles-metric-icon">
+        <span class="material-symbols-outlined">ads_click</span>
+      </div>
+      <div class="perfiles-metric-content">
+        <p>Total de estrategias</p>
+        <strong>{{ summary().total }}</strong>
+      </div>
+    </div>
+
+    <!-- Card 2: En revisión RRHH -->
+    <div class="perfiles-metric-card metric-review">
+      <div class="perfiles-metric-icon metric-review">
+        <span class="material-symbols-outlined">visibility</span>
+      </div>
+      <div class="perfiles-metric-content">
+        <p>En revisión RRHH</p>
+        <strong>{{ summary().enRevision }}</strong>
+      </div>
+    </div>
+
+    <!-- Card 3: Observadas -->
+    <div class="perfiles-metric-card metric-observed">
+      <div class="perfiles-metric-icon metric-observed">
+        <span class="material-symbols-outlined">warning</span>
+      </div>
+      <div class="perfiles-metric-content">
+        <p>Observadas</p>
+        <strong>{{ summary().observadas }}</strong>
+      </div>
+    </div>
+
+    <!-- Card 4: Aprobadas -->
+    <div class="perfiles-metric-card metric-approved">
+      <div class="perfiles-metric-icon metric-approved">
+        <span class="material-symbols-outlined">verified</span>
+      </div>
+      <div class="perfiles-metric-content">
+        <p>Aprobadas</p>
+        <strong>{{ summary().aprobadas }}</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Contenedor Principal de Tabla y Filtros -->
+  <div class="perfiles-table-card">
+    <app-loader [isLoading]="isLoading()" message="Cargando estrategias de búsqueda..."></app-loader>
+
+    <!-- Card de Filtros -->
+    <div class="perfiles-filters-card">
+      <div class="perfiles-filters-grid">
+        <!-- Buscador -->
+        <div class="perfiles-filter-field perfiles-search-filter">
+          <label for="searchFilter">Buscar</label>
+          <div class="perfiles-filter-search">
+            <span class="material-symbols-outlined">search</span>
+            <input
+              id="searchFilter"
+              [ngModel]="searchTerm()"
+              (ngModelChange)="onSearchChange($event)"
+              type="text"
+              placeholder="Buscar por código, cargo, perfil o área..."
+            />
+            @if (searchTerm()) {
+              <button class="clear-search-btn" type="button" (click)="onSearchChange('')">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Estado -->
+        <div class="perfiles-filter-field">
+          <label for="estadoFilter">Estado</label>
+          <select id="estadoFilter" [ngModel]="selectedEstado()" (ngModelChange)="onEstadoChange($event)">
+            <option value="">Todos los estados</option>
+            <option value="PendienteGeneracionEstrategia">Pendiente de generación</option>
+            <option value="EnRevisionRRHHEstrategia">En revisión RRHH</option>
+            <option value="ObservadaEstrategia">Observada</option>
+            <option value="AprobadaEstrategia">Aprobada</option>
+          </select>
+        </div>
+
+        <!-- Área -->
+        <div class="perfiles-filter-field">
+          <label for="areaFilter">Área solicitante</label>
+          <select id="areaFilter" [ngModel]="selectedArea()" (ngModelChange)="onAreaChange($event)">
+            <option value="">Todas las áreas</option>
+            @for (areaItem of areasList(); track areaItem) {
+              <option [value]="areaItem">{{ areaItem }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Cargo -->
+        <div class="perfiles-filter-field">
+          <label for="cargoFilter">Cargo</label>
+          <select id="cargoFilter" [ngModel]="selectedCargo()" (ngModelChange)="onCargoChange($event)">
+            <option value="">Todos los cargos</option>
+            @for (cargoItem of cargosList(); track cargoItem) {
+              <option [value]="cargoItem">{{ cargoItem }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      @if (hasActiveFilters()) {
+        <button class="perfiles-clear-filters" type="button" (click)="limpiarFiltros()">
+          <span class="material-symbols-outlined">filter_list_off</span>
+          Limpiar filtros
+        </button>
+      }
+    </div>
+
+    <!-- Tabla de Datos -->
+    @if (!isLoading()) {
+      <div class="perfiles-table-wrap">
+        <table class="perfiles-table">
+          <thead>
+            <tr>
+              <th>Código estrategia</th>
+              <th>Perfil relacionado</th>
+              <th>Cargo</th>
+              <th>Área</th>
+              <th>Estrategia prioritaria</th>
+              <th>Estado</th>
+              <th>Última actualización</th>
+              <th class="table-actions-header">Acción</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of paginatedItems(); track item.estrategiaId) {
+              <tr>
+                <td>
+                  <span class="perfil-code">{{ item.codigoEstrategia }}</span>
+                </td>
+                <td>
+                  <span class="perfil-solicitud-code">{{ item.codigoPerfil }}</span>
+                </td>
+                <td>
+                  <span class="perfil-cargo-title">{{ item.cargo }}</span>
+                </td>
+                <td>
+                  <span>{{ item.area }}</span>
+                </td>
+                <td>
+                  <span
+                    class="badge-estrategia-recomendada"
+                    [class.badge-estrategia-interna]="(item.estrategiaRecomendada || 'INTERNA') === 'INTERNA'"
+                    [class.badge-estrategia-externa]="item.estrategiaRecomendada === 'EXTERNA'"
+                  >
+                    <span class="material-symbols-outlined text-xs">
+                      {{ (item.estrategiaRecomendada || 'INTERNA') === 'INTERNA' ? 'badge' : 'public' }}
+                    </span>
+                    <span>{{ (item.estrategiaRecomendada || 'INTERNA') === 'INTERNA' ? 'Interna' : 'Externa' }}</span>
+                  </span>
+                </td>
+                <td>
+                  <span [class]="'status-badge ' + getEstadoConfig(item.estado).chipClass">
+                    <span class="material-symbols-outlined status-icon">
+                      @switch (item.estado) {
+                        @case ('PendienteGeneracionEstrategia') { schedule }
+                        @case ('EnRevisionRRHHEstrategia') { visibility }
+                        @case ('ObservadaEstrategia') { warning }
+                        @case ('AprobadaEstrategia') { check_circle }
+                      }
+                    </span>
+                    {{ getEstadoConfig(item.estado).label }}
+                  </span>
+                </td>
+                <td>
+                  <span class="muted-text">{{ item.ultimaActualizacion | date:'dd/MM/yyyy HH:mm' }}</span>
+                </td>
+                <td class="table-actions-cell">
+                  <button
+                    type="button"
+                    (click)="verEstrategia(item.estrategiaId)"
+                    class="perfil-action-btn action-detail"
+                  >
+                    <span class="material-symbols-outlined">visibility</span>
+                    <span>Ver estrategia</span>
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              @if (hasActiveFilters()) {
+                <tr>
+                  <td colspan="7" class="empty-table-message">
+                    <span class="material-symbols-outlined">search_off</span>
+                    <p>No hay estrategias que coincidan con los filtros</p>
+                  </td>
+                </tr>
+              } @else {
+                <tr>
+                  <td colspan="7" class="empty-table-message">
+                    <span class="material-symbols-outlined">folder_open</span>
+                    <p>No se encontraron estrategias. Las estrategias se generarán automáticamente cuando existan perfiles aprobados.</p>
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginación -->
+      @if (totalItems() > 0) {
+        <div class="perfiles-table-footer">
+          <div class="pagination-summary">
+            <label for="perfilesPageSize">Items por página:</label>
+            <div class="pagination-page-size" id="perfilesPageSize">
+              <button type="button" class="pagination-page-size-trigger" (click)="togglePageSizeMenu()" [attr.aria-expanded]="isPageSizeMenuOpen()">
+                <span>{{ pageSize() }}</span>
+                <span class="material-symbols-outlined">expand_less</span>
+              </button>
+
+              @if (isPageSizeMenuOpen()) {
+                <div class="pagination-page-size-menu">
+                  @for (option of pageSizeOptions; track option) {
+                    <button type="button" (click)="updatePageSizeValue(option)" [class.is-selected]="pageSize() === option">
+                      {{ option }}
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+            <span>Mostrando {{ rangeStart() }}–{{ rangeEnd() }} de {{ totalItems() }} estrategias</span>
+          </div>
+
+          <div class="pagination-actions">
+            <button (click)="goToFirstPage()" [disabled]="currentPage() === 1 || totalItems() === 0" aria-label="Primera página">
+              <span class="material-symbols-outlined">first_page</span>
+            </button>
+            <button (click)="goToPreviousPage()" [disabled]="currentPage() === 1 || totalItems() === 0" aria-label="Página anterior">
+              <span class="material-symbols-outlined">chevron_left</span>
+            </button>
+            <button (click)="goToNextPage()" [disabled]="currentPage() === totalPages() || totalItems() === 0" aria-label="Página siguiente">
+              <span class="material-symbols-outlined">chevron_right</span>
+            </button>
+            <button (click)="goToLastPage()" [disabled]="currentPage() === totalPages() || totalItems() === 0" aria-label="Última página">
+              <span class="material-symbols-outlined">last_page</span>
+            </button>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</div>

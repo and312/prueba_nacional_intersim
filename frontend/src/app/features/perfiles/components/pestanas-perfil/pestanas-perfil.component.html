@@ -1,0 +1,22 @@
+<div class="pestanas-contenedor">
+  <button
+    class="pestana-boton"
+    [class.activa]="pestanaActiva === 'resumen'"
+    (click)="seleccionarPestana('resumen')"
+    type="button"
+  >
+    <span class="material-symbols-outlined icono-pestana">summarize</span>
+    <span>Resumen ejecutivo</span>
+  </button>
+
+  <button
+    class="pestana-boton"
+    [class.activa]="pestanaActiva === 'estructurado'"
+    [class.activa-rrhh]="pestanaActiva === 'estructurado' && (userRole === 'RRHH' || userRole === 'Administrador')"
+    (click)="seleccionarPestana('estructurado')"
+    type="button"
+  >
+    <span class="material-symbols-outlined icono-pestana">developer_board</span>
+    <span>Perfil estructurado</span>
+  </button>
+</div>
