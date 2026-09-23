@@ -1,43 +1,53 @@
-# 🏢 SIR - Sistema de Inteligencia y Reclutamiento (Nacional Seguros)
+# 🏢 SIR - Sistema Inteligente de Reclutamiento (Nacional Seguros)
 
-Bienvenido al repositorio oficial del **Sistema de Inteligencia y Reclutamiento (SIR)** para **Nacional Seguros**.
-Este proyecto contiene la solución completa compuesta por la **API Backend en .NET 8**, el **Frontend Web en Angular 19**, scripts de Base de Datos y las configuraciones de orquestación con **Docker**.
+Bienvenido al repositorio oficial del **Sistema Inteligente de Reclutamiento (SIR)** para **Nacional Seguros**.  
+Este proyecto contiene la solución completa compuesta por la **API Backend en .NET 8 (`ns-sir-be`)**, el **Frontend Web en Angular 19/22 (`ns-sir-app`)**, scripts de Base de Datos y las configuraciones de orquestación con **Docker**.
 
 ---
 
-## 🏗️ Arquitectura del Sistema
+## 🏗️ Arquitectura del Sistema y Estructura del Repositorio
 
-La solución está estructurada bajo estándares de arquitectura limpia (*Clean Architecture*) y separación de responsabilidades:
+La solución está estructurada bajo estándares de arquitectura limpia (*Clean Architecture*), separación de responsabilidades y gobernanza técnica mediante **`AGENTS.md`**:
 
 ```text
-nacional-seguros-sir/
-├── docker-compose.yml              # Orquestador unificado Docker
+prueba_nacional_intersim/
+├── AGENTS.md                       # 🤖 Guía Maestra para IA/Devs (ns-sir-be - Reglas y Prioridad de Fuentes)
+├── README.md                       # 📖 Manual de Instalación y Arquitectura del Sistema
 ├── Dockerfile                      # Build multi-stage para Backend .NET 8
-├── nacionalseguros.nginx.conf      # Configuración de Reverse Proxy Nginx para Host
+├── docker-compose.yml              # Orquestador unificado Docker
 ├── NacionalSeguros.sln             # Solución C# .NET 8
-├── README.md                       # Manual de instalación y arquitectura
 │
-├── frontend/                       # 🌐 FRONTEND (Angular 19 + TailwindCSS)
-│   ├── Dockerfile                  # Build multi-stage (Node 22 + Nginx Alpine)
-│   ├── nginx.conf                  # Router interno de Nginx SPA
+├── database/                       # 🗄️ BASE DE DATOS (Scripts SQL DDL/DML, Vistas, Procedures y Seeds)
+│   └── migration.sql
+│
+├── deploy/                         # 🚀 DESPLIEGUE Y PROXIES (Nginx Reverse Proxy host)
+│   └── nacionalseguros.nginx.conf
+│
+├── docs/                           # 📚 DOCUMENTACIÓN TÉCNICA Y REGLAS DE NEGOCIO
+│   ├── api/                        # Colecciones Postman y Contratos OpenAPI / Swagger
+│   ├── architecture/               # Decisiones Técnicas (Clean Architecture, DDD, CQRS)
+│   ├── features/                   # Requerimientos Funcionales y Casos de Uso del PRD
+│   └── rules/                      # Reglas de Negocio (Permisos, Estados, RLS, Auditoría)
+│
+├── frontend/                       # 🌐 FRONTEND (ns-sir-app - Angular 19/22 Standalone + TailwindCSS)
+│   ├── AGENTS.md                   # 🤖 Guía Técnica de Frontend para IA/Devs (Stack y Patrones RxJS)
+│   ├── Dockerfile                  # Build multi-stage (Node + Nginx Alpine)
+│   ├── nginx.conf                  # Router interno SPA Nginx
 │   ├── package.json
-│   └── src/                        # Componentes, servicios y páginas
+│   ├── tailwind.config.js
+│   └── src/                        # Componentes, Servicios, Guards y Vistas
 │
 ├── src/                            # ⚙️ BACKEND (.NET 8 Clean Architecture)
-│   ├── NacionalSeguros.Api/        # Controladores, Middlewares, Webhooks y Swagger
-│   ├── NacionalSeguros.Application/# Casos de uso, DTOs, Comandos y CQRS
-│   ├── NacionalSeguros.Contracts/  # Contratos e Interfaces de API
-│   ├── NacionalSeguros.Domain/     # Entidades de dominio y Reglas de Negocio
+│   ├── NacionalSeguros.Api/        # Controladores REST, Middlewares, Webhooks y Swagger
+│   ├── NacionalSeguros.Application/# CQRS Comandos/Queries, DTOs y Handlers MediatR
+│   ├── NacionalSeguros.Contracts/  # Interfaces y Contratos de la API
+│   ├── NacionalSeguros.Domain/     # Entidades de Dominio, Valuaciones y Reglas de Negocio
 │   ├── NacionalSeguros.Infrastructure/# Integraciones con AI, Notificaciones e IO
 │   ├── NacionalSeguros.Persistence/# EF Core 9 (SQL Server 2022) y Repositorios
-│   └── NacionalSeguros.Shared/     # Utilitarios y primitivas compartidas
+│   └── NacionalSeguros.Shared/     # Utilitarios y Kernel compartido
 │
-├── sql/                            # 🗄️ BASE DE DATOS
-│   └── (Scripts DDL/DML, vistas, procedimientos almacenados y seeds)
-│
-└── docs/postman/                   # 🧪 PRUEBAS Y COLECCIONES POSTMAN
-    ├── SIR.postman_collection.json
-    └── Entornos (QA, Producción, Local)
+└── tests/                          # 🧪 PRUEBAS UNITARIAS E INTEGRACIÓN
+    └── NacionalSeguros.Tests/      # Suite de Pruebas xUnit / Moq / FluentAssertions
 ```
 
 ---
