@@ -48,6 +48,10 @@ public class SolicitudDocumentoConfiguration : IEntityTypeConfiguration<Solicitu
         builder.Property(sd => sd.CreatedDate)
             .IsRequired();
 
+        builder.Property(sd => sd.ContenidoBinario)
+            .HasColumnType("varbinary(max)")
+            .IsRequired(false);
+
         // Relaciones
         builder.HasOne(sd => sd.Solicitud)
             .WithMany()

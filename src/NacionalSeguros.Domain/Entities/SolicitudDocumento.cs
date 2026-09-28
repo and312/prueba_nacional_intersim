@@ -40,9 +40,15 @@ public class SolicitudDocumento
     public string? GeneradoPor { get; private set; }
     public Guid? CorrelationId { get; private set; }
     public DateTime CreatedDate { get; private set; }
+    public byte[]? ContenidoBinario { get; private set; }
 
     // Propiedad de navegación
     public Solicitud Solicitud { get; private set; } = null!;
+
+    public void SetContenidoBinario(byte[]? contenidoBinario)
+    {
+        ContenidoBinario = contenidoBinario;
+    }
 
     public void Actualizar(
         string fileName,
@@ -50,7 +56,8 @@ public class SolicitudDocumento
         string storagePath,
         string? publicUrl,
         string? generadoPor,
-        Guid? correlationId)
+        Guid? correlationId,
+        byte[]? contenidoBinario = null)
     {
         FileName = fileName ?? throw new ArgumentNullException(nameof(fileName));
         StorageProvider = storageProvider ?? throw new ArgumentNullException(nameof(storageProvider));
@@ -58,5 +65,9 @@ public class SolicitudDocumento
         PublicUrl = publicUrl;
         GeneradoPor = generadoPor;
         CorrelationId = correlationId;
+        if (contenidoBinario != null)
+        {
+            ContenidoBinario = contenidoBinario;
+        }
     }
 }
