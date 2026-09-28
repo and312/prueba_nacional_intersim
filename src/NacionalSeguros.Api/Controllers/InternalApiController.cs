@@ -2156,20 +2156,33 @@ public class InternalApiController : ControllerBase
     [HttpGet("solicitudes/{solicitudId:int}/documentos/{tipo}/descarga")]
     public async Task<IActionResult> DescargarDocumento([FromRoute] int solicitudId, [FromRoute] string tipo)
     {
-        if (!UserHasPermission("solicitudes.read") && !UserHasPermission("solicitudes.write"))
+        if (!UserHasPermission("solicitudes.read") && !UserHasPermission("solicitudes.write") && !UserHasPermission("perfiles.read") && !UserHasPermission("perfiles.write"))
         {
             return StatusCode(StatusCodes.Status403Forbidden, new ApiErrorDto { Code = "FORBIDDEN", Message = "No tiene permisos de sistema para descargar documentos.", CorrelationId = GetCorrelationId() });
         }
 
+        var normalizedTipo = tipo.Replace("_", " ");
         var doc = await _dbContext.SolicitudDocumentos
-            .FirstOrDefaultAsync(d => d.SolicitudId == solicitudId && d.TipoDocumento == tipo);
+            .FirstOrDefaultAsync(d => d.SolicitudId == solicitudId && 
+                (d.TipoDocumento == tipo || 
+                 d.TipoDocumento == normalizedTipo || 
+                 (tipo == "SOLICITUD_ESTRUCTURADA_PDF" && d.TipoDocumento == "Solicitud estructurada PDF")));
         if (doc == null) return NotFound();
 
+        // Prioridad 1: Servir desde ContenidoBinario almacenado en la Base de Datos
+        if (doc.ContenidoBinario != null && doc.ContenidoBinario.Length > 0)
+        {
+            var downloadName = doc.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) ? doc.FileName : $"{doc.FileName}.pdf";
+            return File(doc.ContenidoBinario, "application/pdf", downloadName);
+        }
+
+        // Prioridad 2: Si es una URL pública externa HTTP
         if (!string.IsNullOrEmpty(doc.PublicUrl) && doc.PublicUrl.StartsWith("http"))
         {
             return Redirect(doc.PublicUrl);
         }
 
+        // Prioridad 3: Archivo en disco local (fallback)
         if (System.IO.File.Exists(doc.StoragePath))
         {
             var bytes = await System.IO.File.ReadAllBytesAsync(doc.StoragePath);
@@ -2177,6 +2190,107 @@ public class InternalApiController : ControllerBase
         }
 
         return NotFound();
+    }
+
+    [HttpGet("solicitudes/{solicitudId:int}/documentos/solicitud-estructurada/descarga")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public Task<IActionResult> DescargarPdfSolicitudEstructurada([FromRoute] int solicitudId)
+    {
+        return DescargarDocumento(solicitudId, "SOLICITUD_ESTRUCTURADA_PDF");
+    }
+
+    [HttpPost("solicitudes/{solicitudId:int}/documentos/solicitud-estructurada")]
+    [Consumes("multipart/form-data")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public Task<IActionResult> GuardarPdfSolicitudEstructurada([FromRoute] int solicitudId, [FromForm] GuardarPdfForm request)
+    {
+        return GuardarPdfSolicitudInterno(solicitudId, "SOLICITUD_ESTRUCTURADA_PDF", request.File, request.PublicUrl);
+    }
+
+    private async Task<IActionResult> GuardarPdfSolicitudInterno(int solicitudId, string tipoDocumento, IFormFile? file, string? publicUrl)
+    {
+        if (!UserHasPermission("solicitudes.editar") && !UserHasPermission("solicitudes.write") && !UserHasPermission("perfiles.write"))
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new ApiErrorDto { Code = "FORBIDDEN", Message = "No tiene permisos para subir documentos de solicitud.", CorrelationId = GetCorrelationId() });
+        }
+
+        var solicitud = await _dbContext.Solicitudes.FirstOrDefaultAsync(s => s.Id == solicitudId);
+        if (solicitud == null)
+        {
+            return NotFound(new ApiErrorDto { Code = "Solicitud.NotFound", Message = $"La solicitud con ID {solicitudId} no existe.", CorrelationId = GetCorrelationId() });
+        }
+
+        string fileName = file?.FileName ?? $"{tipoDocumento}_{solicitudId}.pdf";
+        string storageProvider = file != null ? "DATABASE" : "AZURE";
+        string storagePath = "";
+        string? resolvedUrl = publicUrl;
+        byte[]? binaryContent = null;
+
+        if (file != null)
+        {
+            using (var ms = new MemoryStream())
+            {
+                await file.CopyToAsync(ms);
+                binaryContent = ms.ToArray();
+            }
+            storagePath = $"DATABASE://{fileName}";
+            if (string.IsNullOrEmpty(resolvedUrl))
+            {
+                resolvedUrl = $"/api/internal/solicitudes/{solicitudId}/documentos/solicitud-estructurada/descarga";
+            }
+        }
+        else if (!string.IsNullOrEmpty(publicUrl))
+        {
+            storagePath = publicUrl;
+        }
+        else
+        {
+            return BadRequest(new ApiErrorDto { Code = "Documento.Empty", Message = "Debe subir un archivo PDF o enviar una URL pública.", CorrelationId = GetCorrelationId() });
+        }
+
+        var existing = await _dbContext.Set<SolicitudDocumento>()
+            .FirstOrDefaultAsync(d => d.SolicitudId == solicitudId && 
+                (d.TipoDocumento == tipoDocumento || d.TipoDocumento == "Solicitud estructurada PDF"));
+
+        if (existing != null)
+        {
+            existing.Actualizar(
+                fileName,
+                storageProvider,
+                storagePath,
+                resolvedUrl,
+                "n8n_automation",
+                Guid.NewGuid(),
+                binaryContent
+            );
+            _dbContext.Set<SolicitudDocumento>().Update(existing);
+        }
+        else
+        {
+            var document = new SolicitudDocumento(
+                solicitudId,
+                tipoDocumento,
+                fileName,
+                storageProvider,
+                storagePath,
+                resolvedUrl,
+                "n8n_automation",
+                Guid.NewGuid()
+            );
+            if (binaryContent != null)
+            {
+                document.SetContenidoBinario(binaryContent);
+            }
+            await _dbContext.Set<SolicitudDocumento>().AddAsync(document);
+        }
+
+        await _dbContext.SaveChangesAsync();
+        return Ok(new { Message = "PDF de solicitud guardado exitosamente en la base de datos." });
     }
 
     [HttpGet("tipos-observacion")]
