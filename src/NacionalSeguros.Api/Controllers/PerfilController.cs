@@ -6,445 +6,520 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
-using NacionalSeguros.Application.Perfiles.Commands.AprobarPerfilCargo;
-using NacionalSeguros.Application.Perfiles.Commands.CrearPerfilCargo;
-using NacionalSeguros.Application.Perfiles.Commands.GenerarPerfil;
-using NacionalSeguros.Application.Perfiles.Commands.ObservarPerfilCargo;
-using NacionalSeguros.Application.Perfiles.Queries.BuscarPerfiles;
-using NacionalSeguros.Application.Perfiles.Queries.ObtenerPerfil;
-using NacionalSeguros.Application.Perfiles.Queries.ObtenerPerfilPorId;
-using NacionalSeguros.Application.Perfiles.Commands.CorregirPerfil;
-using NacionalSeguros.Application.Perfiles.Commands.AprobarPerfilRRHH;
-using NacionalSeguros.Application.Perfiles.Commands.EnviarPerfilArea;
-using NacionalSeguros.Application.Perfiles.Queries.GetPerfilTrazabilidad;
-using NacionalSeguros.Application.Perfiles.Commands.ActualizarPerfilSeccion;
-using NacionalSeguros.Application.Perfiles.Commands.RegenerarPdf;
-using NacionalSeguros.Application.Perfiles.Queries.GetPerfilAuditoria;
+using Microsoft.EntityFrameworkCore;
+using NacionalSeguros.Application.Perfiles.Commands;
+using NacionalSeguros.Application.Perfiles.Queries;
+using NacionalSeguros.Contracts.Requests;
 using NacionalSeguros.Contracts.Responses;
 using NacionalSeguros.Contracts.Security;
-using Microsoft.Extensions.Configuration;
-using NacionalSeguros.Shared.Primitives;
+using NacionalSeguros.Domain.Entities;
+using NacionalSeguros.Persistence.Context;
 
 namespace NacionalSeguros.Api.Controllers;
 
 [ApiController]
-[Route("api/v1")]
-public class PerfilController : ControllerBase
+[Route("api/v1/perfiles")]
+[Authorize]
+public class PerfilesController : ControllerBase
 {
     private readonly ISender _sender;
-    private readonly IConfiguration _configuration;
+    private readonly ApplicationDbContext _context;
 
-    public PerfilController(ISender sender, IConfiguration configuration)
+    public PerfilesController(ISender sender, ApplicationDbContext context)
     {
         _sender = sender ?? throw new ArgumentNullException(nameof(sender));
-        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _context = context ?? throw new ArgumentNullException(nameof(context));
     }
 
-    [Authorize]
-    [HttpPost("perfiles/generar")]
-    [ProducesResponseType(StatusCodes.Status202Accepted)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> Generar([FromBody] GenerarPerfilRequest request)
+    private async Task<Usuario?> GetCurrentUserAsync()
     {
-        string userEmail = User.FindFirst(ClaimTypes.Email)?.Value ?? "system@nacionalseguros.com.bo";
-        var command = new GenerarPerfilCommand(request.SolicitudId, userEmail);
-        var result = await _sender.Send(command);
+        string email = User.FindFirst("email")?.Value ??
+                       User.FindFirst(ClaimTypes.Email)?.Value ??
+                       (User.Identity?.Name != null && User.Identity.Name.Contains("@") ? User.Identity.Name : "") ??
+                       "";
+        if (string.IsNullOrEmpty(email)) return null;
+        return await _context.Usuarios.FirstOrDefaultAsync(u => u.Correo == email);
+    }
+
+    private bool IsAdminOrRrhh()
+    {
+        return User.IsInRole("Administrador") || User.IsInRole("RRHH");
+    }
+
+    [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<PerfilListResponseDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> Listar([FromQuery] bool soloMisPerfiles = false)
+    {
+        var currentUser = await GetCurrentUserAsync();
+        if (currentUser == null) return Unauthorized();
+
+        int? solicitanteId = (IsAdminOrRrhh() && !soloMisPerfiles) ? null : currentUser.Id;
+
+        var query = new ListarPerfilesQuery(solicitanteId);
+        var result = await _sender.Send(query);
 
         if (result.IsFailure)
         {
-            return BadRequest(new ApiErrorDto
-            {
-                Code = result.Error.Code,
-                Message = result.Error.Message,
-                Detail = "Error al intentar iniciar la generacion de perfil.",
-                CorrelationId = GetCorrelationId()
-            });
+            return BadRequest(new ApiErrorDto { Code = result.Error.Code, Message = result.Error.Message });
         }
 
-        return Accepted();
+        return Ok(result.Value);
     }
 
-    [Authorize]
-    [ApiExplorerSettings(IgnoreApi = true)]
-    [HttpGet("perfiles-legacy/{id:int}")]
-    [ProducesResponseType(typeof(PerfilResponseDto), StatusCodes.Status200OK)]
+    [HttpGet("{id:int}")]
+    [ProducesResponseType(typeof(PerfilDetailResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> ObtenerPorId([FromRoute] int id)
     {
-        var query = new ObtenerPerfilPorIdQuery(id);
-        var result = await _sender.Send(query);
+        var currentUser = await GetCurrentUserAsync();
+        if (currentUser == null) return Unauthorized();
+
+        int? solicitanteId = IsAdminOrRrhh() ? null : currentUser.Id;
+
+        var result = await _sender.Send(new ObtenerPerfilDetalleQuery(id, solicitanteId));
 
         if (result.IsFailure)
         {
-            return NotFound(new ApiErrorDto
-            {
-                Code = result.Error.Code,
-                Message = result.Error.Message,
-                Detail = $"No se encontro el perfil de cargo con ID {id}.",
-                CorrelationId = GetCorrelationId()
-            });
+            if (result.Error.Code == "Perfil.Forbidden")
+                return StatusCode(StatusCodes.Status403Forbidden, new ApiErrorDto { Code = "FORBIDDEN", Message = result.Error.Message });
+
+            return NotFound(new ApiErrorDto { Code = result.Error.Code, Message = result.Error.Message });
         }
 
         return Ok(result.Value);
     }
 
-    [Authorize]
-    [HttpPost("perfiles/{id:int}/aprobar")]
-    [ProducesResponseType(typeof(PerfilResponseDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> Aprobar([FromRoute] int id)
-    {
-        string userEmail = User.FindFirst(ClaimTypes.Email)?.Value ?? "system@nacionalseguros.com.bo";
-        var command = new AprobarPerfilCargoCommand(id, userEmail);
-        var result = await _sender.Send(command);
-
-        if (result.IsFailure)
-        {
-            return BadRequest(new ApiErrorDto
-            {
-                Code = result.Error.Code,
-                Message = result.Error.Message,
-                Detail = "Error al intentar aprobar el perfil de cargo.",
-                CorrelationId = GetCorrelationId()
-            });
-        }
-
-        return Ok(result.Value);
-    }
-
-    [Authorize]
-    [HttpPost("perfiles/{id:int}/observar")]
-    [ProducesResponseType(typeof(PerfilResponseDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> Observar([FromRoute] int id, [FromBody] ObservarPerfilRequest request)
-    {
-        string userEmail = User.FindFirst(ClaimTypes.Email)?.Value ?? "system@nacionalseguros.com.bo";
-        var command = new ObservarPerfilCargoCommand(id, request.Justificacion, userEmail);
-        var result = await _sender.Send(command);
-
-        if (result.IsFailure)
-        {
-            return BadRequest(new ApiErrorDto
-            {
-                Code = result.Error.Code,
-                Message = result.Error.Message,
-                Detail = "Error al intentar observar el perfil de cargo.",
-                CorrelationId = GetCorrelationId()
-            });
-        }
-
-        return Ok(result.Value);
-    }
-
-    [HttpPost("callbacks/perfil-creacion")]
-    [ProducesResponseType(typeof(PerfilResponseDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> CallbackPerfilCreacion([FromBody] PerfilCreacionCallbackRequest request)
-    {
-        // Validar X-API-Key para la integracion de n8n
-        var expectedKey = _configuration["IntegrationSettings:N8nApiKey"] ?? "n8n_secret_key_123";
-        if (!Request.Headers.TryGetValue("X-API-Key", out var apiKey) || apiKey != expectedKey)
-        {
-            return Unauthorized(new ApiErrorDto
-            {
-                Code = "UNAUTHORIZED_CALLBACK",
-                Message = "La cabecera X-API-Key es requerida o no es valida.",
-                Detail = "Solo los agentes de IA de n8n estan autorizados para invocar este callback.",
-                CorrelationId = GetCorrelationId()
-            });
-        }
-
-        var command = new CrearPerfilCargoCommand(request, "AgentePerfil");
-        var result = await _sender.Send(command);
-
-        if (result.IsFailure)
-        {
-            return BadRequest(new ApiErrorDto
-            {
-                Code = result.Error.Code,
-                Message = result.Error.Message,
-                Detail = "Error al intentar crear el perfil de cargo via callback.",
-                CorrelationId = GetCorrelationId()
-            });
-        }
-
-        return Ok(result.Value);
-    }
-
-    [Authorize]
-    [ApiExplorerSettings(IgnoreApi = true)]
-    [HttpGet("perfiles-buscar-legacy")]
-    [ProducesResponseType(typeof(IEnumerable<PerfilResponseDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> BuscarPerfiles([FromQuery] string? q)
-    {
-        var query = new BuscarPerfilesQuery(q);
-        var result = await _sender.Send(query);
-
-        if (result.IsFailure)
-        {
-            return BadRequest(new ApiErrorDto
-            {
-                Code = result.Error.Code,
-                Message = result.Error.Message,
-                Detail = "Error al listar los perfiles de cargo.",
-                CorrelationId = GetCorrelationId()
-            });
-        }
-
-        return Ok(result.Value);
-    }
-
-    [Authorize]
-    [HttpGet("solicitudes/{solicitudId:int}/perfil")]
-    [ProducesResponseType(typeof(PerfilResponseDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> ObtenerPorSolicitudId([FromRoute] int solicitudId)
-    {
-        var query = new ObtenerPerfilQuery(solicitudId);
-        var result = await _sender.Send(query);
-
-        if (result.IsFailure)
-        {
-            return NotFound(new ApiErrorDto
-            {
-                Code = result.Error.Code,
-                Message = result.Error.Message,
-                Detail = $"No se encontro el perfil de cargo de la solicitud {solicitudId}.",
-                CorrelationId = GetCorrelationId()
-            });
-        }
-
-        return Ok(result.Value);
-    }
-
-    private string GetCorrelationId()
-    {
-        if (HttpContext.Items.TryGetValue("X-Correlation-ID", out var cid) && cid != null)
-        {
-            return cid.ToString()!;
-        }
-        return Guid.NewGuid().ToString();
-    }
-
-    [Authorize]
-    [HttpPut("perfiles/{id:int}/corregir")]
-    [ProducesResponseType(typeof(PerfilResponseDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> Corregir([FromRoute] int id, [FromBody] CorregirPerfilRequest request)
-    {
-        string userEmail = User.FindFirst(ClaimTypes.Email)?.Value ?? "system@nacionalseguros.com.bo";
-        var command = new CorregirPerfilCommand(id, request.Cargo, request.Descripcion, userEmail);
-        var result = await _sender.Send(command);
-
-        if (result.IsFailure)
-        {
-            return BadRequest(new ApiErrorDto
-            {
-                Code = result.Error.Code,
-                Message = result.Error.Message,
-                Detail = "Error al intentar corregir el perfil de cargo.",
-                CorrelationId = GetCorrelationId()
-            });
-        }
-
-        return Ok(result.Value);
-    }
-
-    [Authorize]
-    [HttpPut("perfiles/{id:int}/aprobar-rrhh")]
-    [ProducesResponseType(typeof(PerfilResponseDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> AprobarRRHH([FromRoute] int id, [FromBody] AprobarPerfilRRHHRequest request)
-    {
-        string userEmail = User.FindFirst(ClaimTypes.Email)?.Value ?? "system@nacionalseguros.com.bo";
-        var command = new AprobarPerfilRRHHCommand(id, request.Comentario, userEmail);
-        var result = await _sender.Send(command);
-
-        if (result.IsFailure)
-        {
-            return BadRequest(new ApiErrorDto
-            {
-                Code = result.Error.Code,
-                Message = result.Error.Message,
-                Detail = "Error al intentar aprobar el perfil de cargo por RRHH.",
-                CorrelationId = GetCorrelationId()
-            });
-        }
-
-        return Ok(result.Value);
-    }
-
-    [Authorize]
-    [HttpPut("perfiles/{id:int}/enviar-area")]
-    [ProducesResponseType(typeof(PerfilResponseDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> EnviarArea([FromRoute] int id, [FromBody] EnviarPerfilAreaRequest request)
-    {
-        string userEmail = User.FindFirst(ClaimTypes.Email)?.Value ?? "system@nacionalseguros.com.bo";
-        var command = new EnviarPerfilAreaCommand(id, request.Comentario, userEmail);
-        var result = await _sender.Send(command);
-
-        if (result.IsFailure)
-        {
-            return BadRequest(new ApiErrorDto
-            {
-                Code = result.Error.Code,
-                Message = result.Error.Message,
-                Detail = "Error al intentar enviar el perfil de cargo al area.",
-                CorrelationId = GetCorrelationId()
-            });
-        }
-
-        return Ok(result.Value);
-    }
-
-    [Authorize]
-    [HttpGet("perfiles/{id:int}/trazabilidad")]
-    [ProducesResponseType(typeof(IEnumerable<StateHistoryResponseDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetTrazabilidad([FromRoute] int id)
-    {
-        var query = new GetPerfilTrazabilidadQuery(id);
-        var result = await _sender.Send(query);
-
-        if (result.IsFailure)
-        {
-            return NotFound(new ApiErrorDto
-            {
-                Code = result.Error.Code,
-                Message = result.Error.Message,
-                Detail = "Error al intentar obtener la trazabilidad del perfil.",
-                CorrelationId = GetCorrelationId()
-            });
-        }
-
-        return Ok(result.Value);
-    }
-
+    [HttpPut("{id:int}/resumen")]
     [Authorize(Roles = "Administrador,RRHH")]
-    [HttpPut("perfiles/{id:int}/secciones/{numeroSeccion:int}")]
-    [ProducesResponseType(typeof(PerfilResponseDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> ActualizarSeccion([FromRoute] int id, [FromRoute] int numeroSeccion, [FromBody] ActualizarSeccionRequest request)
-    {
-        string userEmail = User.FindFirst(ClaimTypes.Email)?.Value ?? "system@nacionalseguros.com.bo";
-        var command = new ActualizarPerfilSeccionCommand(id, numeroSeccion, request.Contenido, userEmail, request.Motivo);
-        var result = await _sender.Send(command);
-
-        if (result.IsFailure)
-        {
-            return BadRequest(new ApiErrorDto
-            {
-                Code = result.Error.Code,
-                Message = result.Error.Message,
-                Detail = "Error al intentar actualizar la sección del perfil.",
-                CorrelationId = GetCorrelationId()
-            });
-        }
-
-        return Ok(result.Value);
-    }
-
-    [Authorize]
-    [HttpGet("perfiles/{id:int}/auditoria")]
-    [ProducesResponseType(typeof(IEnumerable<PerfilAuditoriaResponseDto>), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> GetAuditoria([FromRoute] int id)
-    {
-        var query = new GetPerfilAuditoriaQuery(id);
-        var result = await _sender.Send(query);
-
-        if (result.IsFailure)
-        {
-            return NotFound(new ApiErrorDto
-            {
-                Code = result.Error.Code,
-                Message = result.Error.Message,
-                Detail = "Error al obtener la auditoría del perfil.",
-                CorrelationId = GetCorrelationId()
-            });
-        }
-
-        return Ok(result.Value);
-    }
-
-    [Authorize]
-    [HttpPost("perfiles/{id:int}/pdf/regenerar")]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
-    public async Task<IActionResult> RegenerarPdf([FromRoute] int id)
+    public async Task<IActionResult> ActualizarResumen([FromRoute] int id, [FromBody] ResumenEjecutivoUpdateRequest request)
     {
-        string userEmail = User.FindFirst(ClaimTypes.Email)?.Value ?? "system@nacionalseguros.com.bo";
-        var command = new RegenerarPdfCommand(id, userEmail);
+        var command = new ActualizarResumenCommand(id, request.SolicitudId, request.ResumenEjecutivoRol, User.Identity?.Name ?? "RRHH", EsAutomatizacion: false);
         var result = await _sender.Send(command);
 
         if (result.IsFailure)
         {
-            return BadRequest(new ApiErrorDto
-            {
-                Code = result.Error.Code,
-                Message = result.Error.Message,
-                Detail = "Error al intentar regenerar el PDF del perfil.",
-                CorrelationId = GetCorrelationId()
-            });
+            return BadRequest(new ApiErrorDto { Code = result.Error.Code, Message = result.Error.Message });
         }
 
         return Ok();
     }
-}
 
-public class GenerarPerfilRequest
-{
-    public int SolicitudId { get; set; }
-}
+    [HttpPost("{id:int}/generar-resumen")]
+    [Authorize(Roles = "Administrador,RRHH")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GenerarResumen([FromRoute] int id)
+    {
+        var perfil = await _context.PerfilesCargo
+            .Include(p => p.Estado)
+            .FirstOrDefaultAsync(p => p.Id == id && !p.IsDeleted);
 
-public class ObservarPerfilRequest
-{
-    public string Justificacion { get; set; } = string.Empty;
-}
+        if (perfil == null)
+        {
+            return NotFound(new ApiErrorDto { Code = "Perfil.NotFound", Message = $"El perfil con ID {id} no existe." });
+        }
 
-public class PerfilCreacionCallbackRequest : NacionalSeguros.Contracts.Requests.PerfilEstructuradoInputDto
-{
-}
+        var webhookUrl = NacionalSeguros.Shared.Primitives.WebhookSettings.PerfilVacanteResumenUrl;
+        var payload = new
+        {
+            perfilCargoId = perfil.Id,
+            solicitudId = perfil.SolicitudId,
+            codigoPerfil = perfil.Codigo,
+            version = perfil.Version
+        };
 
-public class CorregirPerfilRequest
-{
-    public string Cargo { get; set; } = string.Empty;
-    public string Descripcion { get; set; } = string.Empty;
-}
+        try
+        {
+            using var httpClient = new HttpClient();
+            var json = System.Text.Json.JsonSerializer.Serialize(payload);
+            using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+            
+            System.Console.WriteLine($"[Webhook Resumen] POST {webhookUrl}");
+            System.Console.WriteLine($"[Webhook Resumen] Payload: {json}");
+            
+            var response = await httpClient.PostAsync(webhookUrl, content);
+            
+            System.Console.WriteLine($"[Webhook Resumen] Response: {response.StatusCode}");
 
-public class AprobarPerfilRRHHRequest
-{
-    public string? Comentario { get; set; }
-}
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorBody = await response.Content.ReadAsStringAsync();
+                return StatusCode((int)response.StatusCode, new ApiErrorDto 
+                { 
+                    Code = "Webhook.Error", 
+                    Message = $"El webhook de generación de resumen falló con estado {response.StatusCode}.", 
+                    Detail = errorBody 
+                });
+            }
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(StatusCodes.Status500InternalServerError, new ApiErrorDto 
+            { 
+                Code = "Webhook.Exception", 
+                Message = "Ocurrió un error al conectar con el webhook de generación de resumen.", 
+                Detail = ex.Message 
+            });
+        }
 
-public class EnviarPerfilAreaRequest
-{
-    public string? Comentario { get; set; }
-}
+        return Ok(new { Message = "Resumen ejecutivo generado exitosamente." });
+    }
 
-public class ActualizarSeccionRequest
-{
-    public string Contenido { get; set; } = string.Empty;
-    public string? Motivo { get; set; }
+    [HttpPost("{id:int}/observaciones")]
+    [Authorize(Roles = "Solicitante,RRHH,Administrador")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> RegistrarObservacion([FromRoute] int id, [FromBody] PerfilObservacionCreateRequest request)
+    {
+        var currentUser = await GetCurrentUserAsync();
+        if (currentUser == null) return Unauthorized();
+
+        var command = new RegistrarObservacionPerfilCommand(id, request.TipoObservacionId, request.Comentario, currentUser.Id, currentUser.Nombre);
+        var result = await _sender.Send(command);
+
+        if (result.IsFailure)
+        {
+            if (result.Error.Code == "Perfil.Forbidden")
+                return StatusCode(StatusCodes.Status403Forbidden, new ApiErrorDto { Code = "FORBIDDEN", Message = result.Error.Message });
+
+            return BadRequest(new ApiErrorDto { Code = result.Error.Code, Message = result.Error.Message });
+        }
+
+        return Ok();
+    }
+
+    [HttpPost("{id:int}/enviar-observaciones")]
+    [Authorize(Roles = "Solicitante,Administrador,RRHH")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> EnviarObservaciones([FromRoute] int id)
+    {
+        var currentUser = await GetCurrentUserAsync();
+        if (currentUser == null) return Unauthorized();
+
+        var command = new EnviarObservacionesSolicitanteCommand(id, currentUser.Id, currentUser.Nombre);
+        var result = await _sender.Send(command);
+
+        if (result.IsFailure)
+        {
+            if (result.Error.Code == "Perfil.Forbidden")
+                return StatusCode(StatusCodes.Status403Forbidden, new ApiErrorDto { Code = "FORBIDDEN", Message = result.Error.Message });
+
+            return BadRequest(new ApiErrorDto { Code = result.Error.Code, Message = result.Error.Message });
+        }
+
+        return Ok();
+    }
+
+    [HttpGet("{perfilCargoId:int}/observaciones")]
+    [ProducesResponseType(typeof(IEnumerable<PerfilObservacionResponseDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ObtenerObservaciones([FromRoute] int perfilCargoId)
+    {
+        var perfil = await _context.Set<PerfilCargo>().FirstOrDefaultAsync(p => p.Id == perfilCargoId);
+        if (perfil == null) return NotFound();
+
+        var list = await _context.Set<PerfilObservacion>()
+            .Include(o => o.TipoObservacion)
+            .Include(o => o.UsuarioSolicitante)
+            .Include(o => o.AtendidaPorUsuario)
+            .Where(o => o.PerfilCargo.SolicitudId == perfil.SolicitudId)
+            .Select(o => new PerfilObservacionResponseDto(
+                o.Id,
+                o.PerfilCargoId,
+                o.TipoObservacionId,
+                o.TipoObservacion.Nombre,
+                o.Comentario,
+                o.UsuarioSolicitanteId,
+                o.UsuarioSolicitante.Nombre,
+                o.NumeroIteracion,
+                o.EstadoObservacion,
+                o.CreatedDate,
+                o.AtendidaPorUsuarioId,
+                o.AtendidaPorUsuario != null ? o.AtendidaPorUsuario.Nombre : null,
+                o.FechaAtencion
+            ))
+            .ToListAsync();
+
+        return Ok(list);
+    }
+
+    [HttpPost("{id:int}/aprobar-solicitante")]
+    [Authorize(Roles = "Solicitante,RRHH,Administrador")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> AprobarSolicitante([FromRoute] int id)
+    {
+        var currentUser = await GetCurrentUserAsync();
+        if (currentUser == null) return Unauthorized();
+
+        var command = new AprobarSolicitantePerfilCommand(id, currentUser.Id, currentUser.Nombre);
+        var result = await _sender.Send(command);
+
+        if (result.IsFailure)
+        {
+            if (result.Error.Code == "Perfil.Forbidden")
+                return StatusCode(StatusCodes.Status403Forbidden, new ApiErrorDto { Code = "FORBIDDEN", Message = result.Error.Message });
+
+            return BadRequest(new ApiErrorDto { Code = result.Error.Code, Message = result.Error.Message });
+        }
+
+        return Ok();
+    }
+
+    [HttpPost("{id:int}/atender-observaciones")]
+    [Authorize(Roles = "Administrador,RRHH")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> AtenderObservaciones([FromRoute] int id)
+    {
+        var currentUser = await GetCurrentUserAsync();
+        if (currentUser == null) return Unauthorized();
+
+        var command = new AtenderObservacionesPerfilCommand(id, currentUser.Id, currentUser.Nombre);
+        var result = await _sender.Send(command);
+
+        if (result.IsFailure)
+        {
+            return BadRequest(new ApiErrorDto { Code = result.Error.Code, Message = result.Error.Message });
+        }
+
+        return Ok();
+    }
+
+    [HttpPost("observaciones/{observacionId:int}/atender")]
+    [Authorize(Roles = "Administrador,RRHH")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> AtenderObservacionId([FromRoute] int observacionId)
+    {
+        var currentUser = await GetCurrentUserAsync();
+        if (currentUser == null) return Unauthorized();
+
+        var obs = await _context.Set<PerfilObservacion>().FirstOrDefaultAsync(o => o.Id == observacionId);
+        if (obs == null) return NotFound();
+
+        obs.Atender(currentUser.Id);
+        await _context.SaveChangesAsync();
+
+        return Ok();
+    }
+
+    [HttpPost("observaciones/{observacionId:int}/reabrir")]
+    [Authorize(Roles = "Administrador,RRHH")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> ReabrirObservacionId([FromRoute] int observacionId)
+    {
+        var obs = await _context.Set<PerfilObservacion>().FirstOrDefaultAsync(o => o.Id == observacionId);
+        if (obs == null) return NotFound();
+
+        obs.Reabrir();
+        await _context.SaveChangesAsync();
+
+        return Ok();
+    }
+
+    [HttpDelete("observaciones/{observacionId:int}")]
+    [Authorize(Roles = "Solicitante,Administrador,RRHH")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> EliminarObservacionId([FromRoute] int observacionId)
+    {
+        var obs = await _context.Set<PerfilObservacion>().FirstOrDefaultAsync(o => o.Id == observacionId);
+        if (obs == null) return NotFound();
+
+        _context.Set<PerfilObservacion>().Remove(obs);
+        await _context.SaveChangesAsync();
+
+        return Ok();
+    }
+
+    [HttpPost("{id:int}/enviar-area")]
+    [Authorize(Roles = "Administrador,RRHH")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> EnviarArea([FromRoute] int id)
+    {
+        var currentUser = await GetCurrentUserAsync();
+        if (currentUser == null) return Unauthorized();
+
+        var command = new EnviarAreaPerfilCommand(id, currentUser.Id, currentUser.Nombre);
+        var result = await _sender.Send(command);
+
+        if (result.IsFailure)
+        {
+            return BadRequest(new ApiErrorDto { Code = result.Error.Code, Message = result.Error.Message });
+        }
+
+        try
+        {
+            var perfil = await _context.Set<PerfilCargo>().FirstOrDefaultAsync(p => p.Id == id);
+            if (perfil != null)
+            {
+                var webhookUrl = NacionalSeguros.Shared.Primitives.WebhookSettings.EnviarAreaWebhookUrl;
+                var payload = new
+                {
+                    solicitudId = perfil.SolicitudId,
+                    perfilCargoId = perfil.Id
+                };
+
+                _ = Task.Run(async () =>
+                {
+                    try
+                    {
+                        using var httpClient = new HttpClient();
+                        var json = System.Text.Json.JsonSerializer.Serialize(payload);
+                        using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+                        await httpClient.PostAsync(webhookUrl, content);
+                    }
+                    catch (Exception)
+                    {
+                        // Omitir errores de webhook asíncrono
+                    }
+                });
+            }
+        }
+        catch (Exception)
+        {
+            // Omitir excepciones preventivamente
+        }
+
+        return Ok();
+    }
+
+    [HttpPost("{id:int}/aprobar-final")]
+    [Authorize(Roles = "Administrador,RRHH")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> AprobarFinal([FromRoute] int id)
+    {
+        var currentUser = await GetCurrentUserAsync();
+        if (currentUser == null) return Unauthorized();
+
+        var command = new AprobarFinalPerfilCommand(id, currentUser.Id, currentUser.Nombre);
+        var result = await _sender.Send(command);
+
+        if (result.IsFailure)
+        {
+            return BadRequest(new ApiErrorDto { Code = result.Error.Code, Message = result.Error.Message });
+        }
+
+        return Ok();
+    }
+
+    [HttpGet("documentos/{solicitudId:int}/{tipo}/descarga")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DescargarDocumento([FromRoute] int solicitudId, [FromRoute] string tipo)
+    {
+        var currentUser = await GetCurrentUserAsync();
+        if (currentUser == null) return Unauthorized();
+
+        var solicitud = await _context.Solicitudes.FirstOrDefaultAsync(s => s.Id == solicitudId);
+        if (solicitud == null) return NotFound();
+
+        // Si no es Admin ni RRHH, validar que sea el solicitante de la solicitud
+        if (!IsAdminOrRrhh() && solicitud.SolicitanteId != currentUser.Id)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new ApiErrorDto { Code = "FORBIDDEN", Message = "No tiene permisos para descargar documentos de esta solicitud." });
+        }
+
+        var doc = await _context.SolicitudDocumentos
+            .FirstOrDefaultAsync(d => d.SolicitudId == solicitudId && d.TipoDocumento == tipo);
+        if (doc == null) return NotFound();
+
+        if (!string.IsNullOrEmpty(doc.PublicUrl) && doc.PublicUrl.StartsWith("http"))
+        {
+            return Redirect(doc.PublicUrl);
+        }
+
+        if (System.IO.File.Exists(doc.StoragePath))
+        {
+            var bytes = await System.IO.File.ReadAllBytesAsync(doc.StoragePath);
+            return File(bytes, "application/pdf", doc.FileName);
+        }
+
+        return NotFound();
+    }
+
+    private async Task<IActionResult> DescargarPdfInterno(int id, string tipoDocumento)
+    {
+        var currentUser = await GetCurrentUserAsync();
+        if (currentUser == null) return Unauthorized();
+
+        var perfil = await _context.Set<PerfilCargo>()
+            .Include(p => p.Solicitud)
+            .FirstOrDefaultAsync(p => p.Id == id);
+        if (perfil == null) return NotFound(new ApiErrorDto { Code = "Perfil.NotFound", Message = "Perfil no encontrado." });
+
+        // Si no es Admin ni RRHH, validar que sea el solicitante de la solicitud relacionada
+        if (!IsAdminOrRrhh() && perfil.Solicitud.SolicitanteId != currentUser.Id)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new ApiErrorDto { Code = "FORBIDDEN", Message = "No tiene permisos para descargar el documento de este perfil." });
+        }
+
+        var doc = await _context.SolicitudDocumentos
+            .FirstOrDefaultAsync(d => d.SolicitudId == perfil.SolicitudId && d.TipoDocumento == tipoDocumento);
+        if (doc == null) return NotFound(new ApiErrorDto { Code = "Documento.NotFound", Message = "El documento solicitado no está registrado." });
+
+        if (doc.ContenidoBinario != null && doc.ContenidoBinario.Length > 0)
+        {
+            var downloadName = doc.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) ? doc.FileName : $"{doc.FileName}.pdf";
+            return File(doc.ContenidoBinario, "application/pdf", downloadName);
+        }
+
+        if (!string.IsNullOrEmpty(doc.PublicUrl) && doc.PublicUrl.StartsWith("http"))
+        {
+            return Redirect(doc.PublicUrl);
+        }
+
+        string localPath = doc.StoragePath;
+        if (!System.IO.File.Exists(localPath))
+        {
+            if (!string.IsNullOrEmpty(doc.PublicUrl))
+            {
+                var relPath = doc.PublicUrl.TrimStart('/');
+                var candidate = System.IO.Path.Combine(Directory.GetCurrentDirectory(), relPath);
+                if (System.IO.File.Exists(candidate)) localPath = candidate;
+            }
+
+            if (!System.IO.File.Exists(localPath) && !string.IsNullOrEmpty(doc.StoragePath))
+            {
+                var filenameOnly = System.IO.Path.GetFileName(doc.StoragePath);
+                var candidate = System.IO.Path.Combine(Directory.GetCurrentDirectory(), "uploads", filenameOnly);
+                if (System.IO.File.Exists(candidate)) localPath = candidate;
+            }
+        }
+
+        if (System.IO.File.Exists(localPath))
+        {
+            var bytes = await System.IO.File.ReadAllBytesAsync(localPath);
+            var downloadName = doc.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) ? doc.FileName : $"{doc.FileName}.pdf";
+            return File(bytes, "application/pdf", downloadName);
+        }
+
+        return NotFound(new ApiErrorDto { Code = "Documento.FileNotFound", Message = "El archivo físico PDF no fue encontrado en el servidor." });
+    }
+
+    [HttpGet("{id:int}/pdf-estructurado")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public Task<IActionResult> DescargarPdfEstructurado([FromRoute] int id)
+    {
+        return DescargarPdfInterno(id, "PERFIL_ESTRUCTURADO_PDF");
+    }
+
+    [HttpGet("{id:int}/pdf-resumen")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public Task<IActionResult> DescargarPdfResumen([FromRoute] int id)
+    {
+        return DescargarPdfInterno(id, "RESUMEN_EJECUTIVO_PDF");
+    }
 }

@@ -2213,24 +2213,23 @@ public class InternalApiController : ControllerBase
         }
 
         string fileName = file?.FileName ?? $"{tipoDocumento}_{perfilId}.pdf";
-        string storageProvider = file != null ? "LOCAL" : "AZURE";
+        string storageProvider = file != null ? "DATABASE" : "AZURE";
         string storagePath = "";
         string? resolvedUrl = publicUrl;
+        byte[]? binaryContent = null;
 
         if (file != null)
         {
-            string uploadsFolder = Path.Combine(Directory.GetCurrentDirectory(), "uploads");
-            if (!Directory.Exists(uploadsFolder))
+            using (var ms = new MemoryStream())
             {
-                Directory.CreateDirectory(uploadsFolder);
+                await file.CopyToAsync(ms);
+                binaryContent = ms.ToArray();
             }
-            string uniqueFileName = $"{Guid.NewGuid()}_{fileName}";
-            storagePath = Path.Combine(uploadsFolder, uniqueFileName);
-            using (var stream = new FileStream(storagePath, FileMode.Create))
+            storagePath = $"DATABASE://{fileName}";
+            if (string.IsNullOrEmpty(resolvedUrl))
             {
-                await file.CopyToAsync(stream);
+                resolvedUrl = $"/api/internal/perfiles/{perfilId}/documentos/perfil-estructurado/descarga";
             }
-            resolvedUrl = $"/uploads/{uniqueFileName}";
         }
         else if (!string.IsNullOrEmpty(publicUrl))
         {
@@ -2252,7 +2251,8 @@ public class InternalApiController : ControllerBase
                 storagePath,
                 resolvedUrl,
                 "n8n_automation",
-                Guid.NewGuid()
+                Guid.NewGuid(),
+                binaryContent
             );
             _dbContext.Set<SolicitudDocumento>().Update(existing);
         }
@@ -2268,6 +2268,10 @@ public class InternalApiController : ControllerBase
                 "n8n_automation",
                 Guid.NewGuid()
             );
+            if (binaryContent != null)
+            {
+                document.SetContenidoBinario(binaryContent);
+            }
             await _dbContext.Set<SolicitudDocumento>().AddAsync(document);
         }
 
@@ -2303,7 +2307,7 @@ public class InternalApiController : ControllerBase
         }
 
         await _dbContext.SaveChangesAsync();
-        return Ok(new { Message = "PDF guardado exitosamente." });
+        return Ok(new { Message = "PDF guardado exitosamente en la base de datos." });
     }
 
     [HttpPost("perfiles/{perfilId:int}/documentos/perfil-estructurado")]
@@ -2348,11 +2352,20 @@ public class InternalApiController : ControllerBase
             .FirstOrDefaultAsync(d => d.SolicitudId == perfil.SolicitudId && d.TipoDocumento == tipoDocumento);
         if (doc == null) return NotFound(new ApiErrorDto { Code = "Documento.NotFound", Message = "El documento solicitado no está registrado.", CorrelationId = GetCorrelationId() });
 
+        // Prioridad 1: Servir desde ContenidoBinario almacenado en la Base de Datos
+        if (doc.ContenidoBinario != null && doc.ContenidoBinario.Length > 0)
+        {
+            var downloadName = doc.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) ? doc.FileName : $"{doc.FileName}.pdf";
+            return File(doc.ContenidoBinario, "application/pdf", downloadName);
+        }
+
+        // Prioridad 2: Si es una URL pública externa HTTP
         if (!string.IsNullOrEmpty(doc.PublicUrl) && doc.PublicUrl.StartsWith("http"))
         {
             return Redirect(doc.PublicUrl);
         }
 
+        // Prioridad 3: Archivo en disco local (fallback)
         if (System.IO.File.Exists(doc.StoragePath))
         {
             var bytes = await System.IO.File.ReadAllBytesAsync(doc.StoragePath);
