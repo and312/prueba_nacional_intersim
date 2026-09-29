@@ -466,6 +466,12 @@ public class PerfilesController : ControllerBase
             .FirstOrDefaultAsync(d => d.SolicitudId == perfil.SolicitudId && d.TipoDocumento == tipoDocumento);
         if (doc == null) return NotFound(new ApiErrorDto { Code = "Documento.NotFound", Message = "El documento solicitado no está registrado." });
 
+        if (doc.ContenidoBinario != null && doc.ContenidoBinario.Length > 0)
+        {
+            var downloadName = doc.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) ? doc.FileName : $"{doc.FileName}.pdf";
+            return File(doc.ContenidoBinario, "application/pdf", downloadName);
+        }
+
         if (!string.IsNullOrEmpty(doc.PublicUrl) && doc.PublicUrl.StartsWith("http"))
         {
             return Redirect(doc.PublicUrl);
