@@ -53,7 +53,7 @@ public class RegenerarPdfCommandHandler : IRequestHandler<RegenerarPdfCommand, R
         }
 
         string correlationId = solicitud.CorrelationId?.ToString() ?? Guid.NewGuid().ToString();
-        string url = "https://nacional-seguros-dev.isia.cloud/webhook/ares-generador-pdf";
+        string url = WebhookSettings.AresGeneradorPdfUrl;
 
         var payload = new
         {
