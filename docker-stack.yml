@@ -1,0 +1,99 @@
+# ==============================================================================
+# DESPLIEGUE EN DOCKER SWARM - SIR (SISTEMA INTELIGENTE DE RECLUTAMIENTO)
+# NACIONAL SEGUROS · INTERSIM
+# ==============================================================================
+# Comando de despliegue sugerido por NS:
+# export REGISTRY=registry.midominio.local:5000 TAG=1.0.0
+# export SQL_HOST=10.0.0.20 REDIS_HOST=10.0.0.21
+# docker stack deploy -c docker-stack.yml --with-registry-auth nacionalseguros
+# ==============================================================================
+
+version: '3.8'
+
+services:
+  api:
+    image: ${REGISTRY}/nacionalseguros-api:${TAG}
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:8080
+      - Redis__ConnectionString=${REDIS_HOST}:6379
+      - Webhooks__AresResumidorUrl=${WEBHOOK_ARES_RESUMIDOR:-https://nacional-seguros-dev.isia.cloud/webhook/ares-resumidor}
+      - Webhooks__AresGeneradorPdfUrl=${WEBHOOK_ARES_GENERADOR_PDF:-https://nacional-seguros-dev.isia.cloud/webhook/ares-generador-pdf-perfil-estructurado}
+      - Webhooks__EnviarAreaWebhookUrl=${WEBHOOK_ENVIAR_AREA:-https://nacional-seguros-dev.isia.cloud/webhook/enviar_area}
+      - Webhooks__PerfilVacanteResumenUrl=${WEBHOOK_PERFIL_VACANTE_RESUMEN:-https://nacional-seguros-dev.isia.cloud/webhook/perfil_vacante_resumen}
+      - Webhooks__PdfResumenEjecutivoUrl=${WEBHOOK_PDF_RESUMEN_EJECUTIVO:-https://nacional-seguros-dev.isia.cloud/webhook/A4_Genera_PDF_resumen_ejecutivo_del_rol}
+      - Webhooks__NotificadorSolicitanteUrl=${WEBHOOK_NOTIFICADOR_SOLICITANTE:-https://nacional-seguros-dev.isia.cloud/webhook/Notificador2_Solicitante_observa_perfil}
+      - Webhooks__MotorMatchingUrl=${WEBHOOK_MOTOR_MATCHING:-https://nacional-seguros-dev.isia.cloud/webhook/motor_matching}
+      - Webhooks__MotorMatchingMvpUrl=${WEBHOOK_MOTOR_MATCHING_MVP:-https://nacional-seguros-dev.isia.cloud/webhook/motor_Matching_Modificado_MVP}
+    secrets:
+      - source: sql_connection
+        target: ConnectionStrings__DefaultConnection
+    ports:
+      - target: 8080
+        published: 8080
+        protocol: tcp
+        mode: ingress
+    networks:
+      - backend
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+        failure_action: rollback
+      rollback_config:
+        parallelism: 1
+        order: stop-first
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 5
+        window: 60s
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+        reservations:
+          memory: 256M
+      placement:
+        constraints:
+          - node.role == worker
+
+  frontend:
+    image: ${REGISTRY}/nacionalseguros-frontend:${TAG}
+    ports:
+      - target: 80
+        published: 8000
+        protocol: tcp
+        mode: ingress
+    networks:
+      - backend
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 1
+        delay: 10s
+        order: start-first
+        failure_action: rollback
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 5
+        window: 60s
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
+      placement:
+        constraints:
+          - node.role == worker
+
+networks:
+  backend:
+    driver: overlay
+    attachable: false
+
+secrets:
+  sql_connection:
+    external: true

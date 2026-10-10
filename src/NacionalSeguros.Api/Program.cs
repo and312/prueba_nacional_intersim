@@ -190,10 +190,15 @@ builder.Services.AddHealthChecks()
     .AddDbContextCheck<ApplicationDbContext>()
     .AddRedis(builder.Configuration["Redis:ConnectionString"] ?? "localhost:6379", name: "redis");
 
-// 11.5. Configurar Webhooks globalmente en la capa Shared
+// 11.5. Configurar Webhooks globalmente en la capa Shared desde la configuración (o variables de entorno Docker)
 NacionalSeguros.Shared.Primitives.WebhookSettings.AresResumidorUrl = builder.Configuration["Webhooks:AresResumidorUrl"] ?? "https://nacional-seguros-dev.isia.cloud/webhook/ares-resumidor";
+NacionalSeguros.Shared.Primitives.WebhookSettings.AresGeneradorPdfUrl = builder.Configuration["Webhooks:AresGeneradorPdfUrl"] ?? "https://nacional-seguros-dev.isia.cloud/webhook/ares-generador-pdf-perfil-estructurado";
 NacionalSeguros.Shared.Primitives.WebhookSettings.EnviarAreaWebhookUrl = builder.Configuration["Webhooks:EnviarAreaWebhookUrl"] ?? "https://nacional-seguros-dev.isia.cloud/webhook/enviar_area";
 NacionalSeguros.Shared.Primitives.WebhookSettings.PerfilVacanteResumenUrl = builder.Configuration["Webhooks:PerfilVacanteResumenUrl"] ?? "https://nacional-seguros-dev.isia.cloud/webhook/perfil_vacante_resumen";
+NacionalSeguros.Shared.Primitives.WebhookSettings.PdfResumenEjecutivoUrl = builder.Configuration["Webhooks:PdfResumenEjecutivoUrl"] ?? "https://nacional-seguros-dev.isia.cloud/webhook/A4_Genera_PDF_resumen_ejecutivo_del_rol";
+NacionalSeguros.Shared.Primitives.WebhookSettings.NotificadorSolicitanteUrl = builder.Configuration["Webhooks:NotificadorSolicitanteUrl"] ?? "https://nacional-seguros-dev.isia.cloud/webhook/Notificador2_Solicitante_observa_perfil";
+NacionalSeguros.Shared.Primitives.WebhookSettings.MotorMatchingUrl = builder.Configuration["Webhooks:MotorMatchingUrl"] ?? "https://nacional-seguros-dev.isia.cloud/webhook/motor_matching";
+NacionalSeguros.Shared.Primitives.WebhookSettings.MotorMatchingMvpUrl = builder.Configuration["Webhooks:MotorMatchingMvpUrl"] ?? "https://nacional-seguros-dev.isia.cloud/webhook/motor_Matching_Modificado_MVP";
 
 var app = builder.Build();
 
