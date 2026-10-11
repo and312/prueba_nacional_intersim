@@ -484,10 +484,10 @@ export class EstrategiasService {
           desgloseList = parsedDesglose.map((c: any) => {
             const critNombre = typeof c === 'string' ? c : (c.criterio || c.Criterio || c.nombre || c.nombreCriterio || 'Criterio evaluado');
             const evidencia = typeof c === 'string' ? 'Evaluación técnica completada' : (c.evidencia || c.Evidencia || c.resultadoEncontrado || c.ResultadoEncontrado || 'Evaluación técnica completada');
-            
+
             const ponderacion = (c && typeof c === 'object' && (c.ponderacion ?? c.Ponderacion ?? c.peso)) != null ? Number(c.ponderacion ?? c.Ponderacion ?? c.peso) : null;
             const puntajeObtenido = (c && typeof c === 'object' && (c.puntajeObtenido ?? c.PuntajeObtenido ?? c.puntajeObtenidoNum)) != null ? Number(c.puntajeObtenido ?? c.PuntajeObtenido ?? c.puntajeObtenidoNum) : null;
-            
+
             let puntajeTexto = '100%';
             let porcentajeCalc = 100;
 
@@ -806,6 +806,16 @@ export class EstrategiasService {
       nivelConfianza: 92,
       estrategiaRecomendada: 'INTERNA',
       justificacion: 'Análisis automatizado basado en perfiles estructurales e historial de competencias.',
+      parametrosMatching: {
+        ajusteAltoDesde: 80,
+        ajusteMedioDesde: 60,
+        ajusteBajoDesde: 40
+      },
+      fuentesConsultadas: [
+        { fuente: 'BD_PERSONAL_INTERNO', nombre: 'Base de personal interno', estado: 'CONSULTADO', totalRecibidos: 5, totalPotenciales: 5 },
+        { fuente: 'BD_POSTULANTES_HISTORICOS', nombre: 'Base histórica de postulantes', estado: 'CONSULTADO', totalRecibidos: 7, totalPotenciales: 0 }
+      ],
+      resumenDescartes: [],
       fechaInicio: new Date().toISOString(),
       createdDate: new Date().toISOString()
     };
@@ -900,6 +910,9 @@ export class EstrategiasService {
     let parametrosRaw: any = dto.parametrosMatching;
     if (typeof parametrosRaw === 'string') {
       try { parametrosRaw = JSON.parse(parametrosRaw); } catch { parametrosRaw = {}; }
+    }
+    if (!parametrosRaw || typeof parametrosRaw !== 'object') {
+      parametrosRaw = {};
     }
 
     // Extract totals by fuente from fuentesConsultadas
@@ -1065,9 +1078,9 @@ export class EstrategiasService {
         duracionTexto
       },
       parametrosMatching: {
-        ajusteAltoDesde: parametrosRaw.ajusteAltoDesde ?? 80,
-        ajusteMedioDesde: parametrosRaw.ajusteMedioDesde ?? 60,
-        ajusteBajoDesde: parametrosRaw.ajusteBajoDesde ?? 40
+        ajusteAltoDesde: parametrosRaw?.ajusteAltoDesde ?? 80,
+        ajusteMedioDesde: parametrosRaw?.ajusteMedioDesde ?? 60,
+        ajusteBajoDesde: parametrosRaw?.ajusteBajoDesde ?? 40
       },
       recomendacion: {
         estrategiaPrioritaria: estrategiaRecomendada,

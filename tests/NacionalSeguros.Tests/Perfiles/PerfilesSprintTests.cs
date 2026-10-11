@@ -115,6 +115,8 @@ public class PerfilesSprintTests
         typeof(PerfilCargo).GetProperty("Solicitud")?.SetValue(perfil, solicitud);
 
         _perfilRepoMock.Setup(r => r.GetByIdWithDetailsAsync(10)).ReturnsAsync(perfil);
+        var obsPendiente = new PerfilObservacion(10, 100, "Obs 1", 5, 1);
+        _perfilRepoMock.Setup(r => r.GetPendientesByPerfilIdAsync(10)).ReturnsAsync(new List<PerfilObservacion> { obsPendiente });
 
         var nextEstado = new Estado("PERF-OBS-AREA", "Observado Area", "Perfil") { Id = 5 };
         _estadoRepoMock.Setup(r => r.GetByCodigoAsync("PERF-OBS-AREA")).ReturnsAsync(nextEstado);

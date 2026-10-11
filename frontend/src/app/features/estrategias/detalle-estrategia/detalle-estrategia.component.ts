@@ -99,7 +99,7 @@ export class DetalleEstrategiaComponent implements OnInit, OnDestroy {
 
   copiarTextoBrief(): void {
     const brief = this.estrategia()?.estrategiaExterna?.briefEditable;
-    
+
     const texto = `Título de publicación:
 ${brief?.titulo || 'Suscriptor Senior de Ramos Generales — La Paz'}
 
@@ -1027,7 +1027,7 @@ Experiencia en reaseguros · Inglés intermedio`;
               } : null);
             }
           },
-          error: () => {}
+          error: () => { }
         });
       }
     });
@@ -1166,6 +1166,12 @@ Experiencia en reaseguros · Inglés intermedio`;
 
   volver(): void {
     this.router.navigate(['/estrategias']);
+  }
+
+  reintentarCarga(): void {
+    const idParam = this.route.snapshot.paramMap.get('estrategiaId');
+    const id = idParam ? Number(idParam) : 2;
+    this.cargarDetalle(id);
   }
 
   isRefreshingEvaluados = signal<boolean>(false);

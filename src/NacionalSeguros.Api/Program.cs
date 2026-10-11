@@ -98,6 +98,10 @@ builder.Services.AddDbContext<ApplicationDbContext>((sp, options) =>
         sqlOptions => {
             sqlOptions.MigrationsAssembly(typeof(ApplicationDbContext).Assembly.FullName);
             sqlOptions.MaxBatchSize(1); // Deshabilita batching (MERGE) para compatibilidad con tablas Ledger
+            sqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 3,
+                maxRetryDelay: TimeSpan.FromSeconds(5),
+                errorNumbersToAdd: null);
         })
     .AddInterceptors(sessionInterceptor, eventInterceptor);
 });
@@ -199,6 +203,9 @@ NacionalSeguros.Shared.Primitives.WebhookSettings.PdfResumenEjecutivoUrl = build
 NacionalSeguros.Shared.Primitives.WebhookSettings.NotificadorSolicitanteUrl = builder.Configuration["Webhooks:NotificadorSolicitanteUrl"] ?? "https://nacional-seguros-dev.isia.cloud/webhook/Notificador2_Solicitante_observa_perfil";
 NacionalSeguros.Shared.Primitives.WebhookSettings.MotorMatchingUrl = builder.Configuration["Webhooks:MotorMatchingUrl"] ?? "https://nacional-seguros-dev.isia.cloud/webhook/motor_matching";
 NacionalSeguros.Shared.Primitives.WebhookSettings.MotorMatchingMvpUrl = builder.Configuration["Webhooks:MotorMatchingMvpUrl"] ?? "https://nacional-seguros-dev.isia.cloud/webhook/motor_Matching_Modificado_MVP";
+NacionalSeguros.Shared.Primitives.WebhookSettings.AresGeneradorPdfSolicitudUrl = builder.Configuration["Webhooks:AresGeneradorPdfSolicitudUrl"] ?? "https://nacional-seguros-dev.isia.cloud/webhook/ares-generador-pdf";
+NacionalSeguros.Shared.Primitives.WebhookSettings.PerfilVacanteWebhookUrl = builder.Configuration["Webhooks:PerfilVacanteWebhookUrl"] ?? "https://nacional-seguros-dev.isia.cloud/webhook/perfil_vacante";
+NacionalSeguros.Shared.Primitives.WebhookSettings.NotificadorDecisionRrhhUrl = builder.Configuration["Webhooks:NotificadorDecisionRrhhUrl"] ?? "https://nacional-seguros-dev.isia.cloud/webhook/Notificador_Aprobado_Rechazado_Observado_SIR";
 
 var app = builder.Build();
 

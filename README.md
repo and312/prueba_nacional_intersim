@@ -370,29 +370,50 @@ npm run build
 # Genera los archivos en: frontend/dist/
 ```
 
-### Despliegue con Docker Compose
+### Despliegue en Producción (Docker Swarm)
 
+El despliegue oficial para Nacional Seguros se realiza mediante **Docker Swarm** utilizando `docker-stack.yml`, configuración desacoplada vía variables de entorno (`.env`) y gestión segura de secretos con Docker Secrets.
+
+#### 1. Configurar Variables de Entorno (.env)
+Copiar la plantilla oficial en el servidor de despliegue y ajustar los valores corporativos:
 ```bash
-# Desde la raíz del proyecto
-docker compose up -d --build
-
-# Servicios:
-#  - Backend:  http://host:8080
-#  - Frontend: http://host:8000
+cp .env.template .env
 ```
 
-Las variables de entorno se pueden inyectar con un archivo `.env` en la raíz:
-
-```env
-# .env — NO subir al repositorio
-DB_CONNECTION=Server=tu-sql,1433;Database=SIR_NacionalSeguros;User Id=usr_ns;Password=Pass;TrustServerCertificate=True;
-REDIS_CONNECTION=redis-host:6379
+#### 2. Crear Secret de Base de Datos (Docker Secret)
+Inyectar la cadena de conexión de producción de forma segura sin exponer credenciales en archivos planos:
+```bash
+echo "Server=sql-host.local,1433;Database=SIR_NacionalSeguros;User Id=usr_ns;Password=TU_PASSWORD_SEGURO;TrustServerCertificate=True;Encrypt=True;" | docker secret create sql_connection -
 ```
 
-### Actualización rápida del backend en servidor
-
+#### 3. Desplegar el Stack
 ```bash
-# 1. Subir los archivos modificados al servidor
-# 2. En el servidor, reconstruir solo el API:
-docker compose -f /opt/docker/docker-compose.yml up -d --build nacionalseguros.api
+export REGISTRY=registry.midominio.local:5000 TAG=1.0.0
+export SQL_HOST=10.0.0.20 REDIS_HOST=10.0.0.21
+docker stack deploy -c docker-stack.yml --with-registry-auth nacionalseguros
+```
+
+---
+
+### Enrutamiento de Red y API Gateway / Reverse Proxy
+
+El frontend de Angular consume el backend mediante rutas relativas `/api/v1/...`. Dependiendo de la topología de red corporativa de Nacional Seguros, se contemplan dos alternativas de enrutamiento:
+
+#### Opción A: Con API Gateway / Reverse Proxy Corporativo (Recomendado)
+Si Nacional Seguros utiliza un balanceador frontal (Traefik, NGINX Ingress, HAProxy, F5 o API Gateway corporativo):
+* Enrutar prefijo `/api/*` ➔ al servicio `api:8080` de la red overlay del stack.
+* Enrutar el resto de rutas `/*` ➔ al servicio `frontend:80`.
+* *No requiere ninguna modificación en los contenedores ni en el código.*
+
+#### Opción B: Despliegue Standalone (Sin Gateway externo)
+Si el clúster expone el puerto del frontend directamente (puerto 8000), el Nginx interno del frontend debe reenviar el tráfico de `/api` hacia el backend. Para ello, en `frontend/nginx.conf` se habilita la directiva de proxy:
+```nginx
+location /api/ {
+    proxy_pass http://api:8080;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
 ```
