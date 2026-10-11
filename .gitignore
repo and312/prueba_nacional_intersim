@@ -34,6 +34,7 @@ appsettings.local.json
 appsettings.local.Development.json
 secrets.json
 secrets.dev.json
+src/NacionalSeguros.Api/appsettings.Development.json
 
 # Rider
 .idea/
