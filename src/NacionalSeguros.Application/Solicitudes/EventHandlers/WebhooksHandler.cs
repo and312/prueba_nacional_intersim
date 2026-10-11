@@ -130,7 +130,7 @@ public class WebhooksHandler :
 
         if (estadoNuevo.Codigo == "SOL-APR")
         {
-            url = "https://nacional-seguros-dev.isia.cloud/webhook/ares-generador-pdf";
+            url = WebhookSettings.AresGeneradorPdfSolicitudUrl;
             triggerSource = "BACKOFFICE_APPROVED";
         }
 
@@ -156,7 +156,7 @@ public class WebhooksHandler :
             _ = EnviarWebhookAsync(url, payload, solicitud.Id, null, solicitud.CorrelationId?.ToString());
 
             // Enviar webhook específico para perfil vacante (n8n)
-            var n8nWebhookUrl = "https://nacional-seguros-dev.isia.cloud/webhook/perfil_vacante";
+            var n8nWebhookUrl = WebhookSettings.PerfilVacanteWebhookUrl;
             var n8nPayload = new
             {
                 solicitudId = solicitud.Id,
@@ -204,7 +204,7 @@ public class WebhooksHandler :
                 var usuarioChanger = await _usuarioRepository.GetByCorreoAsync(ev.Changer);
                 if (usuarioChanger != null && System.Linq.Enumerable.Any(usuarioChanger.Roles, r => string.Equals(r.Nombre, "RRHH", StringComparison.OrdinalIgnoreCase)))
                 {
-                    var rrhhWebhookUrl = "https://nacional-seguros-dev.isia.cloud/webhook/Notificador_Aprobado_Rechazado_Observado_SIR";
+                    var rrhhWebhookUrl = WebhookSettings.NotificadorDecisionRrhhUrl;
                     var rrhhPayload = new { id = solicitud.Id };
                     _ = EnviarWebhookAsync(rrhhWebhookUrl, rrhhPayload, solicitud.Id, null, solicitud.CorrelationId?.ToString());
                 }

@@ -25,6 +25,9 @@ services:
       - Webhooks__NotificadorSolicitanteUrl=${WEBHOOK_NOTIFICADOR_SOLICITANTE:-https://nacional-seguros-dev.isia.cloud/webhook/Notificador2_Solicitante_observa_perfil}
       - Webhooks__MotorMatchingUrl=${WEBHOOK_MOTOR_MATCHING:-https://nacional-seguros-dev.isia.cloud/webhook/motor_matching}
       - Webhooks__MotorMatchingMvpUrl=${WEBHOOK_MOTOR_MATCHING_MVP:-https://nacional-seguros-dev.isia.cloud/webhook/motor_Matching_Modificado_MVP}
+      - Webhooks__AresGeneradorPdfSolicitudUrl=${WEBHOOK_ARES_GENERADOR_PDF_SOLICITUD:-https://nacional-seguros-dev.isia.cloud/webhook/ares-generador-pdf}
+      - Webhooks__PerfilVacanteWebhookUrl=${WEBHOOK_PERFIL_VACANTE:-https://nacional-seguros-dev.isia.cloud/webhook/perfil_vacante}
+      - Webhooks__NotificadorDecisionRrhhUrl=${WEBHOOK_NOTIFICADOR_DECISION_RRHH:-https://nacional-seguros-dev.isia.cloud/webhook/Notificador_Aprobado_Rechazado_Observado_SIR}
     secrets:
       - source: sql_connection
         target: ConnectionStrings__DefaultConnection
