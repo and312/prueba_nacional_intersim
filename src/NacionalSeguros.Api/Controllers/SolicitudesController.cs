@@ -6,6 +6,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using NacionalSeguros.Application.Solicitudes.Commands.ActualizarSolicitud;
 using NacionalSeguros.Application.Solicitudes.Commands.CancelarSolicitud;
 using NacionalSeguros.Application.Solicitudes.Commands.CrearSolicitud;
@@ -18,6 +19,7 @@ using NacionalSeguros.Application.Solicitudes.Queries.GetWhatsAppCostCheck;
 using NacionalSeguros.Contracts.Requests;
 using NacionalSeguros.Contracts.Responses;
 using NacionalSeguros.Contracts.Security;
+using NacionalSeguros.Persistence.Context;
 using NacionalSeguros.Shared.Primitives;
 
 namespace NacionalSeguros.Api.Controllers;
@@ -28,10 +30,12 @@ namespace NacionalSeguros.Api.Controllers;
 public class SolicitudesController : ControllerBase
 {
     private readonly ISender _sender;
+    private readonly ApplicationDbContext _context;
 
-    public SolicitudesController(ISender sender)
+    public SolicitudesController(ISender sender, ApplicationDbContext context)
     {
         _sender = sender ?? throw new ArgumentNullException(nameof(sender));
+        _context = context ?? throw new ArgumentNullException(nameof(context));
     }
 
     private string GetUserEmail()
@@ -357,6 +361,47 @@ public class SolicitudesController : ControllerBase
         }
 
         return Ok(result.Value);
+    }
+
+    [HttpGet("{id:int}/documentos/{tipo}/descarga")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DescargarDocumentoSolicitud([FromRoute] int id, [FromRoute] string tipo)
+    {
+        var normalizedTipo = tipo.Replace("-", " ").Replace("_", " ");
+        var doc = await _context.SolicitudDocumentos
+            .FirstOrDefaultAsync(d => d.SolicitudId == id &&
+                (d.TipoDocumento == tipo ||
+                 d.TipoDocumento == normalizedTipo ||
+                 (tipo == "SOLICITUD_ESTRUCTURADA_PDF" && d.TipoDocumento == "Solicitud estructurada PDF") ||
+                 (tipo == "solicitud-estructurada" && d.TipoDocumento == "Solicitud estructurada PDF")));
+
+        if (doc == null) return NotFound();
+
+        // Prioridad 1: Binario almacenado en la Base de Datos
+        if (doc.ContenidoBinario != null && doc.ContenidoBinario.Length > 0)
+        {
+            var fileName = doc.FileName.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)
+                ? doc.FileName
+                : $"{doc.FileName}.pdf";
+            return File(doc.ContenidoBinario, "application/pdf", fileName);
+        }
+
+        // Prioridad 2: URL pública externa
+        if (!string.IsNullOrEmpty(doc.PublicUrl) && doc.PublicUrl.StartsWith("http"))
+        {
+            return Redirect(doc.PublicUrl);
+        }
+
+        // Prioridad 3: Archivo en disco (fallback)
+        if (System.IO.File.Exists(doc.StoragePath))
+        {
+            var bytes = await System.IO.File.ReadAllBytesAsync(doc.StoragePath);
+            return File(bytes, "application/pdf", doc.FileName);
+        }
+
+        return NotFound();
     }
 
     private string GetCorrelationId()
