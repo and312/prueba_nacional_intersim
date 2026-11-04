@@ -95,6 +95,21 @@ export class ProfileTableComponent {
     this.actionClick.emit({ action, profile });
   }
 
+  splitCodigo(codigo: string | null | undefined): { prefix: string; suffix: string } {
+    if (!codigo) return { prefix: '', suffix: '' };
+    if (codigo.startsWith('PRF-SOL-')) {
+      return { prefix: 'PRF-SOL-', suffix: codigo.substring(8) };
+    }
+    if (codigo.startsWith('PRF-')) {
+      return { prefix: 'PRF-', suffix: codigo.substring(4) };
+    }
+    const idx = codigo.indexOf('-');
+    if (idx !== -1) {
+      return { prefix: codigo.substring(0, idx + 1), suffix: codigo.substring(idx + 1) };
+    }
+    return { prefix: '', suffix: codigo };
+  }
+
   trackByProfileId(index: number, item: ProfileListItem): number {
     return item.id;
   }

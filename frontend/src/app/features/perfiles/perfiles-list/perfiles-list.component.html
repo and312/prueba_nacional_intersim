@@ -40,7 +40,7 @@
   ></app-profile-summary-cards>
 
   <!-- Contenedor de la Tabla -->
-  <div class="perfiles-table-card">
+  <div class="perfiles-table-card" [class.is-fullscreen]="isTableFullscreen()">
     <app-loader [isLoading]="isLoading()" message="Cargando perfiles..."></app-loader>
 
     <!-- Filtros de Perfil -->
@@ -48,6 +48,8 @@
       [userRole]="userRole()"
       [showAreaFilter]="roleConfig().showAreaFilter"
       (filterChange)="onFilterChange($event)"
+      [isFullscreen]="isTableFullscreen()"
+      (toggleFullscreen)="toggleTableFullscreen()"
     ></app-profile-filters>
 
     @if (isError()) {

@@ -110,65 +110,109 @@
     </div>
   </div>
 
-  <div class="solicitudes-table-card">
+  <div class="solicitudes-table-card" [class.is-fullscreen]="isTableFullscreen()">
     <app-loader [isLoading]="componentLoading.isLoading('solicitudes')()" message="Cargando solicitudes..."></app-loader>
     <div class="solicitudes-filters-card">
       <div class="solicitudes-filters-grid">
         <div class="solicitudes-filter-field solicitudes-search-filter">
-          <label>Buscar</label>
+          <label class="filter-label-desktop">Buscar</label>
           <div class="solicitudes-filter-search">
             <span class="material-symbols-outlined">search</span>
             <input (input)="updateSearch($event)" [value]="searchQuery()" type="text" placeholder="Buscar por cargo o área...">
+            @if (searchQuery()) {
+              <button class="clear-search-btn" type="button" (click)="clearSearch()">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            }
           </div>
         </div>
 
-        <div class="solicitudes-filter-field">
-          <label>Estado</label>
-          <select (change)="updateEstado($event)" [value]="selectedEstado()">
-            <option value="">Todos los estados</option>
-            <option value="Solicitud Enviada a RRHH">Enviada a RRHH</option>
-            <option value="Solicitud Observada">Observada</option>
-            <option value="Solicitud Aprobada">Aprobada</option>
-            <option value="Solicitud Rechazada">Rechazada</option>
-          </select>
-        </div>
-
-        <div class="solicitudes-filter-field">
-          <label>Área del solicitante</label>
-          <select (change)="updateArea($event)" [value]="selectedArea()">
-            <option value="">Todas las áreas</option>
-            @for (area of availableAreas(); track area) {
-              <option [value]="area">{{ area }}</option>
+        <div class="solicitudes-mobile-toolbar-actions">
+          <button type="button" 
+                  class="mobile-filter-toggle-btn" 
+                  (click)="toggleMobileFilters()" 
+                  [class.is-active]="isMobileFiltersOpen()"
+                  [attr.aria-expanded]="isMobileFiltersOpen()"
+                  title="Filtros secundarios">
+            <span class="material-symbols-outlined">tune</span>
+            <span class="mobile-btn-text">Filtros</span>
+            @if (activeFiltersCount() > 0) {
+              <span class="mobile-filter-badge">{{ activeFiltersCount() }}</span>
             }
-          </select>
+          </button>
+
+          <button type="button" 
+                  class="table-fullscreen-toggle-btn mobile-fs-btn" 
+                  (click)="toggleTableFullscreen()" 
+                  [attr.aria-label]="isTableFullscreen() ? 'Salir' : 'Maximizar'" 
+                  [title]="isTableFullscreen() ? 'Salir (Esc)' : 'Maximizar'">
+            <span class="material-symbols-outlined">{{ isTableFullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</span>
+            <span class="mobile-btn-text">{{ isTableFullscreen() ? 'Salir' : 'Maximizar' }}</span>
+          </button>
         </div>
 
-        <div class="solicitudes-filter-field">
-          <label>Desde</label>
-          <input (change)="updateFechaDesde($event)" [value]="selectedFechaDesde()" type="date">
-        </div>
+        <div class="solicitudes-secondary-filters" [class.is-open]="isMobileFiltersOpen()">
+          <div class="solicitudes-filter-field">
+            <label>Estado</label>
+            <select (change)="updateEstado($event)" [value]="selectedEstado()">
+              <option value="">Todos los estados</option>
+              <option value="Solicitud Enviada a RRHH">Enviada a RRHH</option>
+              <option value="Solicitud Observada">Observada</option>
+              <option value="Solicitud Aprobada">Aprobada</option>
+              <option value="Solicitud Rechazada">Rechazada</option>
+            </select>
+          </div>
 
-        <div class="solicitudes-filter-field">
-          <label>Hasta</label>
-          <input (change)="updateFechaHasta($event)" [value]="selectedFechaHasta()" type="date">
-        </div>
+          <div class="solicitudes-filter-field">
+            <label>Área del solicitante</label>
+            <select (change)="updateArea($event)" [value]="selectedArea()">
+              <option value="">Todas las áreas</option>
+              @for (area of availableAreas(); track area) {
+                <option [value]="area">{{ area }}</option>
+              }
+            </select>
+          </div>
 
-        <div class="solicitudes-filter-field">
-          <label>Prioridad</label>
-          <select (change)="updatePrioridad($event)" [value]="selectedPrioridad()">
-            <option value="">Todas</option>
-            <option value="Alta">Alta</option>
-            <option value="Media">Media</option>
-            <option value="Baja">Baja</option>
-            <option value="Critica">Critica</option>
-          </select>
+          <div class="solicitudes-filter-field">
+            <label>Desde</label>
+            <input (change)="updateFechaDesde($event)" [value]="selectedFechaDesde()" type="date">
+          </div>
+
+          <div class="solicitudes-filter-field">
+            <label>Hasta</label>
+            <input (change)="updateFechaHasta($event)" [value]="selectedFechaHasta()" type="date">
+          </div>
+
+          <div class="solicitudes-filter-field">
+            <label>Prioridad</label>
+            <select (change)="updatePrioridad($event)" [value]="selectedPrioridad()">
+              <option value="">Todas</option>
+              <option value="Alta">Alta</option>
+              <option value="Media">Media</option>
+              <option value="Baja">Baja</option>
+              <option value="Critica">Critica</option>
+            </select>
+          </div>
+
+          <div class="solicitudes-mobile-clear-wrap">
+            <button (click)="clearFilters()" class="solicitudes-clear-filters" type="button">
+              <span class="material-symbols-outlined">filter_list_off</span>
+              Limpiar filtros
+            </button>
+          </div>
         </div>
       </div>
 
-      <button (click)="clearFilters()" class="solicitudes-clear-filters">
-        <span class="material-symbols-outlined">filter_list_off</span>
-        Limpiar filtros
-      </button>
+      <div class="solicitudes-filters-actions desktop-filters-actions">
+        <button (click)="clearFilters()" class="solicitudes-clear-filters" type="button">
+          <span class="material-symbols-outlined">filter_list_off</span>
+          Limpiar filtros
+        </button>
+        <button (click)="toggleTableFullscreen()" class="table-fullscreen-toggle-btn" type="button" [attr.aria-label]="isTableFullscreen() ? 'Salir de pantalla completa' : 'Pantalla completa'" [title]="isTableFullscreen() ? 'Salir de pantalla completa (Esc)' : 'Pantalla completa'">
+          <span class="material-symbols-outlined">{{ isTableFullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</span>
+          <span>{{ isTableFullscreen() ? 'Salir' : 'Maximizar' }}</span>
+        </button>
+      </div>
     </div>
 
     <div class="solicitudes-table-wrap">
@@ -250,10 +294,16 @@
                 }
               </td>
               <td class="date-cell">
-                <span class="muted-text date-text">{{ (item.createdDate || item.fecha) | date:'dd/MM/yyyy HH:mm' }}</span>
+                <div class="date-stack">
+                  <span class="date-main">{{ (item.createdDate || item.fecha) | date:'dd/MM/yyyy' }}</span>
+                  <span class="date-time">{{ (item.createdDate || item.fecha) | date:'HH:mm' }}</span>
+                </div>
               </td>
               <td class="date-cell">
-                <span class="muted-text date-text">{{ (item.lastModifiedDate || item.createdDate || item.fecha) | date:'dd/MM/yyyy HH:mm' }}</span>
+                <div class="date-stack">
+                  <span class="date-main">{{ (item.lastModifiedDate || item.createdDate || item.fecha) | date:'dd/MM/yyyy' }}</span>
+                  <span class="date-time">{{ (item.lastModifiedDate || item.createdDate || item.fecha) | date:'HH:mm' }}</span>
+                </div>
               </td>
               <td class="table-actions-cell">
                 <button [routerLink]="obtenerAccion(item).route" [queryParams]="soloMisSolicitudes() ? { modo: 'solicitante' } : {}" [class]="obtenerAccion(item).cssClass">

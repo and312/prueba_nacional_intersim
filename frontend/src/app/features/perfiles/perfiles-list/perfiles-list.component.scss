@@ -1,15 +1,15 @@
 .perfiles-page {
   display: flex;
   flex-direction: column;
-  gap: 28px;
+  gap: 24px;
 }
 
 .perfiles-page-header {
   display: flex;
   align-items: flex-end;
-  justify-between: space-between; // wait, styles.scss has flex utilities or we can just use normal css display flex
   justify-content: space-between;
   gap: 24px;
+  flex-shrink: 0;
 }
 
 .perfiles-title {
@@ -94,10 +94,44 @@
 
 .perfiles-table-card {
   position: relative;
+  overflow: hidden;
   border: 1px solid var(--border-subtle, #e2e8f0);
   border-radius: 8px;
   background: #ffffff;
   box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+
+  &.is-fullscreen {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 99999 !important;
+    border-radius: 0 !important;
+    border: none !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+    box-shadow: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+
+    app-profile-filters {
+      flex-shrink: 0;
+    }
+
+    app-profile-table {
+      flex: 1 1 auto;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .perfiles-table-footer {
+      flex-shrink: 0;
+    }
+  }
 }
 
 /* Error Container */
@@ -166,6 +200,9 @@
   border-top: 1px solid var(--border-subtle, #e2e8f0);
   background: #ffffff;
   border-radius: 0 0 8px 8px;
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
 }
 
 .pagination-summary {
@@ -287,8 +324,32 @@
   }
 
   .perfiles-table-footer {
-    flex-direction: column;
-    gap: 16px;
+    padding: 8px 12px;
+    flex-direction: row;
+    justify-content: space-between;
     align-items: center;
+    gap: 8px;
+  }
+
+  .pagination-summary {
+    font-size: 12px;
+    gap: 6px;
+
+    label {
+      display: none;
+    }
+  }
+
+  .pagination-actions {
+    gap: 3px;
+
+    button {
+      width: 28px;
+      height: 28px;
+
+      .material-symbols-outlined {
+        font-size: 16px;
+      }
+    }
   }
 }

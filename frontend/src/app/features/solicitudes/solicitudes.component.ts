@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, HostListener } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormGroup, FormControl, Validators, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -54,6 +54,38 @@ export class SolicitudesComponent implements OnInit {
   pageSizeOptions = [5, 10, 20, 50];
   isPageSizeMenuOpen = signal(false);
   selectedCardFilter = signal<'ALL' | 'REV' | 'OBS' | 'APR'>('ALL');
+  isTableFullscreen = signal(false);
+  isMobileFiltersOpen = signal(false);
+
+  toggleMobileFilters(): void {
+    this.isMobileFiltersOpen.update(v => !v);
+  }
+
+  clearSearch(): void {
+    this.searchQuery.set('');
+    this.resetPagination();
+  }
+
+  activeFiltersCount = computed(() => {
+    let count = 0;
+    if (this.selectedEstado()) count++;
+    if (this.selectedArea()) count++;
+    if (this.selectedPrioridad()) count++;
+    if (this.selectedFechaDesde()) count++;
+    if (this.selectedFechaHasta()) count++;
+    return count;
+  });
+
+  toggleTableFullscreen(): void {
+    this.isTableFullscreen.update(v => !v);
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapePress(): void {
+    if (this.isTableFullscreen()) {
+      this.isTableFullscreen.set(false);
+    }
+  }
 
   availableAreas = computed(() => {
     const set = new Set<string>();

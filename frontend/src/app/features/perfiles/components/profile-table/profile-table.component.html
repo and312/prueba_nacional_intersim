@@ -3,7 +3,6 @@
     <thead>
       <tr>
         <th>Código</th>
-        <th>Solicitud</th>
         @if (showAreaColumn) {
           <th>Área</th>
         }
@@ -20,11 +19,11 @@
     <tbody>
       @for (item of items; track item.id) {
         <tr>
-          <td>
-            <span class="perfil-code">{{ item.codigo }}</span>
-          </td>
-          <td>
-            <span class="perfil-solicitud-code">{{ item.solicitudCodigo }}</span>
+          <td class="code-cell">
+            <div class="perfil-code">
+              <span class="code-prefix">{{ splitCodigo(item.codigo).prefix }}</span>
+              <span class="code-suffix">{{ splitCodigo(item.codigo).suffix }}</span>
+            </div>
           </td>
           @if (showAreaColumn) {
             <td class="area-cell" [title]="item.areaNombre">
@@ -49,11 +48,17 @@
           <td>
             <app-profile-status-badge [estado]="item.estado" [estadoCodigo]="item.estadoCodigo" [rol]="userRole"></app-profile-status-badge>
           </td>
-          <td>
-            <span class="muted-text">{{ item.fechaSolicitud | date:'dd/MM/yyyy HH:mm' }}</span>
+          <td class="date-cell">
+            <div class="date-stack">
+              <span class="date-main">{{ item.fechaSolicitud | date:'dd/MM/yyyy' }}</span>
+              <span class="date-time">{{ item.fechaSolicitud | date:'HH:mm' }}</span>
+            </div>
           </td>
-          <td>
-            <span class="muted-text">{{ item.ultimaActualizacion | date:'dd/MM/yyyy HH:mm' }}</span>
+          <td class="date-cell">
+            <div class="date-stack">
+              <span class="date-main">{{ item.ultimaActualizacion | date:'dd/MM/yyyy' }}</span>
+              <span class="date-time">{{ item.ultimaActualizacion | date:'HH:mm' }}</span>
+            </div>
           </td>
           <td class="table-actions-cell">
             <button

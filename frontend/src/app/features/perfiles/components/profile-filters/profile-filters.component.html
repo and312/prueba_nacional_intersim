@@ -2,7 +2,7 @@
   <div class="perfiles-filters-grid">
     <!-- Buscador -->
     <div class="perfiles-filter-field perfiles-search-filter">
-      <label for="searchFilter">Buscar</label>
+      <label class="filter-label-desktop" for="searchFilter">Buscar</label>
       <div class="perfiles-filter-search">
         <span class="material-symbols-outlined">search</span>
         <input
@@ -19,42 +19,83 @@
       </div>
     </div>
 
-    <!-- Estado -->
-    <div class="perfiles-filter-field">
-      <label for="estadoFilter">Estado del perfil</label>
-      <select id="estadoFilter" formControlName="estado">
-        <option value="">Todos los estados</option>
-        @for (opt of statusOptions; track opt.value) {
-          <option [value]="opt.value">{{ opt.label }}</option>
+    <!-- Botones de cabecera solo visibles en mobile/tablet (<= 1024px) -->
+    <div class="perfiles-mobile-toolbar-actions">
+      <button type="button" 
+              class="mobile-filter-toggle-btn" 
+              (click)="toggleMobileFilters()" 
+              [class.is-active]="isMobileFiltersOpen"
+              [attr.aria-expanded]="isMobileFiltersOpen"
+              title="Filtros secundarios">
+        <span class="material-symbols-outlined">tune</span>
+        <span class="mobile-btn-text">Filtros</span>
+        @if (activeFiltersCount > 0) {
+          <span class="mobile-filter-badge">{{ activeFiltersCount }}</span>
         }
-      </select>
+      </button>
+
+      <button type="button" 
+              class="table-fullscreen-toggle-btn mobile-fs-btn" 
+              (click)="toggleFullscreen.emit()" 
+              [attr.aria-label]="isFullscreen ? 'Salir' : 'Maximizar'" 
+              [title]="isFullscreen ? 'Salir (Esc)' : 'Maximizar'">
+        <span class="material-symbols-outlined">{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</span>
+        <span class="mobile-btn-text">{{ isFullscreen ? 'Salir' : 'Maximizar' }}</span>
+      </button>
     </div>
 
-    <!-- Área Solicitante (Siempre visible) -->
-    <div class="perfiles-filter-field">
-      <label for="areaFilter">Área del solicitante</label>
-      <select id="areaFilter" formControlName="areaId">
-        <option value="">Todas las áreas</option>
-        @for (area of areas; track area.id) {
-          <option [value]="area.id">{{ area.nombre }}</option>
-        }
-      </select>
-    </div>
+    <!-- Filtros secundarios colapsables en mobile/tablet, 'display: contents' en desktop -->
+    <div class="perfiles-secondary-filters" [class.is-open]="isMobileFiltersOpen">
+      <!-- Estado -->
+      <div class="perfiles-filter-field">
+        <label for="estadoFilter">Estado del perfil</label>
+        <select id="estadoFilter" formControlName="estado">
+          <option value="">Todos los estados</option>
+          @for (opt of statusOptions; track opt.value) {
+            <option [value]="opt.value">{{ opt.label }}</option>
+          }
+        </select>
+      </div>
 
-    <!-- Rango de Fechas -->
-    <div class="perfiles-filter-field">
-      <label for="fechaDesdeFilter">Desde</label>
-      <input id="fechaDesdeFilter" formControlName="fechaDesde" type="date" />
-    </div>
+      <!-- Área Solicitante (Siempre visible) -->
+      <div class="perfiles-filter-field">
+        <label for="areaFilter">Área del solicitante</label>
+        <select id="areaFilter" formControlName="areaId">
+          <option value="">Todas las áreas</option>
+          @for (area of areas; track area.id) {
+            <option [value]="area.id">{{ area.nombre }}</option>
+          }
+        </select>
+      </div>
 
-    <div class="perfiles-filter-field">
-      <label for="fechaHastaFilter">Hasta</label>
-      <input id="fechaHastaFilter" formControlName="fechaHasta" type="date" />
+      <!-- Rango de Fechas -->
+      <div class="perfiles-filter-field">
+        <label for="fechaDesdeFilter">Desde</label>
+        <input id="fechaDesdeFilter" formControlName="fechaDesde" type="date" />
+      </div>
+
+      <div class="perfiles-filter-field">
+        <label for="fechaHastaFilter">Hasta</label>
+        <input id="fechaHastaFilter" formControlName="fechaHasta" type="date" />
+      </div>
+
+      <div class="perfiles-mobile-clear-wrap">
+        <button class="perfiles-clear-filters" type="button" (click)="clearFilters()">
+          <span class="material-symbols-outlined">filter_list_off</span>
+          Limpiar filtros
+        </button>
+      </div>
     </div>
   </div>
 
-  <button class="perfiles-clear-filters" type="button" (click)="clearFilters()">
-    <span class="material-symbols-outlined">filter_list_off</span>
-    Limpiar filtros
-  </button>
+  <div class="perfiles-filters-actions desktop-filters-actions">
+    <button class="perfiles-clear-filters" type="button" (click)="clearFilters()">
+      <span class="material-symbols-outlined">filter_list_off</span>
+      Limpiar filtros
+    </button>
+    <button class="table-fullscreen-toggle-btn" type="button" (click)="toggleFullscreen.emit()" [attr.aria-label]="isFullscreen ? 'Salir de pantalla completa' : 'Pantalla completa'" [title]="isFullscreen ? 'Salir de pantalla completa (Esc)' : 'Pantalla completa'">
+      <span class="material-symbols-outlined">{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</span>
+      <span>{{ isFullscreen ? 'Salir' : 'Maximizar' }}</span>
+    </button>
+  </div>
 </div>

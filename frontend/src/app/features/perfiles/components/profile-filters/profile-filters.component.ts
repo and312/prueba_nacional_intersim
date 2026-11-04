@@ -16,7 +16,9 @@ import { ProfilesListService } from '../../services/profiles-list.service';
 export class ProfileFiltersComponent implements OnInit {
   @Input({ required: true }) userRole!: 'RRHH' | 'AreaSol' | 'Administrador';
   @Input({ required: true }) showAreaFilter!: boolean;
+  @Input() isFullscreen = false;
   @Output() filterChange = new EventEmitter<Partial<ProfileListQuery>>();
+  @Output() toggleFullscreen = new EventEmitter<void>();
 
   private profilesService = inject(ProfilesListService);
 
@@ -40,6 +42,21 @@ export class ProfileFiltersComponent implements OnInit {
   }));
 
   areas: { id: number; nombre: string }[] = [];
+  isMobileFiltersOpen = false;
+
+  toggleMobileFilters(): void {
+    this.isMobileFiltersOpen = !this.isMobileFiltersOpen;
+  }
+
+  get activeFiltersCount(): number {
+    const raw = this.filterForm.value;
+    let count = 0;
+    if (raw.estado) count++;
+    if (raw.areaId) count++;
+    if (raw.fechaDesde) count++;
+    if (raw.fechaHasta) count++;
+    return count;
+  }
 
   ngOnInit(): void {
     this.profilesService.getAreasList().subscribe(list => {

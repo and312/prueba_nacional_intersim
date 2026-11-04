@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../../../core/services/auth.service';
@@ -65,6 +65,18 @@ export class PerfilesListComponent implements OnInit {
   activeFilters = signal<Partial<ProfileListQuery>>({});
   soloMisPerfiles = signal<boolean>(false);
   activeCardKey = signal<string | null>(null);
+  isTableFullscreen = signal(false);
+
+  toggleTableFullscreen(): void {
+    this.isTableFullscreen.update(v => !v);
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapePress(): void {
+    if (this.isTableFullscreen()) {
+      this.isTableFullscreen.set(false);
+    }
+  }
 
   // Computed Signal: Filtrado Reactivo Instantáneo en Memoria (0ms Latencia)
   filteredProfiles = computed(() => {
