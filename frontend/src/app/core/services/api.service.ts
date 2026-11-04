@@ -17,7 +17,7 @@ export interface PaginatedResponse<T> {
 export class ApiService {
   private baseUrl = environment.apiUrl;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   // 1. Catálogos
   getCatalogos(nombre: string): Observable<any[]> {
@@ -68,11 +68,11 @@ export class ApiService {
   }
 
   transitarSolicitud(id: number, nuevoEstadoCodigo: string, comentario?: string, seMostroAdvertencia?: boolean, usuarioConfirmoEnvio?: boolean): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/solicitudes/${id}/transicion`, { 
-      nuevoEstadoCodigo, 
-      comentario, 
-      seMostroAdvertencia, 
-      usuarioConfirmoEnvio 
+    return this.http.post<any>(`${this.baseUrl}/solicitudes/${id}/transicion`, {
+      nuevoEstadoCodigo,
+      comentario,
+      seMostroAdvertencia,
+      usuarioConfirmoEnvio
     });
   }
 
@@ -198,7 +198,7 @@ export class ApiService {
   }
 
   descargarPdfSolicitud(id: number): Observable<Blob> {
-    return this.http.get(`${this.baseUrl}/solicitudes/${id}/documentos/PERFIL_ESTRUCTURADO_PDF/descarga`, {
+    return this.http.get(`${this.baseUrl}/solicitudes/${id}/documentos/SOLICITUD_ESTRUCTURADA_PDF/descarga`, {
       responseType: 'blob'
     });
   }
